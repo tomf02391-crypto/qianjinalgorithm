@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>千金U · 算法引擎（动态特码增强版）</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
+/* ===== 设计令牌系统 ===== */
+:root{
+  --bg:#060810;
+  --bg-2:#0a0e1a;
+  --card:rgba(255,255,255,0.045);
+  --card-hover:rgba(255,255,255,0.07);
+  --card-border:rgba(255,255,255,0.08);
+  --card-border-bright:rgba(255,255,255,0.14);
+  --text:#f0f2f8;
+  --text-muted:#7a8499;
+  --text-dim:#525a6e;
+  --accent:#6366f1;
+  --accent2:#8b5cf6;
+  --accent3:#3b82f6;
+  --accent-grad:linear-gradient(135deg,#6366f1,#8b5cf6);
+  --accent-grad-3:linear-gradient(135deg,#6366f1,#8b5cf6,#3b82f6);
+  --success:#22c55e;
+  --success-glow:rgba(34,197,94,0.5);
+  --warning:#f59e0b;
+  --warning-glow:rgba(245,158,11,0.5);
+  --danger:#ef4444;
+  --danger-glow:rgba(239,68,68,0.5);
+  --info:#3b82f6;
+  --glass:rgba(255,255,255,0.025);
+  --skeleton:rgba(255,255,255,0.06);
+  --radius:20px;
+  --radius-sm:14px;
+  --radius-xs:10px;
+  --shadow-card:0 2px 24px rgba(0,0,0,0.35),0 0 0 1px rgba(255,255,255,0.03) inset;
+  --shadow-glow:0 4px 32px rgba(99,102,241,0.25);
+  --ease-bounce:cubic-bezier(0.34,1.56,0.64,1);
+  --ease-smooth:cubic-bezier(0.4,0,0.2,1);
+}
+
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Noto Sans CJK SC',sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ===== 流动极光背景 ===== */
+body::before{
+  content:'';position:fixed;inset:0;z-index:-2;
+  background:
+    radial-gradient(ellipse 80% 50% at 15% 0%,rgba(99,102,241,0.18),transparent 60%),
+    radial-gradient(ellipse 70% 40% at 85% 100%,rgba(139,92,246,0.14),transparent 60%),
+    radial-gradient(ellipse 60% 30% at 50% 50%,rgba(59,130,246,0.08),transparent 70%);
+}
+body::after{
+  content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(circle at 30% 20%,rgba(99,102,241,0.06),transparent 40%),
+    radial-gradient(circle at 70% 80%,rgba(139,92,246,0.05),transparent 40%);
+  animation:auroraDrift 20s ease-in-out infinite alternate;
+}
+@keyframes auroraDrift{
+  0%{transform:translate(0,0) scale(1)}
+  100%{transform:translate(-20px,20px) scale(1.05)}
+}
+
+/* ===== 微细网格纹理叠加 ===== */
+.container::before{
+  content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:0.4;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);
+  background-size:40px 40px;
+  mask:radial-gradient(ellipse at center,black 30%,transparent 70%);
+  -webkit-mask:radial-gradient(ellipse at center,black 30%,transparent 70%);
+}
+
+.container{max-width:480px;margin:0 auto;padding:14px 16px 90px;position:relative}
+
+/* ===== 导航栏 ===== */
+.navbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 18px;border-radius:var(--radius);margin-bottom:14px;
+  background:var(--card);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border:1px solid var(--card-border);
+  box-shadow:var(--shadow-card);
+  position:relative;overflow:hidden;
+}
+.navbar::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
+}
+.nav-title{font-size:18px;font-weight:800;display:flex;align-items:center;gap:10px;letter-spacing:-0.3px}
+.nav-logo{
+  width:36px;height:36px;border-radius:12px;
+  background:var(--accent-grad);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;flex-shrink:0;
+  box-shadow:0 4px 16px rgba(99,102,241,0.4);
+  animation:logoPulse 3s ease-in-out infinite;
+}
+@keyframes logoPulse{
+  0%,100%{box-shadow:0 4px 16px rgba(99,102,241,0.4)}
+  50%{box-shadow:0 4px 24px rgba(139,92,246,0.6)}
+}
+.nav-sub{font-size:10px;color:var(--text-muted);margin-top:3px;font-weight:500;letter-spacing:0.3px}
+.status-badge{
+  display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:999px;
+  background:rgba(255,255,255,0.04);font-size:11px;cursor:pointer;
+  border:1px solid var(--card-border);
+  transition:all 0.25s var(--ease-smooth);max-width:140px;overflow:hidden;white-space:nowrap;
+  font-weight:600;
+}
+.status-badge:hover{background:rgba(255,255,255,0.08);border-color:var(--card-border-bright)}
+.status-badge:active{transform:scale(0.94)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 8px var(--success-glow);flex-shrink:0;transition:all 0.3s}
+.status-dot.loading{background:var(--warning);box-shadow:0 0 8px var(--warning-glow);animation:pulse 1s infinite}
+.status-dot.error{background:var(--danger);box-shadow:0 0 8px var(--danger-glow)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* ===== 卡片系统 ===== */
+.card{
+  background:var(--card);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border:1px solid var(--card-border);border-radius:var(--radius);padding:18px;margin-bottom:14px;
+  box-shadow:var(--shadow-card);
+  position:relative;overflow:hidden;
+  animation:cardIn 0.5s var(--ease-bounce) backwards;
+}
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent 20%,rgba(255,255,255,0.1) 50%,transparent 80%);
+}
+.card:nth-child(1){animation-delay:0s}
+.card:nth-child(2){animation-delay:0.06s}
+.card:nth-child(3){animation-delay:0.12s}
+.card:nth-child(4){animation-delay:0.18s}
+.card:nth-child(5){animation-delay:0.24s}
+.card:nth-child(6){animation-delay:0.3s}
+.card:nth-child(7){animation-delay:0.36s}
+.card:nth-child(8){animation-delay:0.42s}
+@keyframes cardIn{
+  from{opacity:0;transform:translateY(16px) scale(0.97)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+.card-title{
+  font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:14px;
+  display:flex;align-items:center;gap:7px;text-transform:uppercase;letter-spacing:0.8px;
+}
+.card-title .ico{font-size:14px;filter:saturate(1.2)}
+
+/* ===== 倒计时 ===== */
+.countdown-wrap{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.countdown-info{flex:1}
+.countdown-label{font-size:11px;color:var(--text-muted);margin-bottom:6px;font-weight:600;letter-spacing:0.3px}
+.countdown-text{
+  font-size:30px;font-weight:900;font-variant-numeric:tabular-nums;
+  letter-spacing:1px;transition:color 0.3s;line-height:1;
+}
+.countdown-text.urgent{color:var(--danger);animation:pulse 1s infinite}
+.countdown-text.imminent{color:var(--warning)}
+.countdown-ring{width:76px;height:76px;position:relative;flex-shrink:0}
+.countdown-ring svg{width:100%;height:100%;transform:rotate(-90deg);filter:drop-shadow(0 0 6px rgba(99,102,241,0.4))}
+.countdown-ring .ring-bg{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:5}
+.countdown-ring .ring-fg{
+  fill:none;stroke-width:5;stroke-linecap:round;
+  transition:stroke-dashoffset 0.5s var(--ease-smooth),stroke 0.3s;
+}
+.ring-grad-1{stop-color:#6366f1}
+.ring-grad-2{stop-color:#8b5cf6}
+.countdown-ring .ring-text{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;transition:color 0.3s;
+  letter-spacing:0.5px;
+}
+
+/* ===== 预测结果（英雄区域） ===== */
+.pred-main{
+  text-align:center;padding:24px 18px;border-radius:var(--radius-sm);
+  background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.06),rgba(59,130,246,0.04));
+  border:1px solid rgba(99,102,241,0.18);margin-bottom:14px;
+  transition:opacity 0.3s;position:relative;overflow:hidden;
+}
+.pred-main::before{
+  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+  background:conic-gradient(from 0deg,transparent 0%,rgba(99,102,241,0.06) 25%,transparent 50%,rgba(139,92,246,0.06) 75%,transparent 100%);
+  animation:predGlow 8s linear infinite;
+}
+@keyframes predGlow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.pred-main>*{position:relative;z-index:1}
+.pred-main.updating{opacity:0.5}
+.pred-line{
+  font-size:22px;font-weight:900;letter-spacing:1px;line-height:1.6;
+  text-align:center;padding:8px 0 12px;
+}
+.pred-line .combo{color:var(--accent);text-shadow:0 0 12px rgba(99,102,241,0.4)}
+.pred-line .combo2{color:var(--accent2);text-shadow:0 0 12px rgba(139,92,246,0.4)}
+.pred-line .kill-label{color:#ef4444;font-size:16px;margin-right:2px;font-weight:700}
+.pred-line .kill-combo{color:#f87171;font-size:18px;margin-right:6px;padding:1px 6px;border-radius:6px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.15)}
+.pred-line .te-label{color:var(--text-muted);font-size:16px;margin:0 2px}
+.pred-line .te-num{
+  display:inline-block;padding:1px 8px;margin:0 1px;border-radius:6px;
+  background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.2);
+  font-size:20px;font-variant-numeric:tabular-nums;
+}
+.pred-line .te-sep{color:var(--text-dim);font-size:16px}
+.pred-combos{font-size:24px;font-weight:900;letter-spacing:2px;margin-bottom:14px;line-height:1.3}
+.pred-combos .c1{color:var(--accent);text-shadow:0 0 14px rgba(99,102,241,0.5)}
+.pred-combos .c2{color:var(--accent2);text-shadow:0 0 14px rgba(139,92,246,0.5)}
+.pred-combos .c3{color:var(--accent3);text-shadow:0 0 14px rgba(59,130,246,0.5);font-size:20px}
+.pred-combos .c4{color:var(--success);text-shadow:0 0 14px rgba(34,197,94,0.5);font-size:20px}
+.pred-combos .sep{color:var(--text-dim);font-size:16px;margin:0 3px;font-weight:400}
+.pred-numbers{
+  font-size:30px;font-weight:900;font-variant-numeric:tabular-nums;
+  letter-spacing:1px;margin-bottom:10px;display:flex;flex-wrap:wrap;justify-content:center;gap:4px;
+}
+.pred-numbers .n{
+  display:inline-block;padding:3px 10px;margin:1px;border-radius:8px;
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.06);
+  animation:numIn 0.4s var(--ease-bounce) backwards;
+  font-size:22px;min-width:34px;text-align:center;
+}
+.pred-numbers .n.core{
+  background:linear-gradient(135deg,rgba(99,102,241,0.35),rgba(139,92,246,0.25));
+  border:1px solid rgba(99,102,241,0.45);
+  color:#fff;font-weight:900;font-size:23px;
+  box-shadow:0 2px 12px rgba(99,102,241,0.3);
+  text-shadow:0 0 8px rgba(139,92,246,0.6);
+}
+.pred-numbers .n:nth-child(n){animation-delay:calc(var(--i,0) * 0.02s)}
+@keyframes numIn{from{opacity:0;transform:scale(0.3) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.pred-period{font-size:12px;color:var(--text-muted);font-weight:500}
+.pred-confidence{
+  display:inline-flex;align-items:center;gap:4px;
+  margin-top:8px;padding:4px 12px;border-radius:999px;
+  font-size:11px;font-weight:700;letter-spacing:0.3px;
+}
+.pred-confidence.high{background:rgba(34,197,94,0.12);color:var(--success);border:1px solid rgba(34,197,94,0.2)}
+.pred-confidence.mid{background:rgba(245,158,11,0.12);color:var(--warning);border:1px solid rgba(245,158,11,0.2)}
+.pred-confidence.low{background:rgba(239,68,68,0.12);color:var(--danger);border:1px solid rgba(239,68,68,0.2)}
+
+/* ===== 趋势信息 ===== */
+.trend-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.trend-item{
+  padding:12px 14px;border-radius:var(--radius-xs);background:var(--glass);
+  display:flex;flex-direction:column;gap:3px;transition:all 0.25s var(--ease-smooth);
+  border:1px solid rgba(255,255,255,0.03);
+}
+.trend-item:hover{background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.06)}
+.trend-label{font-size:10px;color:var(--text-muted);font-weight:600;letter-spacing:0.3px}
+.trend-value{font-size:17px;font-weight:800;transition:color 0.3s;letter-spacing:-0.3px}
+.trend-bar{
+  height:5px;border-radius:3px;background:rgba(255,255,255,0.06);
+  margin-top:5px;overflow:hidden;position:relative;
+}
+.trend-bar-fill{
+  height:100%;border-radius:3px;transition:width 0.6s var(--ease-smooth);
+  position:relative;
+}
+.trend-bar-fill::after{
+  content:'';position:absolute;inset:0;border-radius:3px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);
+  animation:barShine 2s ease-in-out infinite;
+}
+@keyframes barShine{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
+
+/* ===== 形态分布 ===== */
+.combo-dist{display:flex;gap:8px;margin-top:4px}
+.combo-chip{
+  flex:1;text-align:center;padding:10px 4px;border-radius:var(--radius-xs);
+  background:var(--glass);border:1px solid transparent;
+  transition:all 0.25s var(--ease-smooth);position:relative;overflow:hidden;
+}
+.combo-chip.active{
+  border-color:rgba(99,102,241,0.35);background:rgba(99,102,241,0.08);
+  transform:scale(1.06);box-shadow:0 4px 16px rgba(99,102,241,0.15);
+}
+.combo-chip .name{font-size:11px;font-weight:700;letter-spacing:0.3px}
+.combo-chip .count{font-size:20px;font-weight:900;margin-top:3px;letter-spacing:-0.5px}
+.combo-chip .pct{font-size:9px;color:var(--text-muted);font-weight:600;margin-top:1px}
+
+/* ===== 历史记录表 ===== */
+.history-table{width:100%;font-size:11px;border-collapse:collapse}
+.history-table th{
+  text-align:center;padding:8px 4px;color:var(--text-muted);font-weight:600;
+  border-bottom:1px solid var(--card-border);position:sticky;top:0;
+  background:rgba(10,14,26,0.95);backdrop-filter:blur(12px);z-index:1;
+  font-size:10px;letter-spacing:0.3px;text-transform:uppercase;
+}
+.history-table td{padding:8px 4px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s}
+.history-table tr:last-child td{border-bottom:none}
+.history-table tr.hit-exact td{color:var(--success)}
+.history-table tr.hit-group td{color:var(--warning)}
+.history-table tr{transition:background 0.15s}
+.history-table tr:active{background:rgba(255,255,255,0.03)}
+.tag{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:2px 10px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:0.3px;min-width:28px;
+}
+.tag-te{background:rgba(34,197,94,0.12);color:var(--success);border:1px solid rgba(34,197,94,0.15)}
+.tag-zu{background:rgba(245,158,11,0.12);color:var(--warning);border:1px solid rgba(245,158,11,0.15)}
+.tag-miss{background:rgba(255,255,255,0.04);color:var(--text-dim);border:1px solid rgba(255,255,255,0.04)}
+.tag-core{background:rgba(99,102,241,0.15);color:#a5b4fc;border:1px solid rgba(99,102,241,0.2);margin-right:3px}
+
+/* ===== 回测统计 ===== */
+.bt-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+.bt-stat{
+  text-align:center;padding:16px 8px;border-radius:var(--radius-sm);
+  background:var(--glass);transition:all 0.2s var(--ease-smooth);
+  border:1px solid rgba(255,255,255,0.03);position:relative;overflow:hidden;
+}
+.bt-stat::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;opacity:0.6;
+}
+.bt-stat:nth-child(1)::before{background:var(--success)}
+.bt-stat:nth-child(2)::before{background:var(--warning)}
+.bt-stat:nth-child(3)::before{background:var(--danger)}
+.bt-stat:active{transform:scale(0.95)}
+.bt-stat .val{font-size:24px;font-weight:900;transition:color 0.3s;letter-spacing:-0.5px}
+.bt-stat .lbl{font-size:10px;color:var(--text-muted);margin-top:4px;font-weight:600;letter-spacing:0.3px}
+
+/* ===== 最近开奖 ===== */
+.recent-list{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.recent-list::-webkit-scrollbar{display:none}
+.recent-item{
+  flex-shrink:0;width:66px;padding:10px 4px;border-radius:var(--radius-xs);text-align:center;
+  background:var(--glass);border:1px solid transparent;transition:all 0.2s var(--ease-smooth);
+}
+.recent-item:hover{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.06)}
+.recent-item:active{transform:scale(0.94)}
+.recent-item .period{font-size:9px;color:var(--text-muted);margin-bottom:5px;font-weight:600}
+.recent-item .nums{font-size:11px;font-weight:600;margin-bottom:3px;color:var(--text-muted)}
+.recent-item .sum{font-size:18px;font-weight:900;letter-spacing:-0.5px}
+.recent-item .combo{font-size:9px;margin-top:4px;padding:2px 7px;border-radius:5px;display:inline-block;font-weight:700}
+
+/* ===== 骨架屏 ===== */
+.skeleton{
+  background:linear-gradient(90deg,var(--skeleton) 25%,rgba(255,255,255,0.1) 50%,var(--skeleton) 75%);
+  background-size:200% 100%;animation:shimmer 1.8s infinite;border-radius:8px;
+}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skeleton-text{height:14px;margin:4px 0}
+.skeleton-num{height:32px;width:80px;margin:8px auto}
+
+/* ===== 刷新按钮 ===== */
+.refresh-btn{
+  position:fixed;bottom:24px;left:50%;transform:translateX(216px);
+  width:50px;height:50px;border-radius:50%;border:none;cursor:pointer;
+  background:var(--accent-grad);color:#fff;font-size:20px;z-index:100;
+  box-shadow:0 4px 24px rgba(99,102,241,0.45),0 0 0 4px rgba(99,102,241,0.08);
+  transition:all 0.25s var(--ease-bounce);
+  display:flex;align-items:center;justify-content:center;
+}
+.refresh-btn:hover{box-shadow:0 6px 32px rgba(99,102,241,0.6),0 0 0 6px rgba(99,102,241,0.1)}
+.refresh-btn:active{transform:translateX(216px) scale(0.85)}
+.refresh-btn.spinning svg{animation:spin 0.8s linear infinite}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+/* ===== Toast ===== */
+.toast{
+  position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-24px);
+  padding:12px 24px;border-radius:14px;font-size:13px;z-index:999;font-weight:600;
+  background:rgba(20,24,38,0.9);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border:1px solid var(--card-border-bright);
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  opacity:0;transition:all 0.3s var(--ease-bounce);pointer-events:none;max-width:90%;text-align:center;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== 数据来源信息 ===== */
+.data-info{
+  font-size:10px;color:var(--text-muted);text-align:center;padding:10px;
+  display:flex;justify-content:center;gap:12px;flex-wrap:wrap;letter-spacing:0.3px;font-weight:500;
+}
+
+/* ===== 形态标签颜色 ===== */
+.combo-大单{background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.15)}
+.combo-大双{background:rgba(59,130,246,0.12);color:#60a5fa;border:1px solid rgba(59,130,246,0.15)}
+.combo-小单{background:rgba(245,158,11,0.12);color:#fbbf24;border:1px solid rgba(245,158,11,0.15)}
+.combo-小双{background:rgba(34,197,94,0.12);color:#4ade80;border:1px solid rgba(34,197,94,0.15)}
+
+/* ===== 滚动条美化 ===== */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.2)}
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- 导航栏 -->
+  <div class="navbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="nav-logo">💰</div>
+      <div>
+        <div class="nav-title">千金U · 算法引擎</div>
+        <div class="nav-sub">v9.0 动态特码增强版</div>
+      </div>
+    </div>
+    <div class="status-badge" id="status-badge" onclick="app.refresh()">
+      <span class="status-dot loading" id="status-dot"></span>
+      <span id="status-text">初始化...</span>
+    </div>
+  </div>
+
+  <!-- 倒计时 -->
+  <div class="card">
+    <div class="countdown-wrap">
+      <div class="countdown-info">
+        <div class="countdown-label">距下期开奖</div>
+        <div class="countdown-text" id="cd-text">--分--秒</div>
+      </div>
+      <div class="countdown-ring">
+        <svg viewBox="0 0 76 76">
+          <defs>
+            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" class="ring-grad-1"/>
+              <stop offset="100%" class="ring-grad-2"/>
+            </linearGradient>
+          </defs>
+          <circle class="ring-bg" cx="38" cy="38" r="33"/>
+          <circle class="ring-fg" id="ring-fg" cx="38" cy="38" r="33"
+            stroke="url(#ringGrad)"
+            stroke-dasharray="207.35" stroke-dashoffset="207.35"/>
+        </svg>
+        <div class="ring-text" id="ring-text">--:--</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 预测结果 -->
+  <div class="card">
+    <div class="card-title"><span class="ico">🎯</span> 下期预测</div>
+    <div class="pred-main" id="pred-main">
+      <div class="pred-line" id="pred-line">
+        <span class="skeleton" style="display:inline-block;width:200px;height:28px"></span>
+      </div>
+      <div class="pred-period" id="pred-period">正在获取实时数据...</div>
+      <div id="pred-conf-wrap"></div>
+    </div>
+  </div>
+
+  <!-- 趋势分析 -->
+  <div class="card">
+    <div class="card-title"><span class="ico">📊</span> 趋势分析（近15期）</div>
+    <div class="trend-grid">
+      <div class="trend-item">
+        <div class="trend-label">大小比例</div>
+        <div class="trend-value" id="trend-big-ratio">--</div>
+        <div class="trend-bar"><div class="trend-bar-fill" id="bar-big" style="width:50%;background:linear-gradient(90deg,#3b82f6,#60a5fa)"></div></div>
+      </div>
+      <div class="trend-item">
+        <div class="trend-label">单双比例</div>
+        <div class="trend-value" id="trend-odd-ratio">--</div>
+        <div class="trend-bar"><div class="trend-bar-fill" id="bar-odd" style="width:50%;background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div></div>
+      </div>
+      <div class="trend-item">
+        <div class="trend-label">同形态连龙</div>
+        <div class="trend-value" id="trend-streak">--</div>
+      </div>
+      <div class="trend-item">
+        <div class="trend-label">大小/单双连龙</div>
+        <div class="trend-value" id="trend-big-odd-streak">--</div>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <div class="trend-label" style="margin-bottom:8px;font-size:10px;font-weight:600;color:var(--text-muted);letter-spacing:0.3px">形态分布</div>
+      <div class="combo-dist" id="combo-dist">
+        <div class="combo-chip"><div class="name">大单</div><div class="count">0</div><div class="pct">0%</div></div>
+        <div class="combo-chip"><div class="name">大双</div><div class="count">0</div><div class="pct">0%</div></div>
+        <div class="combo-chip"><div class="name">小单</div><div class="count">0</div><div class="pct">0%</div></div>
+        <div class="combo-chip"><div class="name">小双</div><div class="count">0</div><div class="pct">0%</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 最近开奖 -->
+  <div class="card">
+    <div class="card-title"><span class="ico">🕐</span> 最近开奖</div>
+    <div class="recent-list" id="recent-list">
+      <div class="recent-item"><div class="skeleton" style="height:44px"></div></div>
+      <div class="recent-item"><div class="skeleton" style="height:44px"></div></div>
+      <div class="recent-item"><div class="skeleton" style="height:44px"></div></div>
+    </div>
+  </div>
+
+  <!-- 回测统计 -->
+  <div class="card">
+    <div class="card-title"><span class="ico">📈</span> 回测统计（近30期）</div>
+    <div class="bt-stats">
+      <div class="bt-stat"><div class="val" id="bt-kill-rate" style="color:#a78bfa">--</div><div class="lbl">杀码准确率</div></div>
+      <div class="bt-stat"><div class="val" id="bt-exact-rate" style="color:var(--success)">--</div><div class="lbl">特命中率</div></div>
+      <div class="bt-stat"><div class="val" id="bt-group-rate" style="color:var(--warning)">--</div><div class="lbl">组命中率</div></div>
+      <div class="bt-stat"><div class="val" id="bt-miss-count" style="color:var(--danger)">--</div><div class="lbl">未中数</div></div>
+    </div>
+  </div>
+
+  <!-- 历史预测记录 -->
+  <div class="card">
+    <div class="card-title"><span class="ico">📋</span> 预测记录（最近20期）</div>
+    <div style="max-height:400px;overflow-y:auto;-webkit-overflow-scrolling:touch;border-radius:8px">
+      <div id="history-list" style="display:flex;flex-direction:column;gap:6px">
+        <div style="color:var(--text-muted);padding:24px;text-align:center">加载中...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 数据来源 -->
+  <div class="data-info" id="data-info">等待连接...</div>
+</div>
+
+<button class="refresh-btn" id="refresh-btn" onclick="app.refresh()" title="刷新">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="23 4 23 10 17 10"></polyline>
+    <polyline points="1 20 1 14 7 14"></polyline>
+    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+  </svg>
+</button>
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// 千金U 算法核心 v9.0 动态特码增强版
+// 改进点：
+// 1. 特码数量动态：置信度≥70% → 每组2个，否则每组3个
+// 2. 评分公式优化：probScore系数1.0，freqScore系数2.2，加入遗漏补偿
+// 3. 保留距离加权排序
+// ============================================================
+const QianJinU = {
+
+  // ===== 基础工具 =====
+  judgeCombo(sum) {
+    const b = sum >= 14, o = sum % 2 === 1;
+    if (b && o) return '大单';
+    if (b && !o) return '大双';
+    if (!b && o) return '小单';
+    return '小双';
+  },
+
+  getComboNumbers(combo) {
+    const r = [];
+    for (let i = 0; i <= 27; i++) if (this.judgeCombo(i) === combo) r.push(i);
+    return r;
+  },
+
+  probabilityWeight(sum) {
+    let n = 0;
+    for (let a = 0; a <= 9; a++)
+      for (let b = 0; b <= 9; b++) {
+        const c = sum - a - b;
+        if (c >= 0 && c <= 9) n++;
+      }
+    return n;
+  },
+
+  // ===== 趋势分析（同原版，无改动） =====
+  analyzeTrend(history) {
+    const recent = history.slice(-15);
+    const recent20 = history.slice(-20);
+    const recent30 = history.slice(-30);
+    const decay = 0.85;
+
+    const wCombo = { '大单': 0, '大双': 0, '小单': 0, '小双': 0 };
+    const comboCount = { '大单': 0, '大双': 0, '小单': 0, '小双': 0 };
+    const numberCount = {};
+    const wNumberCount = {};
+
+    recent.forEach((item, i) => {
+      const w = Math.pow(decay, recent.length - 1 - i);
+      wCombo[item.combo] += w;
+      comboCount[item.combo]++;
+      numberCount[item.sum] = (numberCount[item.sum] || 0) + 1;
+      wNumberCount[item.sum] = (wNumberCount[item.sum] || 0) + w;
+    });
+
+    const wBig = wCombo['大单'] + wCombo['大双'];
+    const wSmall = wCombo['小单'] + wCombo['小双'];
+    const wOdd = wCombo['大单'] + wCombo['小单'];
+    const wEven = wCombo['大双'] + wCombo['小双'];
+    const wTotal = wBig + wSmall;
+    const bigRatio = wTotal > 0 ? wBig / wTotal : 0.5;
+    const oddRatio = wTotal > 0 ? wOdd / (wOdd + wEven) : 0.5;
+
+    const lastItem = recent[recent.length - 1];
+    const lastCombo = lastItem ? lastItem.combo : '小双';
+    const lastIsBig = lastCombo === '大单' || lastCombo === '大双';
+    const lastIsOdd = lastCombo === '大单' || lastCombo === '小单';
+
+    let streak = 1;
+    for (let i = recent.length - 2; i >= 0; i--) {
+      if (recent[i].combo === lastCombo) streak++; else break;
+    }
+    let bigStreak = 1;
+    const lastSize = lastIsBig ? '大' : '小';
+    for (let i = recent.length - 2; i >= 0; i--) {
+      const s = (recent[i].combo === '大单' || recent[i].combo === '大双') ? '大' : '小';
+      if (s === lastSize) bigStreak++; else break;
+    }
+    let oddStreak = 1;
+    const lastParity = lastIsOdd ? '单' : '双';
+    for (let i = recent.length - 2; i >= 0; i--) {
+      const p = (recent[i].combo === '大单' || recent[i].combo === '小单') ? '单' : '双';
+      if (p === lastParity) oddStreak++; else break;
+    }
+
+    const last5Size = recent.slice(-5).map(r => (r.combo === '大单' || r.combo === '大双') ? '大' : '小');
+    const last5Parity = recent.slice(-5).map(r => (r.combo === '大单' || r.combo === '小单') ? '单' : '双');
+    const last10Size = recent.slice(-10).map(r => (r.combo === '大单' || r.combo === '大双') ? '大' : '小');
+    const last10Parity = recent.slice(-10).map(r => (r.combo === '大单' || r.combo === '小单') ? '单' : '双');
+
+    let altBig = 0, altOdd = 0;
+    for (let i = 1; i < recent.length; i++) {
+      const prevBig = (recent[i-1].combo === '大单' || recent[i-1].combo === '大双');
+      const currBig = (recent[i].combo === '大单' || recent[i].combo === '大双');
+      if (prevBig !== currBig) altBig++;
+      const prevOdd = (recent[i-1].combo === '大单' || recent[i-1].combo === '小单');
+      const currOdd = (recent[i].combo === '大单' || recent[i].combo === '小单');
+      if (prevOdd !== currOdd) altOdd++;
+    }
+
+    const sumAvg30 = recent30.length > 0
+      ? recent30.reduce((a, r) => a + r.sum, 0) / recent30.length
+      : 13.5;
+
+    const transMatrix = {};
+    for (let i = 1; i < recent20.length; i++) {
+      const prev = recent20[i-1].combo;
+      const curr = recent20[i].combo;
+      if (!transMatrix[prev]) transMatrix[prev] = {};
+      transMatrix[prev][curr] = (transMatrix[prev][curr] || 0) + 1;
+    }
+
+    const transMatrix2 = {};
+    for (let i = 2; i < recent20.length; i++) {
+      const key = recent20[i-2].combo + '→' + recent20[i-1].combo;
+      const curr = recent20[i].combo;
+      if (!transMatrix2[key]) transMatrix2[key] = {};
+      transMatrix2[key][curr] = (transMatrix2[key][curr] || 0) + 1;
+    }
+
+    const gaps = {};
+    for (let n = 0; n <= 27; n++) {
+      let gap = 999;
+      for (let i = recent.length - 1; i >= 0; i--) {
+        if (recent[i].sum === n) { gap = recent.length - 1 - i; break; }
+      }
+      gaps[n] = gap;
+    }
+
+    const recentSums = recent.map(r => r.sum);
+    const recent5Sums = recentSums.slice(-5);
+    let wma5Num = 0, wma5Den = 0;
+    recent5Sums.forEach((s, i) => {
+      const w = Math.pow(decay, recent5Sums.length - 1 - i);
+      wma5Num += s * w; wma5Den += w;
+    });
+    const wma5 = wma5Den > 0 ? wma5Num / wma5Den : 13.5;
+
+    const deltas = [];
+    for (let i = 1; i < recentSums.length; i++) {
+      deltas.push(recentSums[i] - recentSums[i-1]);
+    }
+    const deltaRecent = deltas.slice(-3);
+    const deltaTrend = deltaRecent.length > 0
+      ? deltaRecent.reduce((a, b) => a + b, 0) / deltaRecent.length
+      : 0;
+
+    let stdDev = 5.0;
+    if (recentSums.length > 1) {
+      const meanSum = recentSums.reduce((a, b) => a + b, 0) / recentSums.length;
+      const variance = recentSums.reduce((a, s) => a + (s - meanSum) ** 2, 0) / recentSums.length;
+      stdDev = Math.sqrt(variance);
+    }
+
+    const comboProbs = this._estimateComboProbs(wCombo, transMatrix, transMatrix2, lastCombo, recent20);
+
+    return {
+      comboCount, wCombo, numberCount, wNumberCount,
+      bigRatio, oddRatio,
+      lastCombo, lastIsBig, lastIsOdd,
+      streak, bigStreak, oddStreak,
+      last5Size, last5Parity, last10Size, last10Parity,
+      altBig, altOdd, sumAvg30,
+      transMatrix, transMatrix2, gaps,
+      recent, recent20, recent30,
+      wma5, deltaTrend, stdDev, comboProbs, recentSums
+    };
+  },
+
+  _estimateComboProbs(wCombo, transMatrix, transMatrix2, lastCombo, recent20) {
+    const totalW = Object.values(wCombo).reduce((a, b) => a + b, 0);
+    const probs = {};
+    for (const c of ['大单', '大双', '小单', '小双']) {
+      probs[c] = totalW > 0 ? wCombo[c] / totalW : 0.25;
+    }
+    if (transMatrix[lastCombo]) {
+      const row = transMatrix[lastCombo];
+      const tTotal = Object.values(row).reduce((a, b) => a + b, 0);
+      if (tTotal > 0) {
+        for (const c of ['大单', '大双', '小单', '小双']) {
+          probs[c] = probs[c] * 0.5 + (row[c] || 0) / tTotal * 0.5;
+        }
+      }
+    }
+    if (recent20.length >= 2) {
+      const key = recent20[recent20.length - 2].combo + '→' + recent20[recent20.length - 1].combo;
+      if (transMatrix2[key]) {
+        const row = transMatrix2[key];
+        const tTotal = Object.values(row).reduce((a, b) => a + b, 0);
+        if (tTotal > 0) {
+          for (const c of ['大单', '大双', '小单', '小双']) {
+            probs[c] = probs[c] * 0.7 + (row[c] || 0) / tTotal * 0.3;
+          }
+        }
+      }
+    }
+    const total = Object.values(probs).reduce((a, b) => a + b, 0);
+    if (total > 0) {
+      for (const c in probs) probs[c] /= total;
+    }
+    return probs;
+  },
+
+  predictSize(t) {
+    const { bigRatio, bigStreak, lastIsBig, last5Size, last10Size,
+            transMatrix, transMatrix2, lastCombo, altBig, recent20,
+            deltaTrend } = t;
+    let scoreBig = 0;
+    if (bigStreak >= 6) scoreBig -= 3.0;
+    else if (bigStreak >= 5) scoreBig -= 2.0;
+    else if (bigStreak >= 4) scoreBig -= 1.2;
+    else if (bigStreak >= 3) scoreBig -= 0.5;
+    scoreBig += (bigRatio - 0.5) * 5;
+    const last5Big = last5Size.filter(s => s === '大').length;
+    scoreBig += (last5Big - 2.5) * 0.8;
+    const last10Big = last10Size.filter(s => s === '大').length;
+    scoreBig += (last10Big - 5) * 0.3;
+    if (transMatrix[lastCombo]) {
+      const row = transMatrix[lastCombo];
+      const total = Object.values(row).reduce((a,b) => a+b, 0);
+      if (total > 0) {
+        const bigNext = (row['大单'] || 0) + (row['大双'] || 0);
+        scoreBig += (bigNext / total - 0.5) * 2.5;
+      }
+    }
+    if (bigRatio > 0.65) scoreBig -= 0.8;
+    if (bigRatio < 0.35) scoreBig += 0.8;
+    if (altBig >= 7) {
+      scoreBig += lastIsBig ? -0.6 : 0.6;
+    }
+    if (recent20 && recent20.length >= 2) {
+      const key = recent20[recent20.length - 2].combo + '→' + recent20[recent20.length - 1].combo;
+      if (transMatrix2[key]) {
+        const row = transMatrix2[key];
+        const total = Object.values(row).reduce((a,b) => a+b, 0);
+        if (total > 0) {
+          const bigNext = (row['大单'] || 0) + (row['大双'] || 0);
+          scoreBig += (bigNext / total - 0.5) * 2.0;
+        }
+      }
+    }
+    if (Math.abs(deltaTrend) >= 3) {
+      scoreBig += deltaTrend > 0 ? 0.5 : -0.5;
+    }
+    return scoreBig > 0;
+  },
+
+  predictParity(t) {
+    const { oddRatio, oddStreak, lastIsOdd, last5Parity, last10Parity,
+            transMatrix, transMatrix2, lastCombo, altOdd, recent20,
+            deltaTrend } = t;
+    let scoreOdd = 0;
+    if (oddStreak >= 6) scoreOdd -= 3.0;
+    else if (oddStreak >= 5) scoreOdd -= 2.0;
+    else if (oddStreak >= 4) scoreOdd -= 1.2;
+    else if (oddStreak >= 3) scoreOdd -= 0.5;
+    scoreOdd += (oddRatio - 0.5) * 5;
+    const last5Odd = last5Parity.filter(s => s === '单').length;
+    scoreOdd += (last5Odd - 2.5) * 0.8;
+    const last10Odd = last10Parity.filter(s => s === '单').length;
+    scoreOdd += (last10Odd - 5) * 0.3;
+    if (transMatrix[lastCombo]) {
+      const row = transMatrix[lastCombo];
+      const total = Object.values(row).reduce((a,b) => a+b, 0);
+      if (total > 0) {
+        const oddNext = (row['大单'] || 0) + (row['小单'] || 0);
+        scoreOdd += (oddNext / total - 0.5) * 2.5;
+      }
+    }
+    if (oddRatio > 0.65) scoreOdd -= 0.8;
+    if (oddRatio < 0.35) scoreOdd += 0.8;
+    if (altOdd >= 7) {
+      scoreOdd += lastIsOdd ? -0.6 : 0.6;
+    }
+    if (recent20 && recent20.length >= 2) {
+      const key = recent20[recent20.length - 2].combo + '→' + recent20[recent20.length - 1].combo;
+      if (transMatrix2[key]) {
+        const row = transMatrix2[key];
+        const total = Object.values(row).reduce((a,b) => a+b, 0);
+        if (total > 0) {
+          const oddNext = (row['大单'] || 0) + (row['小单'] || 0);
+          scoreOdd += (oddNext / total - 0.5) * 2.0;
+        }
+      }
+    }
+    if (Math.abs(deltaTrend) >= 3) {
+      scoreOdd += deltaTrend % 2 !== 0 ? 0.3 : -0.2;
+    }
+    return scoreOdd > 0;
+  },
+
+  calcConfidence(t, predictBig, predictOdd) {
+    const { bigRatio, oddRatio, bigStreak, oddStreak, transMatrix, transMatrix2,
+            lastCombo, altBig, altOdd, recent20, stdDev } = t;
+    let conf = 50;
+    conf += Math.abs(bigRatio - 0.5) * 30;
+    conf += Math.abs(oddRatio - 0.5) * 30;
+    if (bigStreak >= 5) conf += 10;
+    else if (bigStreak >= 4) conf += 7;
+    if (oddStreak >= 5) conf += 10;
+    else if (oddStreak >= 4) conf += 7;
+    if (transMatrix[lastCombo]) {
+      const row = transMatrix[lastCombo];
+      const total = Object.values(row).reduce((a,b) => a+b, 0);
+      if (total >= 3) {
+        const maxVal = Math.max(...Object.values(row));
+        conf += (maxVal / total - 0.25) * 20;
+      }
+    }
+    if (altBig >= 8) conf += 5;
+    if (altOdd >= 8) conf += 5;
+    if (recent20 && recent20.length >= 2) {
+      const key = recent20[recent20.length - 2].combo + '→' + recent20[recent20.length - 1].combo;
+      if (transMatrix2[key]) {
+        const row = transMatrix2[key];
+        const total = Object.values(row).reduce((a,b) => a+b, 0);
+        if (total >= 2) {
+          const maxVal = Math.max(...Object.values(row));
+          conf += (maxVal / total - 0.25) * 15;
+        }
+      }
+    }
+    if (stdDev < 4) conf += 5;
+    else if (stdDev > 8) conf -= 3;
+    return Math.min(95, Math.max(15, Math.round(conf)));
+  },
+
+  predictSum(t) {
+    const signals = [];
+    signals.push({ v: t.wma5, w: 1.0 });
+    signals.push({ v: t.sumAvg30, w: 0.5 });
+    const lastSum = t.recentSums[t.recentSums.length - 1];
+    const deltaPred = Math.max(0, Math.min(27, lastSum + t.deltaTrend));
+    signals.push({ v: deltaPred, w: 0.4 });
+    const recent5 = [...t.recentSums.slice(-5)].sort((a, b) => a - b);
+    const median5 = recent5.length > 0 ? recent5[Math.floor(recent5.length / 2)] : 13.5;
+    signals.push({ v: median5, w: 0.6 });
+    if (t.wNumberCount && Object.keys(t.wNumberCount).length > 0) {
+      const topSum = parseInt(Object.entries(t.wNumberCount)
+        .sort((a, b) => b[1] - a[1])[0][0]);
+      signals.push({ v: topSum, w: 0.3 });
+    }
+    const totalW = signals.reduce((a, s) => a + s.w, 0);
+    return signals.reduce((a, s) => a + s.v * s.w, 0) / totalW;
+  },
+
+  calcComboConfidence(combo, t, isPrimary) {
+    let score = (t.comboProbs[combo] || 0.25);
+    if (isPrimary) score += 0.15;
+    if (t.transMatrix[t.lastCombo]) {
+      const row = t.transMatrix[t.lastCombo];
+      const total = Object.values(row).reduce((a, b) => a + b, 0);
+      if (total > 0) {
+        const tProb = (row[combo] || 0) / total;
+        score = score * 0.6 + tProb * 0.4;
+      }
+    }
+    return score;
+  },
+
+  // ===== 全局号码评分（优化权重） =====
+  pickNumbersGlobal(t, predictedSum) {
+    const comboProbs = t.comboProbs;
+    const maxProb = Math.max(...Array.from({length: 28}, (_, i) => this.probabilityWeight(i)));
+    const maxWFreq = t.wNumberCount && Object.keys(t.wNumberCount).length > 0
+      ? Math.max(...Object.values(t.wNumberCount)) : 1;
+    const recent5 = t.recentSums.slice(-5);
+    const recent3 = t.recentSums.slice(-3);
+
+    const scored = [];
+    for (let n = 0; n <= 27; n++) {
+      const combo = this.judgeCombo(n);
+      const wFreq = t.wNumberCount[n] || 0;
+      const freq = t.numberCount[n] || 0;
+      const probW = this.probabilityWeight(n);
+      const gap = t.gaps[n] !== undefined ? t.gaps[n] : 999;
+      const recentFreq = recent5.filter(s => s === n).length;
+
+      const probScore = probW / maxProb;
+      const freqScore = maxWFreq > 0 ? wFreq / maxWFreq : 0;
+      let gapScore;
+      if (gap === 0) gapScore = 0.3;
+      else if (gap <= 2) gapScore = 0.5;
+      else if (gap <= 5) gapScore = 0.8;
+      else if (gap <= 10) gapScore = 1.0;
+      else if (gap <= 15) gapScore = 0.7;
+      else gapScore = 0.4;
+
+      const distToPred = Math.abs(n - predictedSum);
+      const sigma = Math.max(t.stdDev, 3.0);
+      const predScore = Math.exp(-0.5 * (distToPred / sigma) ** 2);
+
+      let clusterScore = 0;
+      for (const rs of recent3) {
+        clusterScore += Math.max(0, 1.0 - Math.abs(n - rs) / 5) * 0.3;
+      }
+      clusterScore = Math.min(1.0, clusterScore);
+      const meanScore = Math.max(0, 1.0 - Math.abs(n - t.sumAvg30) / 10);
+      const coldScore = gap >= 10 ? 0.8 : (gap >= 6 ? 0.4 : 0);
+      const comboProb = comboProbs[combo] || 0.25;
+
+      // 遗漏补偿（missBonus）
+      const missBonus = gap >= 15 ? 0.5 : (gap >= 10 ? 0.3 : 0);
+
+      // 优化后的评分公式
+      const score = (probScore * 1.0 +          // 降低理论概率权重
+                     freqScore * 2.2 +          // 大幅提升近期频率权重
+                     gapScore * 0.5 +
+                     predScore * 1.5 +
+                     clusterScore * 0.6 +
+                     meanScore * 0.2 +          // 降低均值回归干扰
+                     coldScore * 0.3 +
+                     missBonus * 0.6) * (0.5 + comboProb * 0.9);
+
+      scored.push({ num: n, score });
+    }
+    scored.sort((a, b) => b.score - a.score);
+    return scored;
+  },
+
+  // ===== 杀码预测（同原版） =====
+  _comboBaseProbs: null,
+  getComboBaseProbs() {
+    if (this._comboBaseProbs) return this._comboBaseProbs;
+    const probs = { '大单': 0, '大双': 0, '小单': 0, '小双': 0 };
+    let total = 0;
+    for (let n = 0; n <= 27; n++) {
+      const w = this.probabilityWeight(n);
+      probs[this.judgeCombo(n)] += w;
+      total += w;
+    }
+    for (const c in probs) probs[c] /= total;
+    this._comboBaseProbs = probs;
+    return probs;
+  },
+
+  _transScore(combo, t) {
+    if (t.transMatrix[t.lastCombo]) {
+      const row = t.transMatrix[t.lastCombo];
+      const total = Object.values(row).reduce((a, b) => a + b, 0);
+      if (total > 0) return (row[combo] || 0) / total;
+    }
+    return 0.25;
+  },
+
+  predictKillCombo(t) {
+    const combos = ['大单', '大双', '小单', '小双'];
+    const baseProbs = this.getComboBaseProbs();
+    const killScores = {};
+    for (const combo of combos) {
+      let score = 0;
+      const baseProb = baseProbs[combo];
+      score += (0.25 - baseProb) * 4.0;
+      const recentCount = t.comboCount[combo] || 0;
+      const expectedCount = baseProb * (t.recent?.length || 15);
+      score += (recentCount - expectedCount) * 0.4;
+      score += (0.25 - this._transScore(combo, t)) * 2.0;
+      if (t.recent20 && t.recent20.length >= 2) {
+        const key = t.recent20[t.recent20.length - 2].combo + '→' + t.recent20[t.recent20.length - 1].combo;
+        if (t.transMatrix2[key]) {
+          const row = t.transMatrix2[key];
+          const tTotal = Object.values(row).reduce((a, b) => a + b, 0);
+          if (tTotal > 0) {
+            const transProb = (row[combo] || 0) / tTotal;
+            score += (0.25 - transProb) * 1.0;
+          }
+        }
+      }
+      const comboProb = t.comboProbs[combo] || 0.25;
+      score += (0.25 - comboProb) * 2.0;
+      if (combo === t.lastCombo && t.streak >= 3) {
+        score += t.streak * 0.3;
+      }
+      killScores[combo] = score;
+    }
+    return Object.entries(killScores).sort((a, b) => b[1] - a[1])[0][0];
+  },
+
+  // ===== 主预测函数（核心优化：动态特码数量） =====
+  predict(history) {
+    if (!history || history.length < 5) return { error: '数据不足' };
+
+    const t = this.analyzeTrend(history);
+
+    const killCombo = this.predictKillCombo(t);
+
+    const remaining = ['大单', '大双', '小单', '小双'].filter(c => c !== killCombo);
+    const baseProbs = this.getComboBaseProbs();
+    remaining.sort((a, b) => {
+      const scoreA = (t.comboProbs[a] || 0.25) * 0.4 + (baseProbs[a] || 0.25) * 0.3 + this._transScore(a, t) * 0.3;
+      const scoreB = (t.comboProbs[b] || 0.25) * 0.4 + (baseProbs[b] || 0.25) * 0.3 + this._transScore(b, t) * 0.3;
+      return scoreB - scoreA;
+    });
+
+    const combo1 = remaining[0];
+    const combo2 = remaining[1];
+
+    const confidence = this.calcConfidence(t,
+      combo1 === '大单' || combo1 === '大双',
+      combo1 === '大单' || combo1 === '小单'
+    );
+
+    const predictedSum = this.predictSum(t);
+
+    // 特码选取：根据置信度决定每组个数
+    const perGroup = confidence >= 70 ? 2 : 3;   // 高确信取2个，否则取3个
+
+    const scored = this.pickNumbersGlobal(t, predictedSum);
+
+    // 距离加权排序
+    const scoredWithDist = scored.map(s => ({
+      ...s,
+      distWeight: Math.max(0, 1 - Math.abs(s.num - predictedSum) / 8)
+    }));
+    scoredWithDist.sort((a, b) => (b.score * b.distWeight) - (a.score * a.distWeight));
+
+    const teFromCombo1 = [];
+    const teFromCombo2 = [];
+    for (const s of scoredWithDist) {
+      const combo = this.judgeCombo(s.num);
+      if (combo === combo1 && teFromCombo1.length < perGroup && !teFromCombo1.includes(s.num)) {
+        teFromCombo1.push(s.num);
+      }
+      if (combo === combo2 && teFromCombo2.length < perGroup && !teFromCombo2.includes(s.num)) {
+        teFromCombo2.push(s.num);
+      }
+      if (teFromCombo1.length >= perGroup && teFromCombo2.length >= perGroup) break;
+    }
+    const teNumbers = [...teFromCombo1, ...teFromCombo2].sort((a, b) => a - b);
+
+    const groupNumbers = [];
+    for (let n = 0; n <= 27; n++) {
+      const combo = this.judgeCombo(n);
+      if (combo === combo1 || combo === combo2) groupNumbers.push(n);
+    }
+
+    return {
+      killCombo,
+      combo1, combo2,
+      combos: combo1 + '+' + combo2,
+      teNumbers,
+      teNumbersStr: teNumbers.join('/'),
+      groupNumbers,
+      groupNumbersStr: groupNumbers.join('/'),
+      confidence,
+      predictedSum: Math.round(predictedSum * 10) / 10,
+      predSumRounded: Math.round(predictedSum),
+      trend: {
+        bigRatio: (t.bigRatio * 100).toFixed(0) + '%',
+        oddRatio: (t.oddRatio * 100).toFixed(0) + '%',
+        streak: t.streak, bigStreak: t.bigStreak, oddStreak: t.oddStreak,
+        lastCombo: t.lastCombo,
+        comboDistribution: { ...t.comboCount }
+      },
+      _trend: t
+    };
+  },
+
+  checkHit(pred, actual) {
+    const { combo1, combo2, killCombo, teNumbers } = pred;
+    const inGroup = actual.combo === combo1 || actual.combo === combo2;
+    const inTe = inGroup && teNumbers.includes(actual.sum);
+    const killCorrect = actual.combo !== killCombo;
+    return {
+      isHit: inGroup,
+      hitType: inTe ? '特' : (inGroup ? '组' : '未中'),
+      killCorrect,
+      actualSum: actual.sum,
+      actualCombo: actual.combo
+    };
+  },
+
+  backtest(history, testCount = 30) {
+    if (!history || history.length < testCount + 30) return { error: '数据不足' };
+    const results = [];
+    let tc = 0, hc = 0, ec = 0, gc = 0, mc = 0, kc = 0;
+    const si = history.length - testCount;
+
+    for (let i = si; i < history.length; i++) {
+      const td = history.slice(0, i);
+      const ac = history[i];
+      const p = this.predict(td);
+      if (p.error) continue;
+      const h = this.checkHit(p, ac);
+      results.push({
+        period: ac.period,
+        killCombo: p.killCombo,
+        predictedCombos: p.combos,
+        teNumbers: p.teNumbersStr,
+        actualSum: ac.sum,
+        actualCombo: ac.combo,
+        hitType: h.hitType,
+        isHit: h.isHit,
+        killCorrect: h.killCorrect
+      });
+      tc++;
+      if (h.isHit) hc++;
+      if (h.hitType === '特') ec++;
+      if (h.hitType === '组') gc++;
+      if (h.hitType === '未中') mc++;
+      if (h.killCorrect) kc++;
+    }
+
+    return {
+      totalCount: tc, hitCount: hc, exactCount: ec, groupCount: gc, missCount: mc, killCorrectCount: kc,
+      hitRate: tc > 0 ? (hc / tc * 100).toFixed(1) : 0,
+      exactRate: tc > 0 ? (ec / tc * 100).toFixed(1) : 0,
+      groupRate: tc > 0 ? (gc / tc * 100).toFixed(1) : 0,
+      killRate: tc > 0 ? (kc / tc * 100).toFixed(1) : 0,
+      results
+    };
+  }
+};
+
+// ============================================================
+// 应用主逻辑（数据获取同增强版，无改动）
+// ============================================================
+const CONFIG = {
+  API_BASE: 'https://pc28.help/api/kj.json?nbr=80',
+  PROXIES: [
+    (u) => u,
+    (u) => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
+    (u) => 'https://corsproxy.io/?url=' + encodeURIComponent(u),
+    (u) => 'https://proxy.cors.sh/' + u,
+    (u) => 'https://cors-anywhere.herokuapp.com/' + u,
+    (u) => 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(u),
+  ],
+  DRAW_INTERVAL: 210000,
+  AUTO_REFRESH: 10000,
+  FETCH_TIMEOUT: 6000,
+};
+
+const EMBEDDED_DATA = {"countdown":"00:00","data":[{"nbr":"3468379","date":"2026-08-12","time":"02:54:00","number":"4+1+2","num":"7","combination":"小单"},{"nbr":"3468378","date":"2026-08-12","time":"02:50:30","number":"5+1+1","num":"7","combination":"小单"},{"nbr":"3468377","date":"2026-08-12","time":"02:47:00","number":"3+4+5","num":"12","combination":"小双"},{"nbr":"3468376","date":"2026-08-12","time":"02:43:30","number":"7+6+9","num":"22","combination":"大双"},{"nbr":"3468375","date":"2026-08-12","time":"02:40:00","number":"9+1+9","num":"19","combination":"大单"},{"nbr":"3468374","date":"2026-08-12","time":"02:36:30","number":"4+2+1","num":"7","combination":"小单"},{"nbr":"3468373","date":"2026-08-12","time":"02:33:00","number":"4+6+0","num":"10","combination":"小双"},{"nbr":"3468372","date":"2026-08-12","time":"02:29:30","number":"7+0+5","num":"12","combination":"小双"},{"nbr":"3468371","date":"2026-08-12","time":"02:26:00","number":"5+2+4","num":"11","combination":"小单"},{"nbr":"3468370","date":"2026-08-12","time":"02:22:30","number":"7+1+6","num":"14","combination":"大双"},{"nbr":"3468369","date":"2026-08-12","time":"02:19:00","number":"3+4+2","num":"9","combination":"小单"},{"nbr":"3468368","date":"2026-08-12","time":"02:15:30","number":"8+8+0","num":"16","combination":"大双"},{"nbr":"3468367","date":"2026-08-12","time":"02:12:00","number":"3+3+3","num":"9","combination":"小单"},{"nbr":"3468366","date":"2026-08-12","time":"02:08:30","number":"3+9+9","num":"21","combination":"大单"},{"nbr":"3468365","date":"2026-08-12","time":"02:05:00","number":"5+9+3","num":"17","combination":"大单"},{"nbr":"3468364","date":"2026-08-12","time":"02:01:30","number":"2+3+6","num":"11","combination":"小单"},{"nbr":"3468363","date":"2026-08-12","time":"01:58:00","number":"3+8+5","num":"16","combination":"大双"},{"nbr":"3468362","date":"2026-08-12","time":"01:54:30","number":"5+1+6","num":"12","combination":"小双"},{"nbr":"3468361","date":"2026-08-12","time":"01:51:00","number":"6+6+5","num":"17","combination":"大单"},{"nbr":"3468360","date":"2026-08-12","time":"01:47:30","number":"3+5+2","num":"10","combination":"小双"},{"nbr":"3468359","date":"2026-08-12","time":"01:44:00","number":"8+4+9","num":"21","combination":"大单"},{"nbr":"3468358","date":"2026-08-12","time":"01:40:30","number":"8+7+3","num":"18","combination":"大双"},{"nbr":"3468357","date":"2026-08-12","time":"01:37:00","number":"3+1+1","num":"5","combination":"小单"},{"nbr":"3468356","date":"2026-08-12","time":"01:33:30","number":"1+7+3","num":"11","combination":"小单"},{"nbr":"3468355","date":"2026-08-12","time":"01:30:00","number":"7+3+4","num":"14","combination":"大双"},{"nbr":"3468354","date":"2026-08-12","time":"01:26:30","number":"6+1+5","num":"12","combination":"小双"},{"nbr":"3468353","date":"2026-08-12","time":"01:23:00","number":"2+1+8","num":"11","combination":"小单"},{"nbr":"3468352","date":"2026-08-12","time":"01:19:30","number":"0+1+4","num":"5","combination":"小单"},{"nbr":"3468351","date":"2026-08-12","time":"01:16:00","number":"0+1+4","num":"5","combination":"小单"},{"nbr":"3468350","date":"2026-08-12","time":"01:12:30","number":"3+4+9","num":"16","combination":"大双"},{"nbr":"3468349","date":"2026-08-12","time":"01:09:00","number":"8+3+6","num":"17","combination":"大单"},{"nbr":"3468348","date":"2026-08-12","time":"01:05:30","number":"3+7+4","num":"14","combination":"大双"},{"nbr":"3468347","date":"2026-08-12","time":"01:02:00","number":"5+4+1","num":"10","combination":"小双"},{"nbr":"3468346","date":"2026-08-12","time":"00:58:30","number":"7+6+6","num":"19","combination":"大单"},{"nbr":"3468345","date":"2026-08-12","time":"00:55:00","number":"8+1+0","num":"9","combination":"小单"},{"nbr":"3468344","date":"2026-08-12","time":"00:51:30","number":"4+6+8","num":"18","combination":"大双"},{"nbr":"3468343","date":"2026-08-12","time":"00:48:00","number":"2+2+4","num":"8","combination":"小双"},{"nbr":"3468342","date":"2026-08-12","time":"00:44:30","number":"6+2+1","num":"9","combination":"小单"},{"nbr":"3468341","date":"2026-08-12","time":"00:41:00","number":"0+1+7","num":"8","combination":"小双"},{"nbr":"3468340","date":"2026-08-12","time":"00:37:30","number":"7+3+0","num":"10","combination":"小双"},{"nbr":"3468339","date":"2026-08-12","time":"00:34:00","number":"7+2+5","num":"14","combination":"大双"},{"nbr":"3468338","date":"2026-08-12","time":"00:30:30","number":"4+4+6","num":"14","combination":"大双"},{"nbr":"3468337","date":"2026-08-12","time":"00:27:00","number":"2+1+0","num":"3","combination":"小单"},{"nbr":"3468336","date":"2026-08-12","time":"00:23:30","number":"4+3+9","num":"16","combination":"大双"},{"nbr":"3468335","date":"2026-08-12","time":"00:20:00","number":"3+6+1","num":"10","combination":"小双"},{"nbr":"3468334","date":"2026-08-12","time":"00:16:30","number":"5+5+5","num":"15","combination":"大单"},{"nbr":"3468333","date":"2026-08-12","time":"00:13:00","number":"9+3+5","num":"17","combination":"大单"},{"nbr":"3468332","date":"2026-08-12","time":"00:09:30","number":"3+8+0","num":"11","combination":"小单"},{"nbr":"3468331","date":"2026-08-12","time":"00:06:00","number":"2+8+1","num":"11","combination":"小单"},{"nbr":"3468330","date":"2026-08-12","time":"00:02:30","number":"4+7+5","num":"16","combination":"大双"},{"nbr":"3468329","date":"2026-08-11","time":"23:59:00","number":"3+7+1","num":"11","combination":"小单"},{"nbr":"3468328","date":"2026-08-11","time":"23:55:30","number":"5+3+1","num":"9","combination":"小单"},{"nbr":"3468327","date":"2026-08-11","time":"23:52:00","number":"4+9+8","num":"21","combination":"大单"},{"nbr":"3468326","date":"2026-08-11","time":"23:48:30","number":"4+8+1","num":"13","combination":"小单"},{"nbr":"3468325","date":"2026-08-11","time":"23:45:00","number":"9+6+1","num":"16","combination":"大双"},{"nbr":"3468324","date":"2026-08-11","time":"23:41:30","number":"4+1+6","num":"11","combination":"小单"},{"nbr":"3468323","date":"2026-08-11","time":"23:38:00","number":"4+7+6","num":"17","combination":"大单"},{"nbr":"3468322","date":"2026-08-11","time":"23:34:30","number":"4+5+1","num":"10","combination":"小双"},{"nbr":"3468321","date":"2026-08-11","time":"23:31:00","number":"7+5+1","num":"13","combination":"小单"},{"nbr":"3468320","date":"2026-08-11","time":"23:27:30","number":"8+8+7","num":"23","combination":"大单"},{"nbr":"3468319","date":"2026-08-11","time":"23:24:00","number":"8+3+7","num":"18","combination":"大双"},{"nbr":"3468318","date":"2026-08-11","time":"23:20:30","number":"1+4+1","num":"6","combination":"小双"},{"nbr":"3468317","date":"2026-08-11","time":"23:17:00","number":"1+8+1","num":"10","combination":"小双"},{"nbr":"3468316","date":"2026-08-11","time":"23:13:30","number":"1+2+4","num":"7","combination":"小单"},{"nbr":"3468315","date":"2026-08-11","time":"23:10:00","number":"3+8+3","num":"14","combination":"大双"},{"nbr":"3468314","date":"2026-08-11","time":"23:06:30","number":"7+3+3","num":"13","combination":"小单"},{"nbr":"3468313","date":"2026-08-11","time":"23:03:00","number":"3+1+1","num":"5","combination":"小单"},{"nbr":"3468312","date":"2026-08-11","time":"22:59:30","number":"5+5+9","num":"19","combination":"大单"},{"nbr":"3468311","date":"2026-08-11","time":"22:56:00","number":"9+6+0","num":"15","combination":"大单"},{"nbr":"3468310","date":"2026-08-11","time":"22:52:30","number":"5+4+7","num":"16","combination":"大双"},{"nbr":"3468309","date":"2026-08-11","time":"22:49:00","number":"3+0+0","num":"3","combination":"小单"},{"nbr":"3468308","date":"2026-08-11","time":"22:45:30","number":"6+1+5","num":"12","combination":"小双"},{"nbr":"3468307","date":"2026-08-11","time":"22:42:00","number":"5+9+6","num":"20","combination":"大双"},{"nbr":"3468306","date":"2026-08-11","time":"22:38:30","number":"1+2+5","num":"8","combination":"小双"},{"nbr":"3468305","date":"2026-08-11","time":"22:35:00","number":"3+8+0","num":"11","combination":"小单"},{"nbr":"3468304","date":"2026-08-11","time":"22:31:30","number":"3+3+3","num":"9","combination":"小单"},{"nbr":"3468303","date":"2026-08-11","time":"22:28:00","number":"9+6+7","num":"22","combination":"大双"},{"nbr":"3468302","date":"2026-08-11","time":"22:24:30","number":"2+3+9","num":"14","combination":"大双"},{"nbr":"3468301","date":"2026-08-11","time":"22:21:00","number":"1+6+0","num":"7","combination":"小单"},{"nbr":"3468300","date":"2026-08-11","time":"22:17:30","number":"0+8+3","num":"11","combination":"小单"}],"message":"success"};
+
+const app = {
+  history: [],
+  countdown: '',
+  countdownTarget: null,
+  countdownTimer: null,
+  isFetching: false,
+  lastPeriod: null,
+  fetchMode: '',
+  retryCount: 0,
+  lastFetchTime: null,
+  renderRAF: null,
+
+  async fetchViaFetch() {
+    const ts = Date.now();
+    const apiUrl = CONFIG.API_BASE + '&_t=' + ts;
+    for (let i = 0; i < CONFIG.PROXIES.length; i++) {
+      const url = CONFIG.PROXIES[i](apiUrl);
+      try {
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), CONFIG.FETCH_TIMEOUT);
+        const resp = await fetch(url, {
+          signal: ctrl.signal,
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        clearTimeout(tid);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const d = await resp.json();
+        if (!d || !Array.isArray(d.data) || d.data.length === 0) throw new Error('数据为空');
+        this.fetchMode = i === 0 ? '直连' : '代理';
+        return d;
+      } catch (e) { /* 尝试下一个 */ }
+    }
+    return null;
+  },
+
+  fetchViaXHR() {
+    return new Promise((resolve) => {
+      const ts = Date.now();
+      const apiUrl = CONFIG.API_BASE + '&_t=' + ts;
+      let tried = 0;
+      const total = CONFIG.PROXIES.length;
+      const tryNext = (idx) => {
+        if (idx >= total) { resolve(null); return; }
+        const url = CONFIG.PROXIES[idx](apiUrl);
+        const xhr = new XMLHttpRequest();
+        xhr.timeout = CONFIG.FETCH_TIMEOUT;
+        xhr.onreadystatechange = () => {
+          if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+              try {
+                const d = JSON.parse(xhr.responseText);
+                if (d && Array.isArray(d.data) && d.data.length > 0) {
+                  this.fetchMode = idx === 0 ? '直连' : '代理';
+                  resolve(d);
+                  return;
+                }
+              } catch(_) {}
+            }
+            tryNext(idx + 1);
+          }
+        };
+        xhr.ontimeout = () => tryNext(idx + 1);
+        xhr.onerror = () => tryNext(idx + 1);
+        try {
+          xhr.open('GET', url, true);
+          xhr.setRequestHeader('Cache-Control', 'no-cache');
+          xhr.send();
+        } catch(_) { tryNext(idx + 1); }
+      };
+      tryNext(0);
+    });
+  },
+
+  fetchViaJSONP() {
+    return new Promise((resolve) => {
+      const cbName = '__jsonp_cb_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+      const apiUrl = CONFIG.API_BASE + '&_t=' + Date.now();
+      const url = apiUrl + (apiUrl.includes('?') ? '&' : '?') + 'callback=' + cbName;
+      let done = false;
+      const cleanup = () => {
+        done = true;
+        delete window[cbName];
+        if (script && script.parentNode) script.parentNode.removeChild(script);
+      };
+      const script = document.createElement('script');
+      script.timeout = CONFIG.FETCH_TIMEOUT;
+      window[cbName] = (data) => {
+        if (done) return;
+        cleanup();
+        if (data && Array.isArray(data.data) && data.data.length > 0) {
+          this.fetchMode = 'JSONP';
+          resolve(data);
+        } else {
+          resolve(null);
+        }
+      };
+      script.onerror = () => {
+        if (done) return;
+        cleanup();
+        resolve(null);
+      };
+      setTimeout(() => {
+        if (done) return;
+        cleanup();
+        resolve(null);
+      }, CONFIG.FETCH_TIMEOUT);
+      try {
+        script.src = url;
+        document.head.appendChild(script);
+      } catch(_) {
+        cleanup();
+        resolve(null);
+      }
+    });
+  },
+
+  async refresh() {
+    if (this.isFetching) return;
+    this.isFetching = true;
+
+    const dot = document.getElementById('status-dot');
+    const stext = document.getElementById('status-text');
+    const btn = document.getElementById('refresh-btn');
+    dot.className = 'status-dot loading';
+    stext.textContent = '获取数据...';
+    btn.classList.add('spinning');
+
+    let data = null;
+
+    try { data = await this.fetchViaFetch(); } catch(_) {}
+    if (!data) {
+      try { data = await this.fetchViaXHR(); } catch(_) {}
+    }
+    if (!data) {
+      try { data = await this.fetchViaJSONP(); } catch(_) {}
+    }
+    if (!data && EMBEDDED_DATA && EMBEDDED_DATA.data) {
+      data = EMBEDDED_DATA;
+      this.fetchMode = '离线';
+      console.log('使用内嵌备用数据');
+    }
+
+    if (!data) {
+      this.retryCount++;
+      dot.className = 'status-dot error';
+      stext.textContent = '重试(' + this.retryCount + ')';
+      document.getElementById('pred-period').textContent =
+        '正在获取实时数据... 第' + this.retryCount + '次重试';
+      document.getElementById('data-info').textContent =
+        '连接失败，3秒后自动重试 (' + this.retryCount + ')';
+      btn.classList.remove('spinning');
+      this.isFetching = false;
+      setTimeout(() => { if (!this.isFetching) this.refresh(); }, 3000);
+      return;
+    }
+
+    this.retryCount = 0;
+    this.lastFetchTime = new Date();
+
+    if (data.countdown) this.countdown = data.countdown;
+    this.history = data.data.reverse().map(item => {
+      const nums = String(item.number).split('+').map(n => parseInt(n));
+      const sum = parseInt(item.num);
+      return { period: String(item.nbr), nums, sum, combo: item.combination };
+    });
+
+    dot.className = 'status-dot';
+    stext.textContent = '实时(' + this.fetchMode + ')';
+    this.lastPeriod = this.history[this.history.length - 1].period;
+    btn.classList.remove('spinning');
+    this.isFetching = false;
+
+    this.renderAll();
+    this.setupCountdown();
+    this.updateDataInfo();
+  },
+
+  renderAll() {
+    if (this.renderRAF) cancelAnimationFrame(this.renderRAF);
+    this.renderRAF = requestAnimationFrame(() => {
+      this.renderPrediction();
+      this.renderTrend();
+      this.renderRecent();
+      this.renderBacktest();
+      this.renderHistory();
+    });
+  },
+
+  renderPrediction() {
+    const pred = QianJinU.predict(this.history);
+    if (pred.error) {
+      document.getElementById('pred-line').textContent = '数据不足';
+      return;
+    }
+
+    const lineEl = document.getElementById('pred-line');
+    const teStr = pred.teNumbers.map(n => `<span class="te-num">${String(n).padStart(2,'0')}</span>`).join('<span class="te-sep">/</span>');
+    lineEl.innerHTML =
+      `<span class="kill-label">杀</span><span class="kill-combo">${pred.killCombo}</span>` +
+      `<span class="combo">${pred.combo1}</span>` +
+      `<span class="combo2">${pred.combo2}</span>` +
+      `<span class="te-label">特</span>` +
+      teStr;
+
+    const lastPeriod = this.history[this.history.length - 1].period;
+    const nextPeriodNum = parseInt(lastPeriod) + 1;
+    document.getElementById('pred-period').textContent =
+      '第 ' + nextPeriodNum + ' 期 · 预测和值' + pred.predictedSum + ' · 置信' + pred.confidence + '%';
+
+    const confWrap = document.getElementById('pred-conf-wrap');
+    confWrap.innerHTML = '';
+  },
+
+  renderTrend() {
+    const pred = QianJinU.predict(this.history);
+    if (pred.error) return;
+    const t = pred._trend;
+
+    const bigR = Math.round(t.bigRatio * 100);
+    document.getElementById('trend-big-ratio').textContent =
+      t.bigRatio >= 0.5 ? `大 ${bigR}%` : `小 ${100 - bigR}%`;
+    document.getElementById('bar-big').style.width = bigR + '%';
+
+    const oddR = Math.round(t.oddRatio * 100);
+    document.getElementById('trend-odd-ratio').textContent =
+      t.oddRatio >= 0.5 ? `单 ${oddR}%` : `双 ${100 - oddR}%`;
+    document.getElementById('bar-odd').style.width = oddR + '%';
+
+    document.getElementById('trend-streak').textContent = t.streak + '期 (' + t.lastCombo + ')';
+    document.getElementById('trend-big-odd-streak').textContent = `大${t.bigStreak} / 单${t.oddStreak}`;
+
+    const dist = t.comboCount;
+    const total = Object.values(dist).reduce((a, b) => a + b, 0) || 1;
+    const chips = document.getElementById('combo-dist').children;
+    const combos = ['大单', '大双', '小单', '小双'];
+    for (let i = 0; i < 4; i++) {
+      const c = combos[i];
+      const cnt = dist[c] || 0;
+      chips[i].querySelector('.count').textContent = cnt;
+      chips[i].querySelector('.pct').textContent = Math.round(cnt / total * 100) + '%';
+      chips[i].classList.toggle('active', c === pred.combo1 || c === pred.combo2);
+    }
+  },
+
+  renderRecent() {
+    const recent = this.history.slice(-10).reverse();
+    const html = recent.map(r => {
+      const comboClass = 'combo-' + r.combo;
+      return `<div class="recent-item">
+        <div class="period">${r.period.slice(-4)}</div>
+        <div class="nums">${r.nums.join('+')}</div>
+        <div class="sum">${r.sum}</div>
+        <div class="combo ${comboClass}">${r.combo}</div>
+      </div>`;
+    }).join('');
+    document.getElementById('recent-list').innerHTML = html;
+  },
+
+  renderBacktest() {
+    const bt = QianJinU.backtest(this.history, 30);
+    if (bt.error) return;
+    document.getElementById('bt-kill-rate').textContent = bt.killRate + '%';
+    document.getElementById('bt-exact-rate').textContent = bt.exactRate + '%';
+    document.getElementById('bt-group-rate').textContent = bt.groupRate + '%';
+    document.getElementById('bt-miss-count').textContent = bt.missCount;
+  },
+
+  renderHistory() {
+    const bt = QianJinU.backtest(this.history, 20);
+    if (bt.error) return;
+    const html = bt.results.reverse().map(r => {
+      const isTe = r.hitType === '特';
+      const isGroup = r.hitType === '组';
+      const isMiss = r.hitType === '未中';
+      const resultColor = isTe ? 'var(--success)' : (isGroup ? 'var(--warning)' : 'var(--text-dim)');
+      const resultBg = isTe ? 'rgba(34,197,94,0.1)' : (isGroup ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.03)');
+      const teDisplay = r.teNumbers.split('/').map(n => String(n).padStart(2,'0')).join('/');
+      const actualDisplay = String(r.actualSum).padStart(2,'0');
+      const killColor = r.killCorrect ? 'var(--text-dim)' : 'var(--danger, #ef4444)';
+      return `<div class="hist-row" style="
+        display:flex;align-items:center;gap:4px;padding:8px 10px;border-radius:8px;
+        background:${resultBg};border-left:3px solid ${resultColor};
+        font-size:13px;font-weight:700;
+      ">
+        <span style="color:var(--text-muted);min-width:32px">${r.period.slice(-4)}</span>
+        <span style="color:${killColor};font-size:11px;opacity:0.8">杀${r.killCombo}</span>
+        <span style="color:var(--accent)">${r.predictedCombos.replace('+','')}</span>
+        <span style="color:var(--text-muted);font-size:11px">特</span>
+        <span style="font-variant-numeric:tabular-nums;color:${isTe ? 'var(--success)' : 'var(--text)'}">${teDisplay}</span>
+        <span style="margin-left:auto;color:${resultColor}">${isTe ? '🀄️特' : (isGroup ? '🀄️组' : '🀄️未中')}${actualDisplay}</span>
+      </div>`;
+    }).join('');
+    document.getElementById('history-list').innerHTML = html;
+  },
+
+  setupCountdown() {
+    const latest = this.history[this.history.length - 1];
+    if (!latest) return;
+
+    let nextTime;
+    if (this.countdown) {
+      const parts = this.countdown.split(':').map(n => parseInt(n));
+      nextTime = Date.now() + (parts[0] * 60 + (parts[1] || 0)) * 1000;
+    } else {
+      nextTime = Date.now() + CONFIG.DRAW_INTERVAL;
+    }
+    this.countdownTarget = nextTime;
+
+    if (this.countdownTimer) clearInterval(this.countdownTimer);
+
+    const circ = 2 * Math.PI * 33;
+    document.getElementById('ring-fg').setAttribute('stroke-dasharray', circ.toFixed(2));
+
+    const update = () => {
+      const diff = this.countdownTarget - Date.now();
+      const ring = document.getElementById('ring-fg');
+      const cdText = document.getElementById('cd-text');
+      const ringText = document.getElementById('ring-text');
+
+      if (diff <= 0) {
+        cdText.textContent = '开奖中...';
+        cdText.className = 'countdown-text urgent';
+        ringText.textContent = '--:--';
+        ringText.style.color = 'var(--danger)';
+        ring.style.strokeDashoffset = circ.toFixed(2);
+        if (diff <= -1000 && !this.isFetching) this.refresh();
+        return;
+      }
+
+      const total = CONFIG.DRAW_INTERVAL;
+      const m = String(Math.floor(diff / 60000)).padStart(2, '0');
+      const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+      const progress = Math.min(1, diff / total);
+      const offset = circ * (1 - progress);
+
+      cdText.textContent = `${m}分${s}秒`;
+      cdText.className = parseInt(m) < 1 ? 'countdown-text urgent' :
+                         parseInt(m) <= 2 ? 'countdown-text imminent' : 'countdown-text';
+      ringText.textContent = `${m}:${s}`;
+      ringText.style.color = parseInt(m) < 1 ? 'var(--danger)' :
+                             parseInt(m) <= 2 ? 'var(--warning)' : 'var(--text)';
+      ring.style.strokeDashoffset = offset.toFixed(2);
+    };
+
+    update();
+    this.countdownTimer = setInterval(update, 1000);
+  },
+
+  updateDataInfo() {
+    const time = this.lastFetchTime;
+    const timeStr = time ? String(time.getHours()).padStart(2,'0') + ':' +
+                    String(time.getMinutes()).padStart(2,'0') + ':' +
+                    String(time.getSeconds()).padStart(2,'0') : '--';
+    const period = this.lastPeriod ? '期' + this.lastPeriod.slice(-6) : '';
+    document.getElementById('data-info').textContent =
+      `实时数据 · ${this.fetchMode} · ${timeStr} · ${period}`;
+  },
+
+  showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+  },
+
+  init() {
+    this.refresh();
+    setInterval(() => {
+      if (!this.isFetching) this.refresh();
+    }, CONFIG.AUTO_REFRESH);
+    setInterval(() => {
+      if (this.lastFetchTime && !this.isFetching) this.updateDataInfo();
+    }, 1000);
+  }
+};
+
+app.init();
+</script>
+</body>
+</html>
