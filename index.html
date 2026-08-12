@@ -3,158 +3,85 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>千金U · 交叉验证精准版</title>
+<title>千金U · 双组特码最终版</title>
 <style>
+/* ========== 完整样式 ========== */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-
 :root{
-  --bg:#060810;
-  --bg-2:#0a0e1a;
-  --card:rgba(255,255,255,0.05);
-  --card-border:rgba(255,255,255,0.08);
-  --text:#f0f2f8;
-  --text-muted:#7a8499;
-  --text-dim:#525a6e;
-  --accent:#6366f1;
-  --accent2:#8b5cf6;
-  --accent3:#3b82f6;
-  --success:#22c55e;
-  --warning:#f59e0b;
-  --danger:#ef4444;
-  --radius:20px;
-  --radius-sm:14px;
-  --shadow-card:0 2px 24px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.03) inset;
-  --ease-bounce:cubic-bezier(0.34,1.56,0.64,1);
-  --ease-smooth:cubic-bezier(0.4,0,0.2,1);
+  --bg:#060810; --bg-2:#0a0e1a; --card:rgba(255,255,255,0.05);
+  --card-border:rgba(255,255,255,0.08); --text:#f0f2f8; --text-muted:#7a8499;
+  --accent:#6366f1; --accent2:#8b5cf6; --success:#22c55e; --warning:#f59e0b; --danger:#ef4444;
+  --radius:20px; --radius-sm:14px; --shadow-card:0 2px 24px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.03) inset;
 }
-body{
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif;
-  background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;
-  padding:14px 16px 90px;
-}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);padding:14px 16px 90px;overflow-x:hidden}
 .container{max-width:480px;margin:0 auto}
-
-/* 导航栏 */
 .navbar{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:16px 18px;border-radius:var(--radius);margin-bottom:14px;
-  background:var(--card);backdrop-filter:blur(24px);
-  border:1px solid var(--card-border);box-shadow:var(--shadow-card);
-  position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:space-between;padding:16px 18px;
+  border-radius:var(--radius);margin-bottom:14px;background:var(--card);
+  backdrop-filter:blur(24px);border:1px solid var(--card-border);box-shadow:var(--shadow-card);
 }
-.navbar::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
-}
-.nav-title{font-size:18px;font-weight:800;display:flex;align-items:center;gap:10px;letter-spacing:-0.3px}
-.nav-logo{
-  width:36px;height:36px;border-radius:12px;
-  background:linear-gradient(135deg,#6366f1,#8b5cf6);
-  display:flex;align-items:center;justify-content:center;
-  font-size:20px;flex-shrink:0;
-  box-shadow:0 4px 16px rgba(99,102,241,0.4);
-}
-.nav-sub{font-size:10px;color:var(--text-muted);margin-top:3px;font-weight:500;letter-spacing:0.3px}
-.status-badge{
-  display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:999px;
-  background:rgba(255,255,255,0.04);font-size:11px;cursor:pointer;
-  border:1px solid var(--card-border);transition:all 0.25s;
-}
-.status-badge:active{transform:scale(0.94)}
-.status-dot{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 8px rgba(34,197,94,0.5);flex-shrink:0}
+.nav-title{font-size:18px;font-weight:800;display:flex;align-items:center;gap:10px}
+.nav-logo{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 16px rgba(99,102,241,0.4)}
+.nav-sub{font-size:10px;color:var(--text-muted);margin-top:3px}
+.status-badge{display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:999px;background:rgba(255,255,255,0.04);font-size:11px;cursor:pointer;border:1px solid var(--card-border)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 8px rgba(34,197,94,0.5)}
 .status-dot.loading{background:var(--warning);animation:pulse 1s infinite}
 .status-dot.error{background:var(--danger)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
-
-/* 卡片 */
 .card{
-  background:var(--card);backdrop-filter:blur(24px);
-  border:1px solid var(--card-border);border-radius:var(--radius);padding:18px;margin-bottom:14px;
-  box-shadow:var(--shadow-card);position:relative;overflow:hidden;
-  animation:cardIn 0.5s var(--ease-bounce) backwards;
+  background:var(--card);backdrop-filter:blur(24px);border:1px solid var(--card-border);
+  border-radius:var(--radius);padding:18px;margin-bottom:14px;box-shadow:var(--shadow-card);
 }
-.card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent 20%,rgba(255,255,255,0.1) 50%,transparent 80%);
-}
-@keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 .card-title{font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:7px;text-transform:uppercase;letter-spacing:0.8px}
-
-/* 倒计时 */
 .countdown-wrap{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.countdown-info{flex:1}
-.countdown-label{font-size:11px;color:var(--text-muted);margin-bottom:6px;font-weight:600}
-.countdown-text{font-size:30px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:1px;line-height:1}
+.countdown-text{font-size:30px;font-weight:900;font-variant-numeric:tabular-nums}
 .countdown-text.urgent{color:var(--danger);animation:pulse 1s infinite}
 .countdown-text.imminent{color:var(--warning)}
-.countdown-ring{width:76px;height:76px;position:relative;flex-shrink:0}
-.countdown-ring svg{width:100%;height:100%;transform:rotate(-90deg);filter:drop-shadow(0 0 6px rgba(99,102,241,0.4))}
+.countdown-ring{width:76px;height:76px;position:relative}
+.countdown-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
 .countdown-ring .ring-bg{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:5}
-.countdown-ring .ring-fg{fill:none;stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset 0.5s}
-.ring-grad-1{stop-color:#6366f1}
-.ring-grad-2{stop-color:#8b5cf6}
-.countdown-ring .ring-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;font-variant-numeric:tabular-nums}
-
-/* 预测主区域 */
+.countdown-ring .ring-fg{fill:none;stroke-width:5;stroke-linecap:round}
+.countdown-ring .ring-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800}
 .pred-main{
-  text-align:center;padding:24px 18px;border-radius:var(--radius-sm);
+  text-align:center;padding:20px 16px;border-radius:var(--radius-sm);
   background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.06));
-  border:1px solid rgba(99,102,241,0.18);margin-bottom:14px;position:relative;overflow:hidden;
+  border:1px solid rgba(99,102,241,0.18);position:relative;overflow:hidden;
 }
-.pred-main::before{
-  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
-  background:conic-gradient(from 0deg,transparent 0%,rgba(99,102,241,0.06) 25%,transparent 50%,rgba(139,92,246,0.06) 75%,transparent 100%);
-  animation:predGlow 8s linear infinite;
-}
+.pred-main::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:conic-gradient(from 0deg,transparent 0%,rgba(99,102,241,0.06) 25%,transparent 50%,rgba(139,92,246,0.06) 75%,transparent 100%);animation:predGlow 8s linear infinite}
 @keyframes predGlow{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 .pred-main>*{position:relative;z-index:1}
-.pred-line{font-size:22px;font-weight:900;letter-spacing:1px;line-height:1.6;padding:8px 0 12px}
+.pred-line{font-size:20px;font-weight:900;letter-spacing:0.5px;line-height:1.8}
 .pred-line .combo{color:var(--accent);text-shadow:0 0 12px rgba(99,102,241,0.4)}
 .pred-line .combo2{color:var(--accent2);text-shadow:0 0 12px rgba(139,92,246,0.4)}
-.pred-line .combo3{color:var(--accent3);text-shadow:0 0 12px rgba(59,130,246,0.4)}
-.pred-line .kill-label{color:#ef4444;font-size:16px;font-weight:700}
-.pred-line .kill-combo{color:#f87171;font-size:18px;padding:1px 6px;border-radius:6px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.15)}
-.pred-line .te-label{color:var(--text-muted);font-size:16px;margin:0 2px}
-.pred-line .te-num{
-  display:inline-block;padding:1px 8px;margin:0 1px;border-radius:6px;
-  background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.2);
-  font-size:20px;font-variant-numeric:tabular-nums;
-  position:relative;
-}
-.pred-line .te-num .star{position:absolute;top:-6px;right:-6px;font-size:8px;color:var(--warning)}
-.pred-line .te-sep{color:var(--text-dim);font-size:16px}
-.pred-period{font-size:12px;color:var(--text-muted);font-weight:500;margin-top:6px}
-.pred-weight-info{font-size:10px;color:var(--accent2);margin-top:4px;opacity:0.8;letter-spacing:0.5px}
-
-/* 趋势 */
+.pred-line .combo3{color:#3b82f6;text-shadow:0 0 12px rgba(59,130,246,0.4)}
+.pred-line .kill{color:#f87171;font-size:16px;padding:1px 6px;border-radius:6px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.15)}
+.pred-line .te-num{display:inline-block;padding:1px 8px;margin:0 2px;border-radius:6px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.2);font-size:18px;font-variant-numeric:tabular-nums}
+.pred-line .te-sep{color:var(--text-dim);font-size:14px}
+.pred-period{font-size:12px;color:var(--text-muted);margin-top:6px}
+.pred-weight{font-size:10px;color:var(--accent2);margin-top:4px;opacity:0.8}
 .trend-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.trend-item{padding:12px 14px;border-radius:var(--radius-xs);background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:3px}
+.trend-item{padding:12px 14px;border-radius:var(--radius-sm);background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03)}
 .trend-label{font-size:10px;color:var(--text-muted);font-weight:600}
 .trend-value{font-size:17px;font-weight:800}
 .trend-bar{height:5px;border-radius:3px;background:rgba(255,255,255,0.06);margin-top:5px;overflow:hidden}
 .trend-bar-fill{height:100%;border-radius:3px;transition:width 0.6s}
-
 .combo-dist{display:flex;gap:8px;margin-top:4px}
-.combo-chip{flex:1;text-align:center;padding:10px 4px;border-radius:var(--radius-xs);background:rgba(255,255,255,0.02);border:1px solid transparent;transition:all 0.25s}
-.combo-chip.active{border-color:rgba(99,102,241,0.35);background:rgba(99,102,241,0.08);transform:scale(1.06)}
+.combo-chip{flex:1;text-align:center;padding:10px 4px;border-radius:var(--radius-sm);background:rgba(255,255,255,0.02);border:1px solid transparent;transition:all 0.25s}
+.combo-chip.active{border-color:rgba(99,102,241,0.35);background:rgba(99,102,241,0.08);transform:scale(1.05)}
 .combo-chip .name{font-size:11px;font-weight:700}
 .combo-chip .count{font-size:20px;font-weight:900}
 .combo-chip .pct{font-size:9px;color:var(--text-muted)}
-
-/* 最近开奖 */
 .recent-list{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
 .recent-list::-webkit-scrollbar{display:none}
-.recent-item{flex-shrink:0;width:66px;padding:10px 4px;border-radius:var(--radius-xs);text-align:center;background:rgba(255,255,255,0.02);border:1px solid transparent}
-.recent-item .period{font-size:9px;color:var(--text-muted);margin-bottom:5px}
-.recent-item .nums{font-size:11px;font-weight:600;margin-bottom:3px;color:var(--text-muted)}
+.recent-item{flex-shrink:0;width:66px;padding:10px 4px;border-radius:var(--radius-sm);text-align:center;background:rgba(255,255,255,0.02);border:1px solid transparent}
+.recent-item .period{font-size:9px;color:var(--text-muted)}
+.recent-item .nums{font-size:11px;font-weight:600;color:var(--text-muted)}
 .recent-item .sum{font-size:18px;font-weight:900}
-.recent-item .combo{font-size:9px;margin-top:4px;padding:2px 7px;border-radius:5px;display:inline-block;font-weight:700}
+.recent-item .combo{font-size:9px;padding:2px 7px;border-radius:5px;display:inline-block;font-weight:700}
 .combo-大单{background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.15)}
 .combo-大双{background:rgba(59,130,246,0.12);color:#60a5fa;border:1px solid rgba(59,130,246,0.15)}
 .combo-小单{background:rgba(245,158,11,0.12);color:#fbbf24;border:1px solid rgba(245,158,11,0.15)}
 .combo-小双{background:rgba(34,197,94,0.12);color:#4ade80;border:1px solid rgba(34,197,94,0.15)}
-
-/* 回测统计 */
 .bt-stats{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px}
 .bt-stat{text-align:center;padding:12px 4px;border-radius:var(--radius-sm);background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);position:relative}
 .bt-stat .val{font-size:22px;font-weight:900}
@@ -164,49 +91,34 @@ body{
 .bt-stat:nth-child(2)::before{background:var(--warning)}
 .bt-stat:nth-child(3)::before{background:var(--accent)}
 .bt-stat:nth-child(4)::before{background:var(--danger)}
-
-/* 历史记录 */
-.hist-row{display:flex;align-items:center;gap:4px;padding:8px 10px;border-radius:8px;font-size:13px;font-weight:700;border-left:3px solid var(--text-dim)}
+.hist-row{display:flex;align-items:center;gap:4px;padding:8px 10px;border-radius:8px;font-size:13px;font-weight:700;border-left:3px solid var(--text-dim);margin-bottom:4px}
 .hist-row .period{color:var(--text-muted);min-width:32px}
 .hist-row .kill{font-size:11px;opacity:0.8}
 .hist-row .combos{color:var(--accent)}
 .hist-row .te{color:var(--text-muted);font-size:11px}
 .hist-row .nums{font-variant-numeric:tabular-nums}
 .hist-row .result{margin-left:auto}
-
-/* 刷新按钮 */
 .refresh-btn{
   position:fixed;bottom:24px;left:50%;transform:translateX(216px);
   width:50px;height:50px;border-radius:50%;border:none;cursor:pointer;
   background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:20px;z-index:100;
-  box-shadow:0 4px 24px rgba(99,102,241,0.45);transition:all 0.25s var(--ease-bounce);
+  box-shadow:0 4px 24px rgba(99,102,241,0.45);transition:all 0.25s ease;
   display:flex;align-items:center;justify-content:center;
 }
 .refresh-btn:active{transform:translateX(216px) scale(0.85)}
 .refresh-btn.spinning svg{animation:spin 0.8s linear infinite}
 @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-
-.toast{
-  position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-24px);
-  padding:12px 24px;border-radius:14px;font-size:13px;z-index:999;font-weight:600;
-  background:rgba(20,24,38,0.9);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.14);
-  box-shadow:0 8px 32px rgba(0,0,0,0.4);opacity:0;transition:all 0.3s var(--ease-bounce);pointer-events:none;max-width:90%;text-align:center;
-}
+.toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-24px);padding:12px 24px;border-radius:14px;font-size:13px;z-index:999;font-weight:600;background:rgba(20,24,38,0.9);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.14);box-shadow:0 8px 32px rgba(0,0,0,0.4);opacity:0;transition:all 0.3s ease;pointer-events:none;max-width:90%;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .data-info{font-size:10px;color:var(--text-muted);text-align:center;padding:10px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
 </style>
 </head>
 <body>
 <div class="container">
-
-  <!-- 导航栏 -->
   <div class="navbar">
     <div style="display:flex;align-items:center;gap:10px">
       <div class="nav-logo">💰</div>
-      <div>
-        <div class="nav-title">千金U · 引擎</div>
-        <div class="nav-sub">v12.0 交叉验证</div>
-      </div>
+      <div><div class="nav-title">千金U · 双组特码</div><div class="nav-sub">v13.0 最终版</div></div>
     </div>
     <div class="status-badge" id="status-badge" onclick="app.refresh()">
       <span class="status-dot loading" id="status-dot"></span>
@@ -214,41 +126,31 @@ body{
     </div>
   </div>
 
-  <!-- 倒计时 -->
   <div class="card">
     <div class="countdown-wrap">
-      <div class="countdown-info">
-        <div class="countdown-label">距下期开奖</div>
-        <div class="countdown-text" id="cd-text">--分--秒</div>
-      </div>
+      <div><div class="card-title" style="margin-bottom:0">距下期开奖</div><div class="countdown-text" id="cd-text">--分--秒</div></div>
       <div class="countdown-ring">
         <svg viewBox="0 0 76 76">
-          <defs><linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" class="ring-grad-1"/><stop offset="100%" class="ring-grad-2"/>
-          </linearGradient></defs>
+          <defs><linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
           <circle class="ring-bg" cx="38" cy="38" r="33"/>
-          <circle class="ring-fg" id="ring-fg" cx="38" cy="38" r="33"
-            stroke="url(#ringGrad)" stroke-dasharray="207.35" stroke-dashoffset="207.35"/>
+          <circle class="ring-fg" id="ring-fg" cx="38" cy="38" r="33" stroke="url(#ringGrad)" stroke-dasharray="207.35" stroke-dashoffset="207.35"/>
         </svg>
         <div class="ring-text" id="ring-text">--:--</div>
       </div>
     </div>
   </div>
 
-  <!-- 预测 -->
   <div class="card">
-    <div class="card-title"><span>🎯</span> 下期预测</div>
+    <div class="card-title">🎯 下期预测</div>
     <div class="pred-main" id="pred-main">
       <div class="pred-line" id="pred-line"><span style="display:inline-block;width:200px;height:28px;background:rgba(255,255,255,0.06);border-radius:8px;animation:shimmer 1.8s infinite"></span></div>
       <div class="pred-period" id="pred-period">正在获取实时数据...</div>
-      <div class="pred-weight-info" id="pred-weight-info">权重方案：--</div>
-      <div id="pred-conf-wrap"></div>
+      <div class="pred-weight" id="pred-weight">权重方案：--</div>
     </div>
   </div>
 
-  <!-- 趋势 -->
   <div class="card">
-    <div class="card-title"><span>📊</span> 趋势分析（近15期）</div>
+    <div class="card-title">📊 趋势分析（近15期）</div>
     <div class="trend-grid">
       <div class="trend-item"><div class="trend-label">大小比例</div><div class="trend-value" id="trend-big-ratio">--</div><div class="trend-bar"><div class="trend-bar-fill" id="bar-big" style="width:50%;background:linear-gradient(90deg,#3b82f6,#60a5fa)"></div></div></div>
       <div class="trend-item"><div class="trend-label">单双比例</div><div class="trend-value" id="trend-odd-ratio">--</div><div class="trend-bar"><div class="trend-bar-fill" id="bar-odd" style="width:50%;background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div></div></div>
@@ -256,7 +158,7 @@ body{
       <div class="trend-item"><div class="trend-label">大小/单双连龙</div><div class="trend-value" id="trend-big-odd-streak">--</div></div>
     </div>
     <div style="margin-top:14px">
-      <div class="trend-label" style="margin-bottom:8px;font-size:10px;font-weight:600;color:var(--text-muted)">形态分布</div>
+      <div class="trend-label" style="margin-bottom:8px;font-size:10px;color:var(--text-muted)">形态分布</div>
       <div class="combo-dist" id="combo-dist">
         <div class="combo-chip"><div class="name">大单</div><div class="count">0</div><div class="pct">0%</div></div>
         <div class="combo-chip"><div class="name">大双</div><div class="count">0</div><div class="pct">0%</div></div>
@@ -266,48 +168,38 @@ body{
     </div>
   </div>
 
-  <!-- 最近开奖 -->
   <div class="card">
-    <div class="card-title"><span>🕐</span> 最近开奖</div>
-    <div class="recent-list" id="recent-list">
-      <div class="recent-item"><div style="height:44px;background:rgba(255,255,255,0.06);border-radius:8px;animation:shimmer 1.8s infinite"></div></div>
-    </div>
+    <div class="card-title">🕐 最近开奖</div>
+    <div class="recent-list" id="recent-list"><div class="recent-item"><div style="height:44px;background:rgba(255,255,255,0.06);border-radius:8px"></div></div></div>
   </div>
 
-  <!-- 回测统计 -->
   <div class="card">
-    <div class="card-title"><span>📈</span> 回测统计（近30期）</div>
+    <div class="card-title">📈 回测统计（近30期）</div>
     <div class="bt-stats">
-      <div class="bt-stat"><div class="val" id="bt-kill-rate" style="color:#a78bfa">--</div><div class="lbl">杀码准确率</div></div>
-      <div class="bt-stat"><div class="val" id="bt-exact-rate" style="color:var(--success)">--</div><div class="lbl">特命中率</div></div>
-      <div class="bt-stat"><div class="val" id="bt-group-rate" style="color:var(--warning)">--</div><div class="lbl">组命中率</div></div>
+      <div class="bt-stat"><div class="val" id="bt-hit-rate" style="color:var(--success)">--</div><div class="lbl">整体命中率</div></div>
+      <div class="bt-stat"><div class="val" id="bt-exact-rate" style="color:var(--warning)">--</div><div class="lbl">特命中率</div></div>
+      <div class="bt-stat"><div class="val" id="bt-group-rate" style="color:var(--accent)">--</div><div class="lbl">组命中率</div></div>
       <div class="bt-stat"><div class="val" id="bt-miss-count" style="color:var(--danger)">--</div><div class="lbl">未中数</div></div>
     </div>
-    <div style="text-align:center;font-size:10px;color:var(--text-muted);margin-top:4px" id="cv-info">交叉验证准确率：--</div>
+    <div style="text-align:center;font-size:10px;color:var(--text-muted)" id="cv-info">交叉验证准确率：--</div>
   </div>
 
-  <!-- 历史记录 -->
   <div class="card">
-    <div class="card-title"><span>📋</span> 预测记录（最近20期）</div>
-    <div style="max-height:400px;overflow-y:auto;border-radius:8px" id="history-list">
-      <div style="color:var(--text-muted);padding:24px;text-align:center">加载中...</div>
-    </div>
+    <div class="card-title">📋 预测记录（最近20期）</div>
+    <div style="max-height:400px;overflow-y:auto;border-radius:8px" id="history-list"><div style="color:var(--text-muted);padding:24px;text-align:center">加载中...</div></div>
   </div>
 
   <div class="data-info" id="data-info">等待连接...</div>
 </div>
 
 <button class="refresh-btn" id="refresh-btn" onclick="app.refresh()" title="刷新">
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-    <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
-    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-  </svg>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
 </button>
 <div class="toast" id="toast"></div>
 
 <script>
 // ============================================================
-// 千金U 算法核心 v12.0 — 交叉验证模型选择 + 固定4特码
+// 算法核心 — 双组特码 v13.0（最终版）
 // ============================================================
 const QianJinU = {
 
@@ -329,7 +221,7 @@ const QianJinU = {
     return n;
   },
 
-  // ----- 趋势分析（同前） -----
+  // ----- 趋势分析 -----
   analyzeTrend(history) {
     const recent = history.slice(-15);
     const recent20 = history.slice(-20);
@@ -488,7 +380,7 @@ const QianJinU = {
     return signals.reduce((a,s)=>a+s.v*s.w,0)/totalW;
   },
 
-  // ----- 特征计算 -----
+  // ----- 特征计算（含重号） -----
   computeFeatures(n, t, predictedSum) {
     const combo = this.judgeCombo(n);
     const wFreq = t.wNumberCount[n] || 0;
@@ -521,17 +413,28 @@ const QianJinU = {
       }
     }
     const transScore = transProb;
-    return { probScore, freqScore, gapScore, predScore, clusterScore, comboProb, coldScore, trendScore, transScore };
+    // 重号因子
+    let repeatScore = 0;
+    if (t.recentSums && t.recentSums.length >= 3) {
+      const last3 = t.recentSums.slice(-3);
+      if (last3.includes(n)) repeatScore = 1.0;
+      else {
+        for (const r of last3) {
+          if (Math.abs(n - r) <= 2) { repeatScore = 0.6; break; }
+        }
+      }
+    }
+    return { probScore, freqScore, gapScore, predScore, clusterScore, comboProb, coldScore, trendScore, transScore, repeatScore };
   },
 
-  // ----- 全局评分（使用给定权重） -----
   pickNumbersGlobal(t, predictedSum, weights) {
     const scored = [];
-    for(let n=0;n<=27;n++){
+    for(let n=0; n<=27; n++){
       const feat = this.computeFeatures(n, t, predictedSum);
       const score = weights.prob*feat.probScore + weights.freq*feat.freqScore + weights.gap*feat.gapScore +
                     weights.pred*feat.predScore + weights.cluster*feat.clusterScore + weights.combo*feat.comboProb +
-                    weights.cold*feat.coldScore + weights.trend*feat.trendScore + weights.trans*feat.transScore;
+                    weights.cold*feat.coldScore + weights.trend*feat.trendScore + weights.trans*feat.transScore +
+                    weights.repeat*feat.repeatScore;
       scored.push({num:n, score});
     }
     scored.sort((a,b)=>b.score-a.score);
@@ -580,20 +483,18 @@ const QianJinU = {
     return Object.entries(killScores).sort((a,b)=>b[1]-a[1])[0][0];
   },
 
-  // ================== 交叉验证 ==================
+  // ========== 交叉验证权重池 ==========
   _weightPool: [
-    { name:'均衡型', prob:0.5, freq:2.0, gap:0.6, pred:1.8, cluster:0.4, combo:1.0, cold:0.5, trend:0.3, trans:0.7 },
-    { name:'追热型', prob:0.3, freq:3.5, gap:0.4, pred:1.5, cluster:0.3, combo:0.8, cold:0.2, trend:0.2, trans:0.5 },
-    { name:'追冷型', prob:0.4, freq:1.2, gap:1.0, pred:1.2, cluster:0.5, combo:0.8, cold:1.2, trend:0.3, trans:0.6 },
-    { name:'侧重和值', prob:0.4, freq:1.8, gap:0.5, pred:3.0, cluster:0.6, combo:0.8, cold:0.4, trend:0.4, trans:0.6 },
-    { name:'侧重形态', prob:0.6, freq:1.8, gap:0.5, pred:1.5, cluster:0.4, combo:2.0, cold:0.5, trend:0.3, trans:0.8 },
-    { name:'高频+形态', prob:0.4, freq:2.8, gap:0.4, pred:1.5, cluster:0.3, combo:1.5, cold:0.3, trend:0.2, trans:0.6 },
-    { name:'冷热平衡', prob:0.5, freq:2.2, gap:0.7, pred:1.6, cluster:0.4, combo:1.0, cold:0.8, trend:0.3, trans:0.7 },
-    { name:'马尔可夫加强', prob:0.4, freq:1.8, gap:0.5, pred:1.5, cluster:0.4, combo:1.0, cold:0.4, trend:0.3, trans:1.5 }
+    { name:'均衡型', prob:0.5, freq:2.0, gap:0.6, pred:1.8, cluster:0.4, combo:1.0, cold:0.5, trend:0.3, trans:0.7, repeat:0.5 },
+    { name:'激进追热', prob:0.2, freq:4.0, gap:0.3, pred:2.0, cluster:0.3, combo:0.6, cold:0.1, trend:0.2, trans:0.4, repeat:1.2 },
+    { name:'重号优先', prob:0.3, freq:3.0, gap:0.4, pred:1.8, cluster:0.4, combo:0.8, cold:0.2, trend:0.2, trans:0.5, repeat:2.0 },
+    { name:'侧重和值', prob:0.4, freq:1.8, gap:0.5, pred:3.5, cluster:0.5, combo:0.8, cold:0.4, trend:0.4, trans:0.6, repeat:0.6 },
+    { name:'冷热平衡', prob:0.5, freq:2.5, gap:0.8, pred:1.6, cluster:0.4, combo:1.0, cold:1.0, trend:0.3, trans:0.7, repeat:0.8 },
+    { name:'形态+重号', prob:0.4, freq:2.8, gap:0.4, pred:1.5, cluster:0.3, combo:2.0, cold:0.3, trend:0.2, trans:0.6, repeat:1.5 },
   ],
 
   crossValidate(history) {
-    if(history.length < 100) return this._weightPool[0];
+    if(history.length < 100) return this._weightPool[1];
     const total = history.length;
     const folds = 5;
     const foldSize = Math.floor(total / folds);
@@ -606,7 +507,6 @@ const QianJinU = {
         const train = history.slice(0, testStart);
         const test = history.slice(testStart, testEnd);
         if(train.length < 30 || test.length === 0) continue;
-        const tTrain = this.analyzeTrend(train);
         let hit=0, count=0;
         for(let i=0; i<test.length; i++){
           const pred = this._predictWithWeights(train.slice(0, testStart + i), w);
@@ -620,7 +520,7 @@ const QianJinU = {
       const avgHitRate = totalCount>0 ? totalHit/totalCount : 0;
       if(avgHitRate > bestAvgScore){ bestAvgScore = avgHitRate; bestWeights = w; }
     }
-    return bestWeights || this._weightPool[0];
+    return bestWeights || this._weightPool[1];
   },
 
   _predictWithWeights(history, weights) {
@@ -628,7 +528,8 @@ const QianJinU = {
     const t = this.analyzeTrend(history);
     const killCombo = this.predictKillCombo(t);
     const confidence = this.calcConfidence(t, (t.lastCombo==='大单'||t.lastCombo==='大双'), (t.lastCombo==='大单'||t.lastCombo==='小单'));
-    const groupCount = confidence>=70 ? 2 : 3;
+    // 双组/三组选择
+    const groupCount = confidence >= 70 ? 2 : 3;
     const allCombos = ['大单','大双','小单','小双'];
     const remaining = allCombos.filter(c=>c!==killCombo);
     const baseProbs = this.getComboBaseProbs();
@@ -640,30 +541,36 @@ const QianJinU = {
     const scored = this.pickNumbersGlobal(t, predictedSum, weights);
     const scoredWithDist = scored.map(s => ({...s, distWeight: Math.max(0, 1 - Math.abs(s.num - predictedSum)/8)}));
     scoredWithDist.sort((a,b)=>(b.score*b.distWeight)-(a.score*a.distWeight));
+
+    // 特码：每组取3个（固定6个，不再减少）
+    const perGroup = 3;  // 固定为3，共6个特码
     const teFrom1=[], teFrom2=[];
     for(const s of scoredWithDist){
       const combo = this.judgeCombo(s.num);
-      if(combo === combo1 && teFrom1.length<2) teFrom1.push(s.num);
-      if(combo === combo2 && teFrom2.length<2) teFrom2.push(s.num);
-      if(teFrom1.length>=2 && teFrom2.length>=2) break;
+      if(combo === combo1 && teFrom1.length < perGroup) teFrom1.push(s.num);
+      if(combo === combo2 && teFrom2.length < perGroup) teFrom2.push(s.num);
+      if(teFrom1.length >= perGroup && teFrom2.length >= perGroup) break;
     }
     let teNumbers = [...teFrom1, ...teFrom2];
-    if(teNumbers.length<4){
-      for(const s of scoredWithDist){ if(!teNumbers.includes(s.num)){ teNumbers.push(s.num); if(teNumbers.length>=4) break; } }
+    // 补足至6个
+    if (teNumbers.length < 6) {
+      for(const s of scoredWithDist){
+        if(!teNumbers.includes(s.num)){ teNumbers.push(s.num); if(teNumbers.length >= 6) break; }
+      }
     }
     teNumbers.sort((a,b)=>a-b);
     const combosStr = active.join('+');
     return { killCombo, combo1, combo2, combo3, combos:combosStr, teNumbers, teNumbersStr:teNumbers.join('/'),
-             confidence, predictedSum:Math.round(predictedSum*10)/10, _trend:t, weightName: weights.name || '自定义' };
+             confidence, predictedSum:Math.round(predictedSum*10)/10, _trend:t, weightName: weights.name || '激进追热' };
   },
 
-  // ----- 主预测（集成交叉验证） -----
+  // ----- 主预测 -----
   predict(history) {
     if(!history || history.length<5) return { error:'数据不足' };
     const bestWeights = this.crossValidate(history);
     const result = this._predictWithWeights(history, bestWeights);
     if(result.error) return result;
-    result.weightUsed = bestWeights.name || '均衡型';
+    result.weightUsed = bestWeights.name || '激进追热';
     return result;
   },
 
@@ -675,7 +582,7 @@ const QianJinU = {
     return { isHit: inGroup, hitType: inTe ? '特' : (inGroup ? '组' : '未中'), killCorrect: actual.combo !== pred.killCombo };
   },
 
-  // ----- 回测（含交叉验证准确率） -----
+  // ----- 回测（含整体命中率） -----
   backtest(history, testCount=30) {
     if(!history || history.length<testCount+30) return { error:'数据不足' };
     const results = [];
@@ -692,14 +599,11 @@ const QianJinU = {
                      hitType: h.hitType, isHit: h.isHit, killCorrect: h.killCorrect });
       tc++; if(h.isHit) hc++; if(h.hitType==='特') ec++; if(h.hitType==='组') gc++; if(h.hitType==='未中') mc++; if(h.killCorrect) kc++;
     }
-    // 计算交叉验证准确率（最近一次）
     let cvRate = '--';
     if(history.length>=100){
       const bestW = this.crossValidate(history);
-      // 简单模拟交叉验证准确率（用最近一折验证）
       const train = history.slice(0, history.length - 20);
       const test = history.slice(-20);
-      const tTrain = this.analyzeTrend(train);
       let hit=0, count=0;
       for(let i=0; i<test.length; i++){
         const pred = this._predictWithWeights(train.slice(0, train.length + i), bestW);
@@ -710,8 +614,10 @@ const QianJinU = {
       cvRate = count>0 ? (hit/count*100).toFixed(1)+'%' : '--';
     }
     return { totalCount:tc, hitCount:hc, exactCount:ec, groupCount:gc, missCount:mc, killCorrectCount:kc,
-             hitRate: tc>0?(hc/tc*100).toFixed(1):0, exactRate: tc>0?(ec/tc*100).toFixed(1):0,
-             groupRate: tc>0?(gc/tc*100).toFixed(1):0, killRate: tc>0?(kc/tc*100).toFixed(1):0,
+             hitRate: tc>0?(hc/tc*100).toFixed(1):0,        // 整体命中率（组命中）
+             exactRate: tc>0?(ec/tc*100).toFixed(1):0,
+             groupRate: tc>0?(gc/tc*100).toFixed(1):0,
+             killRate: tc>0?(kc/tc*100).toFixed(1):0,
              results, cvRate };
   }
 };
@@ -869,14 +775,13 @@ const app = {
     const pred = QianJinU.predict(this.history);
     if(pred.error){ document.getElementById('pred-line').textContent = '数据不足'; return; }
     const lineEl = document.getElementById('pred-line');
-    // 给每个特码加上星级（基于得分排名，此处简化为显示其得分相对高低，这里只是装饰）
-    const teStr = pred.teNumbers.map(n => `<span class="te-num">${String(n).padStart(2,'0')}<span class="star">★</span></span>`).join('<span class="te-sep">/</span>');
+    const teStr = pred.teNumbers.map(n => `<span class="te-num">${String(n).padStart(2,'0')}</span>`).join('<span class="te-sep">/</span>');
     let comboHtml = `<span class="combo">${pred.combo1}</span>`;
     if(pred.combo2) comboHtml += `<span class="combo2">${pred.combo2}</span>`;
     if(pred.combo3) comboHtml += `<span class="combo3">${pred.combo3}</span>`;
-    lineEl.innerHTML = `<span class="kill-label">杀</span><span class="kill-combo">${pred.killCombo}</span>` + comboHtml + `<span class="te-label">特</span>` + teStr;
-    document.getElementById('pred-period').textContent = '第 '+(parseInt(this.history[this.history.length-1].period)+1)+' 期 · 预测和值'+pred.predictedSum+' · 置信'+pred.confidence+'%';
-    document.getElementById('pred-weight-info').textContent = '权重方案：'+ (pred.weightUsed || '均衡型') + '（交叉验证选出）';
+    lineEl.innerHTML = `<span class="kill">杀${pred.killCombo}</span> ` + comboHtml + ` <span class="te-label">特</span> ` + teStr;
+    document.getElementById('pred-period').textContent = '第 '+(parseInt(this.history[this.history.length-1].period)+1)+' 期 · 预测和值 '+pred.predictedSum+' · 置信 '+pred.confidence+'%';
+    document.getElementById('pred-weight').textContent = '权重方案：'+ (pred.weightUsed || '均衡型') + '（交叉验证）';
   },
 
   renderTrend() {
@@ -915,7 +820,7 @@ const app = {
   renderBacktest() {
     const bt = QianJinU.backtest(this.history, 30);
     if(bt.error) return;
-    document.getElementById('bt-kill-rate').textContent = bt.killRate+'%';
+    document.getElementById('bt-hit-rate').textContent = bt.hitRate+'%';
     document.getElementById('bt-exact-rate').textContent = bt.exactRate+'%';
     document.getElementById('bt-group-rate').textContent = bt.groupRate+'%';
     document.getElementById('bt-miss-count').textContent = bt.missCount;
