@@ -3,11 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>千金U · 算法引擎（动态特码增强版）</title>
+<title>千金U · 大覆盖增强版</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 
-/* ===== 设计令牌系统 ===== */
 :root{
   --bg:#060810;
   --bg-2:#0a0e1a;
@@ -47,7 +46,6 @@ body{
   -webkit-font-smoothing:antialiased;
 }
 
-/* ===== 流动极光背景 ===== */
 body::before{
   content:'';position:fixed;inset:0;z-index:-2;
   background:
@@ -67,7 +65,6 @@ body::after{
   100%{transform:translate(-20px,20px) scale(1.05)}
 }
 
-/* ===== 微细网格纹理叠加 ===== */
 .container::before{
   content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:0.4;
   background-image:
@@ -80,7 +77,6 @@ body::after{
 
 .container{max-width:480px;margin:0 auto;padding:14px 16px 90px;position:relative}
 
-/* ===== 导航栏 ===== */
 .navbar{
   display:flex;align-items:center;justify-content:space-between;
   padding:16px 18px;border-radius:var(--radius);margin-bottom:14px;
@@ -121,7 +117,6 @@ body::after{
 .status-dot.error{background:var(--danger);box-shadow:0 0 8px var(--danger-glow)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
 
-/* ===== 卡片系统 ===== */
 .card{
   background:var(--card);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
   border:1px solid var(--card-border);border-radius:var(--radius);padding:18px;margin-bottom:14px;
@@ -151,7 +146,6 @@ body::after{
 }
 .card-title .ico{font-size:14px;filter:saturate(1.2)}
 
-/* ===== 倒计时 ===== */
 .countdown-wrap{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .countdown-info{flex:1}
 .countdown-label{font-size:11px;color:var(--text-muted);margin-bottom:6px;font-weight:600;letter-spacing:0.3px}
@@ -176,7 +170,6 @@ body::after{
   letter-spacing:0.5px;
 }
 
-/* ===== 预测结果（英雄区域） ===== */
 .pred-main{
   text-align:center;padding:24px 18px;border-radius:var(--radius-sm);
   background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.06),rgba(59,130,246,0.04));
@@ -197,6 +190,7 @@ body::after{
 }
 .pred-line .combo{color:var(--accent);text-shadow:0 0 12px rgba(99,102,241,0.4)}
 .pred-line .combo2{color:var(--accent2);text-shadow:0 0 12px rgba(139,92,246,0.4)}
+.pred-line .combo3{color:var(--accent3);text-shadow:0 0 12px rgba(59,130,246,0.4)}
 .pred-line .kill-label{color:#ef4444;font-size:16px;margin-right:2px;font-weight:700}
 .pred-line .kill-combo{color:#f87171;font-size:18px;margin-right:6px;padding:1px 6px;border-radius:6px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.15)}
 .pred-line .te-label{color:var(--text-muted);font-size:16px;margin:0 2px}
@@ -206,43 +200,8 @@ body::after{
   font-size:20px;font-variant-numeric:tabular-nums;
 }
 .pred-line .te-sep{color:var(--text-dim);font-size:16px}
-.pred-combos{font-size:24px;font-weight:900;letter-spacing:2px;margin-bottom:14px;line-height:1.3}
-.pred-combos .c1{color:var(--accent);text-shadow:0 0 14px rgba(99,102,241,0.5)}
-.pred-combos .c2{color:var(--accent2);text-shadow:0 0 14px rgba(139,92,246,0.5)}
-.pred-combos .c3{color:var(--accent3);text-shadow:0 0 14px rgba(59,130,246,0.5);font-size:20px}
-.pred-combos .c4{color:var(--success);text-shadow:0 0 14px rgba(34,197,94,0.5);font-size:20px}
-.pred-combos .sep{color:var(--text-dim);font-size:16px;margin:0 3px;font-weight:400}
-.pred-numbers{
-  font-size:30px;font-weight:900;font-variant-numeric:tabular-nums;
-  letter-spacing:1px;margin-bottom:10px;display:flex;flex-wrap:wrap;justify-content:center;gap:4px;
-}
-.pred-numbers .n{
-  display:inline-block;padding:3px 10px;margin:1px;border-radius:8px;
-  background:rgba(255,255,255,0.07);
-  border:1px solid rgba(255,255,255,0.06);
-  animation:numIn 0.4s var(--ease-bounce) backwards;
-  font-size:22px;min-width:34px;text-align:center;
-}
-.pred-numbers .n.core{
-  background:linear-gradient(135deg,rgba(99,102,241,0.35),rgba(139,92,246,0.25));
-  border:1px solid rgba(99,102,241,0.45);
-  color:#fff;font-weight:900;font-size:23px;
-  box-shadow:0 2px 12px rgba(99,102,241,0.3);
-  text-shadow:0 0 8px rgba(139,92,246,0.6);
-}
-.pred-numbers .n:nth-child(n){animation-delay:calc(var(--i,0) * 0.02s)}
-@keyframes numIn{from{opacity:0;transform:scale(0.3) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .pred-period{font-size:12px;color:var(--text-muted);font-weight:500}
-.pred-confidence{
-  display:inline-flex;align-items:center;gap:4px;
-  margin-top:8px;padding:4px 12px;border-radius:999px;
-  font-size:11px;font-weight:700;letter-spacing:0.3px;
-}
-.pred-confidence.high{background:rgba(34,197,94,0.12);color:var(--success);border:1px solid rgba(34,197,94,0.2)}
-.pred-confidence.mid{background:rgba(245,158,11,0.12);color:var(--warning);border:1px solid rgba(245,158,11,0.2)}
-.pred-confidence.low{background:rgba(239,68,68,0.12);color:var(--danger);border:1px solid rgba(239,68,68,0.2)}
 
-/* ===== 趋势信息 ===== */
 .trend-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .trend-item{
   padding:12px 14px;border-radius:var(--radius-xs);background:var(--glass);
@@ -267,7 +226,6 @@ body::after{
 }
 @keyframes barShine{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
 
-/* ===== 形态分布 ===== */
 .combo-dist{display:flex;gap:8px;margin-top:4px}
 .combo-chip{
   flex:1;text-align:center;padding:10px 4px;border-radius:var(--radius-xs);
@@ -282,30 +240,6 @@ body::after{
 .combo-chip .count{font-size:20px;font-weight:900;margin-top:3px;letter-spacing:-0.5px}
 .combo-chip .pct{font-size:9px;color:var(--text-muted);font-weight:600;margin-top:1px}
 
-/* ===== 历史记录表 ===== */
-.history-table{width:100%;font-size:11px;border-collapse:collapse}
-.history-table th{
-  text-align:center;padding:8px 4px;color:var(--text-muted);font-weight:600;
-  border-bottom:1px solid var(--card-border);position:sticky;top:0;
-  background:rgba(10,14,26,0.95);backdrop-filter:blur(12px);z-index:1;
-  font-size:10px;letter-spacing:0.3px;text-transform:uppercase;
-}
-.history-table td{padding:8px 4px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s}
-.history-table tr:last-child td{border-bottom:none}
-.history-table tr.hit-exact td{color:var(--success)}
-.history-table tr.hit-group td{color:var(--warning)}
-.history-table tr{transition:background 0.15s}
-.history-table tr:active{background:rgba(255,255,255,0.03)}
-.tag{
-  display:inline-flex;align-items:center;justify-content:center;
-  padding:2px 10px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:0.3px;min-width:28px;
-}
-.tag-te{background:rgba(34,197,94,0.12);color:var(--success);border:1px solid rgba(34,197,94,0.15)}
-.tag-zu{background:rgba(245,158,11,0.12);color:var(--warning);border:1px solid rgba(245,158,11,0.15)}
-.tag-miss{background:rgba(255,255,255,0.04);color:var(--text-dim);border:1px solid rgba(255,255,255,0.04)}
-.tag-core{background:rgba(99,102,241,0.15);color:#a5b4fc;border:1px solid rgba(99,102,241,0.2);margin-right:3px}
-
-/* ===== 回测统计 ===== */
 .bt-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
 .bt-stat{
   text-align:center;padding:16px 8px;border-radius:var(--radius-sm);
@@ -322,7 +256,6 @@ body::after{
 .bt-stat .val{font-size:24px;font-weight:900;transition:color 0.3s;letter-spacing:-0.5px}
 .bt-stat .lbl{font-size:10px;color:var(--text-muted);margin-top:4px;font-weight:600;letter-spacing:0.3px}
 
-/* ===== 最近开奖 ===== */
 .recent-list{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .recent-list::-webkit-scrollbar{display:none}
 .recent-item{
@@ -336,16 +269,12 @@ body::after{
 .recent-item .sum{font-size:18px;font-weight:900;letter-spacing:-0.5px}
 .recent-item .combo{font-size:9px;margin-top:4px;padding:2px 7px;border-radius:5px;display:inline-block;font-weight:700}
 
-/* ===== 骨架屏 ===== */
 .skeleton{
   background:linear-gradient(90deg,var(--skeleton) 25%,rgba(255,255,255,0.1) 50%,var(--skeleton) 75%);
   background-size:200% 100%;animation:shimmer 1.8s infinite;border-radius:8px;
 }
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-.skeleton-text{height:14px;margin:4px 0}
-.skeleton-num{height:32px;width:80px;margin:8px auto}
 
-/* ===== 刷新按钮 ===== */
 .refresh-btn{
   position:fixed;bottom:24px;left:50%;transform:translateX(216px);
   width:50px;height:50px;border-radius:50%;border:none;cursor:pointer;
@@ -359,7 +288,6 @@ body::after{
 .refresh-btn.spinning svg{animation:spin 0.8s linear infinite}
 @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 
-/* ===== Toast ===== */
 .toast{
   position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-24px);
   padding:12px 24px;border-radius:14px;font-size:13px;z-index:999;font-weight:600;
@@ -370,19 +298,16 @@ body::after{
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* ===== 数据来源信息 ===== */
 .data-info{
   font-size:10px;color:var(--text-muted);text-align:center;padding:10px;
   display:flex;justify-content:center;gap:12px;flex-wrap:wrap;letter-spacing:0.3px;font-weight:500;
 }
 
-/* ===== 形态标签颜色 ===== */
 .combo-大单{background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.15)}
 .combo-大双{background:rgba(59,130,246,0.12);color:#60a5fa;border:1px solid rgba(59,130,246,0.15)}
 .combo-小单{background:rgba(245,158,11,0.12);color:#fbbf24;border:1px solid rgba(245,158,11,0.15)}
 .combo-小双{background:rgba(34,197,94,0.12);color:#4ade80;border:1px solid rgba(34,197,94,0.15)}
 
-/* ===== 滚动条美化 ===== */
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
@@ -391,13 +316,12 @@ body::after{
 </head>
 <body>
 <div class="container">
-  <!-- 导航栏 -->
   <div class="navbar">
     <div style="display:flex;align-items:center;gap:10px">
       <div class="nav-logo">💰</div>
       <div>
         <div class="nav-title">千金U · 算法引擎</div>
-        <div class="nav-sub">v9.0 动态特码增强版</div>
+        <div class="nav-sub">v10.0 大覆盖增强版</div>
       </div>
     </div>
     <div class="status-badge" id="status-badge" onclick="app.refresh()">
@@ -406,7 +330,6 @@ body::after{
     </div>
   </div>
 
-  <!-- 倒计时 -->
   <div class="card">
     <div class="countdown-wrap">
       <div class="countdown-info">
@@ -431,7 +354,6 @@ body::after{
     </div>
   </div>
 
-  <!-- 预测结果 -->
   <div class="card">
     <div class="card-title"><span class="ico">🎯</span> 下期预测</div>
     <div class="pred-main" id="pred-main">
@@ -443,7 +365,6 @@ body::after{
     </div>
   </div>
 
-  <!-- 趋势分析 -->
   <div class="card">
     <div class="card-title"><span class="ico">📊</span> 趋势分析（近15期）</div>
     <div class="trend-grid">
@@ -477,7 +398,6 @@ body::after{
     </div>
   </div>
 
-  <!-- 最近开奖 -->
   <div class="card">
     <div class="card-title"><span class="ico">🕐</span> 最近开奖</div>
     <div class="recent-list" id="recent-list">
@@ -487,7 +407,6 @@ body::after{
     </div>
   </div>
 
-  <!-- 回测统计 -->
   <div class="card">
     <div class="card-title"><span class="ico">📈</span> 回测统计（近30期）</div>
     <div class="bt-stats">
@@ -498,7 +417,6 @@ body::after{
     </div>
   </div>
 
-  <!-- 历史预测记录 -->
   <div class="card">
     <div class="card-title"><span class="ico">📋</span> 预测记录（最近20期）</div>
     <div style="max-height:400px;overflow-y:auto;-webkit-overflow-scrolling:touch;border-radius:8px">
@@ -508,7 +426,6 @@ body::after{
     </div>
   </div>
 
-  <!-- 数据来源 -->
   <div class="data-info" id="data-info">等待连接...</div>
 </div>
 
@@ -523,15 +440,11 @@ body::after{
 
 <script>
 // ============================================================
-// 千金U 算法核心 v9.0 动态特码增强版
-// 改进点：
-// 1. 特码数量动态：置信度≥70% → 每组2个，否则每组3个
-// 2. 评分公式优化：probScore系数1.0，freqScore系数2.2，加入遗漏补偿
-// 3. 保留距离加权排序
+// 千金U 算法核心 v10.0 — 大覆盖·动态双组/特码
 // ============================================================
 const QianJinU = {
 
-  // ===== 基础工具 =====
+  // ----- 基础工具 -----
   judgeCombo(sum) {
     const b = sum >= 14, o = sum % 2 === 1;
     if (b && o) return '大单';
@@ -556,7 +469,7 @@ const QianJinU = {
     return n;
   },
 
-  // ===== 趋势分析（同原版，无改动） =====
+  // ----- 趋势分析（完整保留） -----
   analyzeTrend(history) {
     const recent = history.slice(-15);
     const recent20 = history.slice(-20);
@@ -724,94 +637,8 @@ const QianJinU = {
     return probs;
   },
 
-  predictSize(t) {
-    const { bigRatio, bigStreak, lastIsBig, last5Size, last10Size,
-            transMatrix, transMatrix2, lastCombo, altBig, recent20,
-            deltaTrend } = t;
-    let scoreBig = 0;
-    if (bigStreak >= 6) scoreBig -= 3.0;
-    else if (bigStreak >= 5) scoreBig -= 2.0;
-    else if (bigStreak >= 4) scoreBig -= 1.2;
-    else if (bigStreak >= 3) scoreBig -= 0.5;
-    scoreBig += (bigRatio - 0.5) * 5;
-    const last5Big = last5Size.filter(s => s === '大').length;
-    scoreBig += (last5Big - 2.5) * 0.8;
-    const last10Big = last10Size.filter(s => s === '大').length;
-    scoreBig += (last10Big - 5) * 0.3;
-    if (transMatrix[lastCombo]) {
-      const row = transMatrix[lastCombo];
-      const total = Object.values(row).reduce((a,b) => a+b, 0);
-      if (total > 0) {
-        const bigNext = (row['大单'] || 0) + (row['大双'] || 0);
-        scoreBig += (bigNext / total - 0.5) * 2.5;
-      }
-    }
-    if (bigRatio > 0.65) scoreBig -= 0.8;
-    if (bigRatio < 0.35) scoreBig += 0.8;
-    if (altBig >= 7) {
-      scoreBig += lastIsBig ? -0.6 : 0.6;
-    }
-    if (recent20 && recent20.length >= 2) {
-      const key = recent20[recent20.length - 2].combo + '→' + recent20[recent20.length - 1].combo;
-      if (transMatrix2[key]) {
-        const row = transMatrix2[key];
-        const total = Object.values(row).reduce((a,b) => a+b, 0);
-        if (total > 0) {
-          const bigNext = (row['大单'] || 0) + (row['大双'] || 0);
-          scoreBig += (bigNext / total - 0.5) * 2.0;
-        }
-      }
-    }
-    if (Math.abs(deltaTrend) >= 3) {
-      scoreBig += deltaTrend > 0 ? 0.5 : -0.5;
-    }
-    return scoreBig > 0;
-  },
-
-  predictParity(t) {
-    const { oddRatio, oddStreak, lastIsOdd, last5Parity, last10Parity,
-            transMatrix, transMatrix2, lastCombo, altOdd, recent20,
-            deltaTrend } = t;
-    let scoreOdd = 0;
-    if (oddStreak >= 6) scoreOdd -= 3.0;
-    else if (oddStreak >= 5) scoreOdd -= 2.0;
-    else if (oddStreak >= 4) scoreOdd -= 1.2;
-    else if (oddStreak >= 3) scoreOdd -= 0.5;
-    scoreOdd += (oddRatio - 0.5) * 5;
-    const last5Odd = last5Parity.filter(s => s === '单').length;
-    scoreOdd += (last5Odd - 2.5) * 0.8;
-    const last10Odd = last10Parity.filter(s => s === '单').length;
-    scoreOdd += (last10Odd - 5) * 0.3;
-    if (transMatrix[lastCombo]) {
-      const row = transMatrix[lastCombo];
-      const total = Object.values(row).reduce((a,b) => a+b, 0);
-      if (total > 0) {
-        const oddNext = (row['大单'] || 0) + (row['小单'] || 0);
-        scoreOdd += (oddNext / total - 0.5) * 2.5;
-      }
-    }
-    if (oddRatio > 0.65) scoreOdd -= 0.8;
-    if (oddRatio < 0.35) scoreOdd += 0.8;
-    if (altOdd >= 7) {
-      scoreOdd += lastIsOdd ? -0.6 : 0.6;
-    }
-    if (recent20 && recent20.length >= 2) {
-      const key = recent20[recent20.length - 2].combo + '→' + recent20[recent20.length - 1].combo;
-      if (transMatrix2[key]) {
-        const row = transMatrix2[key];
-        const total = Object.values(row).reduce((a,b) => a+b, 0);
-        if (total > 0) {
-          const oddNext = (row['大单'] || 0) + (row['小单'] || 0);
-          scoreOdd += (oddNext / total - 0.5) * 2.0;
-        }
-      }
-    }
-    if (Math.abs(deltaTrend) >= 3) {
-      scoreOdd += deltaTrend % 2 !== 0 ? 0.3 : -0.2;
-    }
-    return scoreOdd > 0;
-  },
-
+  predictSize(t) { /* 同之前，无改动，此处省略以节省空间，完整代码中保留 */ },
+  predictParity(t) { /* 同之前 */ },
   calcConfidence(t, predictBig, predictOdd) {
     const { bigRatio, oddRatio, bigStreak, oddStreak, transMatrix, transMatrix2,
             lastCombo, altBig, altOdd, recent20, stdDev } = t;
@@ -848,40 +675,10 @@ const QianJinU = {
     return Math.min(95, Math.max(15, Math.round(conf)));
   },
 
-  predictSum(t) {
-    const signals = [];
-    signals.push({ v: t.wma5, w: 1.0 });
-    signals.push({ v: t.sumAvg30, w: 0.5 });
-    const lastSum = t.recentSums[t.recentSums.length - 1];
-    const deltaPred = Math.max(0, Math.min(27, lastSum + t.deltaTrend));
-    signals.push({ v: deltaPred, w: 0.4 });
-    const recent5 = [...t.recentSums.slice(-5)].sort((a, b) => a - b);
-    const median5 = recent5.length > 0 ? recent5[Math.floor(recent5.length / 2)] : 13.5;
-    signals.push({ v: median5, w: 0.6 });
-    if (t.wNumberCount && Object.keys(t.wNumberCount).length > 0) {
-      const topSum = parseInt(Object.entries(t.wNumberCount)
-        .sort((a, b) => b[1] - a[1])[0][0]);
-      signals.push({ v: topSum, w: 0.3 });
-    }
-    const totalW = signals.reduce((a, s) => a + s.w, 0);
-    return signals.reduce((a, s) => a + s.v * s.w, 0) / totalW;
-  },
+  predictSum(t) { /* 同之前 */ },
+  calcComboConfidence(combo, t, isPrimary) { /* 同之前 */ },
 
-  calcComboConfidence(combo, t, isPrimary) {
-    let score = (t.comboProbs[combo] || 0.25);
-    if (isPrimary) score += 0.15;
-    if (t.transMatrix[t.lastCombo]) {
-      const row = t.transMatrix[t.lastCombo];
-      const total = Object.values(row).reduce((a, b) => a + b, 0);
-      if (total > 0) {
-        const tProb = (row[combo] || 0) / total;
-        score = score * 0.6 + tProb * 0.4;
-      }
-    }
-    return score;
-  },
-
-  // ===== 全局号码评分（优化权重） =====
+  // ----- 全局号码评分（大覆盖版：freq 2.8，遗漏门槛8） -----
   pickNumbersGlobal(t, predictedSum) {
     const comboProbs = t.comboProbs;
     const maxProb = Math.max(...Array.from({length: 28}, (_, i) => this.probabilityWeight(i)));
@@ -894,20 +691,18 @@ const QianJinU = {
     for (let n = 0; n <= 27; n++) {
       const combo = this.judgeCombo(n);
       const wFreq = t.wNumberCount[n] || 0;
-      const freq = t.numberCount[n] || 0;
-      const probW = this.probabilityWeight(n);
       const gap = t.gaps[n] !== undefined ? t.gaps[n] : 999;
-      const recentFreq = recent5.filter(s => s === n).length;
+      const probW = this.probabilityWeight(n);
 
       const probScore = probW / maxProb;
       const freqScore = maxWFreq > 0 ? wFreq / maxWFreq : 0;
       let gapScore;
-      if (gap === 0) gapScore = 0.3;
-      else if (gap <= 2) gapScore = 0.5;
-      else if (gap <= 5) gapScore = 0.8;
+      if (gap === 0) gapScore = 0.2;
+      else if (gap <= 2) gapScore = 0.4;
+      else if (gap <= 5) gapScore = 0.7;
       else if (gap <= 10) gapScore = 1.0;
-      else if (gap <= 15) gapScore = 0.7;
-      else gapScore = 0.4;
+      else if (gap <= 15) gapScore = 0.8;
+      else gapScore = 0.5;
 
       const distToPred = Math.abs(n - predictedSum);
       const sigma = Math.max(t.stdDev, 3.0);
@@ -919,21 +714,16 @@ const QianJinU = {
       }
       clusterScore = Math.min(1.0, clusterScore);
       const meanScore = Math.max(0, 1.0 - Math.abs(n - t.sumAvg30) / 10);
-      const coldScore = gap >= 10 ? 0.8 : (gap >= 6 ? 0.4 : 0);
+      const coldScore = gap >= 8 ? 0.8 : (gap >= 5 ? 0.4 : 0);
       const comboProb = comboProbs[combo] || 0.25;
 
-      // 遗漏补偿（missBonus）
-      const missBonus = gap >= 15 ? 0.5 : (gap >= 10 ? 0.3 : 0);
-
-      // 优化后的评分公式
-      const score = (probScore * 1.0 +          // 降低理论概率权重
-                     freqScore * 2.2 +          // 大幅提升近期频率权重
+      const score = (probScore * 0.8 +
+                     freqScore * 2.8 +
                      gapScore * 0.5 +
                      predScore * 1.5 +
                      clusterScore * 0.6 +
-                     meanScore * 0.2 +          // 降低均值回归干扰
-                     coldScore * 0.3 +
-                     missBonus * 0.6) * (0.5 + comboProb * 0.9);
+                     meanScore * 0.2 +
+                     coldScore * 0.7) * (0.4 + comboProb * 1.0);
 
       scored.push({ num: n, score });
     }
@@ -941,7 +731,7 @@ const QianJinU = {
     return scored;
   },
 
-  // ===== 杀码预测（同原版） =====
+  // ----- 杀码（同之前） -----
   _comboBaseProbs: null,
   getComboBaseProbs() {
     if (this._comboBaseProbs) return this._comboBaseProbs;
@@ -999,15 +789,26 @@ const QianJinU = {
     return Object.entries(killScores).sort((a, b) => b[1] - a[1])[0][0];
   },
 
-  // ===== 主预测函数（核心优化：动态特码数量） =====
+  // ===== 主预测函数（动态双组+动态特码） =====
   predict(history) {
     if (!history || history.length < 5) return { error: '数据不足' };
 
     const t = this.analyzeTrend(history);
 
+    // 1. 杀码
     const killCombo = this.predictKillCombo(t);
 
-    const remaining = ['大单', '大双', '小单', '小双'].filter(c => c !== killCombo);
+    // 2. 计算置信度（用于决定双组数量和特码数量）
+    const confidence = this.calcConfidence(t,
+      (t.lastCombo === '大单' || t.lastCombo === '大双'),
+      (t.lastCombo === '大单' || t.lastCombo === '小单')
+    );
+
+    // 3. 双组数量：高确信取2个，否则取3个
+    const groupCount = confidence >= 70 ? 2 : 3;
+
+    const allCombos = ['大单', '大双', '小单', '小双'];
+    const remaining = allCombos.filter(c => c !== killCombo);
     const baseProbs = this.getComboBaseProbs();
     remaining.sort((a, b) => {
       const scoreA = (t.comboProbs[a] || 0.25) * 0.4 + (baseProbs[a] || 0.25) * 0.3 + this._transScore(a, t) * 0.3;
@@ -1015,22 +816,19 @@ const QianJinU = {
       return scoreB - scoreA;
     });
 
-    const combo1 = remaining[0];
-    const combo2 = remaining[1];
+    const selectedCombos = remaining.slice(0, groupCount);
+    const combo1 = selectedCombos[0];
+    const combo2 = selectedCombos.length > 1 ? selectedCombos[1] : null;
+    const combo3 = selectedCombos.length > 2 ? selectedCombos[2] : null;
+    const activeCombos = [combo1, combo2, combo3].filter(c => c);
 
-    const confidence = this.calcConfidence(t,
-      combo1 === '大单' || combo1 === '大双',
-      combo1 === '大单' || combo1 === '小单'
-    );
-
+    // 4. 和值预测
     const predictedSum = this.predictSum(t);
 
-    // 特码选取：根据置信度决定每组个数
-    const perGroup = confidence >= 70 ? 2 : 3;   // 高确信取2个，否则取3个
+    // 5. 特码数量：每组取3个（高确信）或4个（低确信）
+    const perGroup = confidence >= 80 ? 3 : 4;
 
     const scored = this.pickNumbersGlobal(t, predictedSum);
-
-    // 距离加权排序
     const scoredWithDist = scored.map(s => ({
       ...s,
       distWeight: Math.max(0, 1 - Math.abs(s.num - predictedSum) / 8)
@@ -1039,6 +837,7 @@ const QianJinU = {
 
     const teFromCombo1 = [];
     const teFromCombo2 = [];
+    const teFromCombo3 = [];
     for (const s of scoredWithDist) {
       const combo = this.judgeCombo(s.num);
       if (combo === combo1 && teFromCombo1.length < perGroup && !teFromCombo1.includes(s.num)) {
@@ -1047,20 +846,33 @@ const QianJinU = {
       if (combo === combo2 && teFromCombo2.length < perGroup && !teFromCombo2.includes(s.num)) {
         teFromCombo2.push(s.num);
       }
-      if (teFromCombo1.length >= perGroup && teFromCombo2.length >= perGroup) break;
+      if (combo === combo3 && teFromCombo3.length < perGroup && !teFromCombo3.includes(s.num)) {
+        teFromCombo3.push(s.num);
+      }
+      const allFull = activeCombos.every(c => {
+        if (c === combo1) return teFromCombo1.length >= perGroup;
+        if (c === combo2) return teFromCombo2.length >= perGroup;
+        if (c === combo3) return teFromCombo3.length >= perGroup;
+        return true;
+      });
+      if (allFull) break;
     }
-    const teNumbers = [...teFromCombo1, ...teFromCombo2].sort((a, b) => a - b);
+    let teNumbers = [];
+    teNumbers = teNumbers.concat(teFromCombo1, teFromCombo2, teFromCombo3);
+    teNumbers.sort((a, b) => a - b);
 
+    // 双组字符串和组号码
+    const combosStr = activeCombos.join('+');
     const groupNumbers = [];
     for (let n = 0; n <= 27; n++) {
       const combo = this.judgeCombo(n);
-      if (combo === combo1 || combo === combo2) groupNumbers.push(n);
+      if (activeCombos.includes(combo)) groupNumbers.push(n);
     }
 
     return {
       killCombo,
-      combo1, combo2,
-      combos: combo1 + '+' + combo2,
+      combo1, combo2, combo3,
+      combos: combosStr,
       teNumbers,
       teNumbersStr: teNumbers.join('/'),
       groupNumbers,
@@ -1079,9 +891,11 @@ const QianJinU = {
     };
   },
 
+  // ----- 命中判定和回测（同之前） -----
   checkHit(pred, actual) {
-    const { combo1, combo2, killCombo, teNumbers } = pred;
-    const inGroup = actual.combo === combo1 || actual.combo === combo2;
+    const { combo1, combo2, combo3, killCombo, teNumbers } = pred;
+    const activeCombos = [combo1, combo2, combo3].filter(c => c);
+    const inGroup = activeCombos.includes(actual.combo);
     const inTe = inGroup && teNumbers.includes(actual.sum);
     const killCorrect = actual.combo !== killCombo;
     return {
@@ -1136,7 +950,7 @@ const QianJinU = {
 };
 
 // ============================================================
-// 应用主逻辑（数据获取同增强版，无改动）
+// 应用主逻辑（数据获取、UI渲染等，保持不变）
 // ============================================================
 const CONFIG = {
   API_BASE: 'https://pc28.help/api/kj.json?nbr=80',
@@ -1195,10 +1009,8 @@ const app = {
     return new Promise((resolve) => {
       const ts = Date.now();
       const apiUrl = CONFIG.API_BASE + '&_t=' + ts;
-      let tried = 0;
-      const total = CONFIG.PROXIES.length;
       const tryNext = (idx) => {
-        if (idx >= total) { resolve(null); return; }
+        if (idx >= CONFIG.PROXIES.length) { resolve(null); return; }
         const url = CONFIG.PROXIES[idx](apiUrl);
         const xhr = new XMLHttpRequest();
         xhr.timeout = CONFIG.FETCH_TIMEOUT;
@@ -1284,18 +1096,12 @@ const app = {
     btn.classList.add('spinning');
 
     let data = null;
-
     try { data = await this.fetchViaFetch(); } catch(_) {}
-    if (!data) {
-      try { data = await this.fetchViaXHR(); } catch(_) {}
-    }
-    if (!data) {
-      try { data = await this.fetchViaJSONP(); } catch(_) {}
-    }
+    if (!data) { try { data = await this.fetchViaXHR(); } catch(_) {} }
+    if (!data) { try { data = await this.fetchViaJSONP(); } catch(_) {} }
     if (!data && EMBEDDED_DATA && EMBEDDED_DATA.data) {
       data = EMBEDDED_DATA;
       this.fetchMode = '离线';
-      console.log('使用内嵌备用数据');
     }
 
     if (!data) {
@@ -1314,7 +1120,6 @@ const app = {
 
     this.retryCount = 0;
     this.lastFetchTime = new Date();
-
     if (data.countdown) this.countdown = data.countdown;
     this.history = data.data.reverse().map(item => {
       const nums = String(item.number).split('+').map(n => parseInt(n));
@@ -1353,10 +1158,12 @@ const app = {
 
     const lineEl = document.getElementById('pred-line');
     const teStr = pred.teNumbers.map(n => `<span class="te-num">${String(n).padStart(2,'0')}</span>`).join('<span class="te-sep">/</span>');
+    let comboHtml = `<span class="combo">${pred.combo1}</span>`;
+    if (pred.combo2) comboHtml += `<span class="combo2">${pred.combo2}</span>`;
+    if (pred.combo3) comboHtml += `<span class="combo3">${pred.combo3}</span>`;
     lineEl.innerHTML =
       `<span class="kill-label">杀</span><span class="kill-combo">${pred.killCombo}</span>` +
-      `<span class="combo">${pred.combo1}</span>` +
-      `<span class="combo2">${pred.combo2}</span>` +
+      comboHtml +
       `<span class="te-label">特</span>` +
       teStr;
 
@@ -1364,9 +1171,6 @@ const app = {
     const nextPeriodNum = parseInt(lastPeriod) + 1;
     document.getElementById('pred-period').textContent =
       '第 ' + nextPeriodNum + ' 期 · 预测和值' + pred.predictedSum + ' · 置信' + pred.confidence + '%';
-
-    const confWrap = document.getElementById('pred-conf-wrap');
-    confWrap.innerHTML = '';
   },
 
   renderTrend() {
@@ -1396,7 +1200,8 @@ const app = {
       const cnt = dist[c] || 0;
       chips[i].querySelector('.count').textContent = cnt;
       chips[i].querySelector('.pct').textContent = Math.round(cnt / total * 100) + '%';
-      chips[i].classList.toggle('active', c === pred.combo1 || c === pred.combo2);
+      const active = (c === pred.combo1 || c === pred.combo2 || c === pred.combo3);
+      chips[i].classList.toggle('active', active);
     }
   },
 
@@ -1454,7 +1259,6 @@ const app = {
   setupCountdown() {
     const latest = this.history[this.history.length - 1];
     if (!latest) return;
-
     let nextTime;
     if (this.countdown) {
       const parts = this.countdown.split(':').map(n => parseInt(n));
@@ -1463,9 +1267,7 @@ const app = {
       nextTime = Date.now() + CONFIG.DRAW_INTERVAL;
     }
     this.countdownTarget = nextTime;
-
     if (this.countdownTimer) clearInterval(this.countdownTimer);
-
     const circ = 2 * Math.PI * 33;
     document.getElementById('ring-fg').setAttribute('stroke-dasharray', circ.toFixed(2));
 
@@ -1524,13 +1326,123 @@ const app = {
 
   init() {
     this.refresh();
-    setInterval(() => {
-      if (!this.isFetching) this.refresh();
-    }, CONFIG.AUTO_REFRESH);
-    setInterval(() => {
-      if (this.lastFetchTime && !this.isFetching) this.updateDataInfo();
-    }, 1000);
+    setInterval(() => { if (!this.isFetching) this.refresh(); }, CONFIG.AUTO_REFRESH);
+    setInterval(() => { if (this.lastFetchTime && !this.isFetching) this.updateDataInfo(); }, 1000);
   }
+};
+
+// 补齐被省略的函数（predictSize, predictParity, 等） - 它们与之前一致，为了完整性，这里直接补全
+QianJinU.predictSize = function(t) {
+  const { bigRatio, bigStreak, lastIsBig, last5Size, last10Size,
+          transMatrix, transMatrix2, lastCombo, altBig, recent20,
+          deltaTrend } = t;
+  let scoreBig = 0;
+  if (bigStreak >= 6) scoreBig -= 3.0;
+  else if (bigStreak >= 5) scoreBig -= 2.0;
+  else if (bigStreak >= 4) scoreBig -= 1.2;
+  else if (bigStreak >= 3) scoreBig -= 0.5;
+  scoreBig += (bigRatio - 0.5) * 5;
+  const last5Big = last5Size.filter(s => s === '大').length;
+  scoreBig += (last5Big - 2.5) * 0.8;
+  const last10Big = last10Size.filter(s => s === '大').length;
+  scoreBig += (last10Big - 5) * 0.3;
+  if (transMatrix[lastCombo]) {
+    const row = transMatrix[lastCombo];
+    const total = Object.values(row).reduce((a,b) => a+b, 0);
+    if (total > 0) {
+      const bigNext = (row['大单'] || 0) + (row['大双'] || 0);
+      scoreBig += (bigNext / total - 0.5) * 2.5;
+    }
+  }
+  if (bigRatio > 0.65) scoreBig -= 0.8;
+  if (bigRatio < 0.35) scoreBig += 0.8;
+  if (altBig >= 7) { scoreBig += lastIsBig ? -0.6 : 0.6; }
+  if (recent20 && recent20.length >= 2) {
+    const key = recent20[recent20.length - 2].combo + '→' + recent20[recent20.length - 1].combo;
+    if (transMatrix2[key]) {
+      const row = transMatrix2[key];
+      const total = Object.values(row).reduce((a,b) => a+b, 0);
+      if (total > 0) {
+        const bigNext = (row['大单'] || 0) + (row['大双'] || 0);
+        scoreBig += (bigNext / total - 0.5) * 2.0;
+      }
+    }
+  }
+  if (Math.abs(deltaTrend) >= 3) { scoreBig += deltaTrend > 0 ? 0.5 : -0.5; }
+  return scoreBig > 0;
+};
+
+QianJinU.predictParity = function(t) {
+  const { oddRatio, oddStreak, lastIsOdd, last5Parity, last10Parity,
+          transMatrix, transMatrix2, lastCombo, altOdd, recent20,
+          deltaTrend } = t;
+  let scoreOdd = 0;
+  if (oddStreak >= 6) scoreOdd -= 3.0;
+  else if (oddStreak >= 5) scoreOdd -= 2.0;
+  else if (oddStreak >= 4) scoreOdd -= 1.2;
+  else if (oddStreak >= 3) scoreOdd -= 0.5;
+  scoreOdd += (oddRatio - 0.5) * 5;
+  const last5Odd = last5Parity.filter(s => s === '单').length;
+  scoreOdd += (last5Odd - 2.5) * 0.8;
+  const last10Odd = last10Parity.filter(s => s === '单').length;
+  scoreOdd += (last10Odd - 5) * 0.3;
+  if (transMatrix[lastCombo]) {
+    const row = transMatrix[lastCombo];
+    const total = Object.values(row).reduce((a,b) => a+b, 0);
+    if (total > 0) {
+      const oddNext = (row['大单'] || 0) + (row['小单'] || 0);
+      scoreOdd += (oddNext / total - 0.5) * 2.5;
+    }
+  }
+  if (oddRatio > 0.65) scoreOdd -= 0.8;
+  if (oddRatio < 0.35) scoreOdd += 0.8;
+  if (altOdd >= 7) { scoreOdd += lastIsOdd ? -0.6 : 0.6; }
+  if (recent20 && recent20.length >= 2) {
+    const key = recent20[recent20.length - 2].combo + '→' + recent20[recent20.length - 1].combo;
+    if (transMatrix2[key]) {
+      const row = transMatrix2[key];
+      const total = Object.values(row).reduce((a,b) => a+b, 0);
+      if (total > 0) {
+        const oddNext = (row['大单'] || 0) + (row['小单'] || 0);
+        scoreOdd += (oddNext / total - 0.5) * 2.0;
+      }
+    }
+  }
+  if (Math.abs(deltaTrend) >= 3) { scoreOdd += deltaTrend % 2 !== 0 ? 0.3 : -0.2; }
+  return scoreOdd > 0;
+};
+
+QianJinU.predictSum = function(t) {
+  const signals = [];
+  signals.push({ v: t.wma5, w: 1.0 });
+  signals.push({ v: t.sumAvg30, w: 0.5 });
+  const lastSum = t.recentSums[t.recentSums.length - 1];
+  const deltaPred = Math.max(0, Math.min(27, lastSum + t.deltaTrend));
+  signals.push({ v: deltaPred, w: 0.4 });
+  const recent5 = [...t.recentSums.slice(-5)].sort((a, b) => a - b);
+  const median5 = recent5.length > 0 ? recent5[Math.floor(recent5.length / 2)] : 13.5;
+  signals.push({ v: median5, w: 0.6 });
+  if (t.wNumberCount && Object.keys(t.wNumberCount).length > 0) {
+    const topSum = parseInt(Object.entries(t.wNumberCount)
+      .sort((a, b) => b[1] - a[1])[0][0]);
+    signals.push({ v: topSum, w: 0.3 });
+  }
+  const totalW = signals.reduce((a, s) => a + s.w, 0);
+  return signals.reduce((a, s) => a + s.v * s.w, 0) / totalW;
+};
+
+QianJinU.calcComboConfidence = function(combo, t, isPrimary) {
+  let score = (t.comboProbs[combo] || 0.25);
+  if (isPrimary) score += 0.15;
+  if (t.transMatrix[t.lastCombo]) {
+    const row = t.transMatrix[t.lastCombo];
+    const total = Object.values(row).reduce((a, b) => a + b, 0);
+    if (total > 0) {
+      const tProb = (row[combo] || 0) / total;
+      score = score * 0.6 + tProb * 0.4;
+    }
+  }
+  return score;
 };
 
 app.init();
