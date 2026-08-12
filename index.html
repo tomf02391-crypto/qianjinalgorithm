@@ -193,7 +193,7 @@ body{
   <div class="navbar">
     <div style="display:flex;align-items:center;gap:10px">
       <div class="nav-logo">💰</div>
-      <div><div class="nav-title liquid-text">千金U · 双组特码</div><div class="nav-sub">v14.0 玻璃液态版 · 算法融合升级</div></div>
+      <div><div class="nav-title liquid-text">千金U · 双组特码</div><div class="nav-sub">v17.0 玻璃液态版 · 算法融合升级</div></div>
     </div>
     <div class="status-badge" id="status-badge" onclick="app.refresh()">
       <span class="status-dot loading" id="status-dot"></span>
@@ -274,7 +274,7 @@ body{
 
 <script>
 // ============================================================
-// 算法核心 — 双组特码 v16.1（玻璃液态版 · 多模型融合 + 三组合覆盖强化 + 杀码频率保护 + 组合中心加权）
+// 算法核心 — 双组特码 v17.0（玻璃液态版 · 多模型融合 + 三组合覆盖强化 + 杀码频率保护 + 组合中心加权）
 // 升级要点：
 //  1. 多窗口频率（5/10/15/20/30期）+ 双衰减加权
 //  2. 9路模型集成投票（频率/动量/均值回归/一阶二阶转移/连龙/交替/RSI/偏度）
@@ -440,10 +440,42 @@ const QianJinU = {
     // 组合概率（贝叶斯融合 + 比例约束）
     const comboProbs = this._estimateComboProbs(wCombo, wCombo5, transMatrix, transMatrix2, lastCombo, recent20, {bigRatio, oddRatio});
 
+    // v17 新特征：跨度 / 尾数 / 重号 / 三位结构
+    const spanStats = {}, tailStats = {}, repeatStats = {0:0,1:0,2:0,3:0};
+    const recentSpan = [];
+    for(const item of recent){
+      const nums = (item.number||'').split('+').map(x=>parseInt(x,10)).filter(x=>!isNaN(x));
+      if(nums.length===3){
+        const span = Math.max(...nums)-Math.min(...nums);
+        recentSpan.push(span);
+        spanStats[span] = (spanStats[span]||0)+1;
+        const tail = item.sum % 10;
+        tailStats[tail] = (tailStats[tail]||0)+1;
+        const uniq = new Set(nums).size;
+        repeatStats[3-uniq] = (repeatStats[3-uniq]||0)+1; // 0无重 1对子 2三同
+      }
+    }
+    const lastSpan = recentSpan.length ? recentSpan[recentSpan.length-1] : 9;
+    const spanMean = recentSpan.length ? this._avg(recentSpan) : 9;
+    // 近5期跨度趋势
+    const span5 = recentSpan.slice(-5);
+    const spanTrend = span5.length>=2 ? span5[span5.length-1]-span5[0] : 0;
+    // 尾数最近出现
+    const tailGaps = {};
+    for(let t=0;t<=9;t++){
+      let gap=999;
+      for(let i=recent.length-1;i>=0;i--){ const n=(recent[i].sum)%10; if(n===t){ gap=recent.length-1-i; break; } }
+      tailGaps[t]=gap;
+    }
+    const lastTail = recent.length ? (recent[recent.length-1].sum%10) : 0;
+    const lastRepeat = repeatStats;
+    const lastSpanVal = lastSpan;
+
     return { comboCount, wCombo, wCombo5, wNumberCount, numberCount, bigRatio, oddRatio, winRatio, lastCombo, lastIsBig, lastIsOdd,
              streak, bigStreak, oddStreak, altBig, altOdd, mean30, mean15, median15, stdDev, skew, ma5, ma10, rsi,
              transMatrix, transMatrix2, transBigProb, transOddProb, gaps, recent, recent20, recent30, wma5,
-             deltaTrend, comboProbs, sums15, sums30, topWeightedSums, coldSums };
+             deltaTrend, comboProbs, sums15, sums30, topWeightedSums, coldSums,
+             spanStats, tailStats, repeatStats, spanMean, spanTrend, tailGaps, lastTail, lastSpan, recentSpan };
   },
 
   _estimateComboProbs(wCombo, wCombo5, transMatrix, transMatrix2, lastCombo, recent20, ratio) {
@@ -598,7 +630,22 @@ const QianJinU = {
     }
     const isBig = n >= 14, isOdd = n % 2 === 1;
     const alignScore = (isBig === predictBig ? 0.5 : 0) + (isOdd === predictOdd ? 0.5 : 0);
-    return { probScore, freqScore, gapScore, predScore, clusterScore, comboProb, coldScore, trendScore, transScore, repeatScore, alignScore };
+    // v17 新增：尾数 / 跨度 / 重号 / 和值区间分布
+    const tail = n % 10;
+    const tailGap = t.tailGaps ? t.tailGaps[tail] : 5;
+    const tailScore = tailGap>=6 ? 0.8 : (tailGap>=3 ? 0.5 : (tailGap===0 ? 0.2 : 0.4));
+    // 跨度接近均值
+    const spanScore = t.spanMean ? Math.max(0, 1 - Math.abs((t.lastSpan||9) - t.spanMean)/9) : 0.5;
+    // 重号倾向：近15期对子占比
+    const pairRatio = t.repeatStats ? ((t.repeatStats[1]||0)+(t.repeatStats[2]||0)*2)/Math.max(1,(t.repeatStats[0]||0)+(t.repeatStats[1]||0)+(t.repeatStats[2]||0)) : 0.3;
+    // 和值区间分布：该组合内近30期和值四分位，落在 [q1,q3] 区间加分
+    let rangeScore = 0.5;
+    if(t.sums15 && t.sums15.length>=8){
+      const s = [...t.sums15].sort((a,b)=>a-b);
+      const q1 = s[Math.floor(s.length*0.25)], q3 = s[Math.floor(s.length*0.75)];
+      rangeScore = (n>=q1 && n<=q3) ? 1.0 : (Math.abs(n-q1)<3 || Math.abs(n-q3)<3 ? 0.7 : 0.3);
+    }
+    return { probScore, freqScore, gapScore, predScore, clusterScore, comboProb, coldScore, trendScore, transScore, repeatScore, alignScore, tailScore, spanScore, pairScore:pairRatio, rangeScore };
   },
 
   pickNumbersGlobal(t, predictedSum, weights, predictBig, predictOdd) {
@@ -608,7 +655,8 @@ const QianJinU = {
       const score = weights.prob*feat.probScore + weights.freq*feat.freqScore + weights.gap*feat.gapScore +
                     weights.pred*feat.predScore + weights.cluster*feat.clusterScore + weights.combo*feat.comboProb +
                     weights.cold*feat.coldScore + weights.trend*feat.trendScore + weights.trans*feat.transScore +
-                    weights.repeat*feat.repeatScore + weights.align*feat.alignScore;
+                    weights.repeat*feat.repeatScore + weights.align*feat.alignScore +
+                    weights.tail*feat.tailScore + weights.span*feat.spanScore + weights.pair*feat.pairScore + weights.range*feat.rangeScore;
       scored.push({num:n, score});
     }
     scored.sort((a,b)=>b.score-a.score);
@@ -629,17 +677,42 @@ const QianJinU = {
     if(t.transMatrix[t.lastCombo]){ const row=t.transMatrix[t.lastCombo]; const total=Object.values(row).reduce((a,b)=>a+b,0); if(total>0) return (row[combo]||0)/total; }
     return 0.25;
   },
+  _killRegret: {},
+  _killRegretCount: 0,
+  learnKillRegret(killCombo, actualCombo, history) {
+    if(!killCombo || !actualCombo) return;
+    if(killCombo === actualCombo){
+      this._killRegret[actualCombo] = (this._killRegret[actualCombo]||0) + 1;
+    } else {
+      this._killRegret[actualCombo] = (this._killRegret[actualCombo]||0) * 0.98;
+    }
+    this._killRegretCount++;
+    if(this._killRegretCount > 200) this._killRegretCount = 200;
+  },
+  getKillRegretScore(combo) {
+    const cnt = this._killRegret[combo] || 0;
+    if(cnt <= 0) return 0;
+    return Math.min(1.8, cnt * 0.22);
+  },
   predictKillCombo(t, history) {
     const combos = ['大单','大双','小单','小双'];
-    const baseProbs = this.getComboBaseProbs();
+    // v17f 实际频率基准：全历史组合实际频率替代理论概率权重（大单实际27%不能被理论低权重误导）
+    const histFreq = {};
+    for(const c of combos) histFreq[c] = 0.25;
+    if(history && history.length>=30){
+      for(const r of history) histFreq[r.combo] = (histFreq[r.combo]||0)+1;
+      const ht = history.length;
+      for(const c of combos) histFreq[c] /= ht;
+    }
+    const pb = this.predictSize(t), po = this.predictParity(t);
     const killScores = {};
     for(const combo of combos){
       let score = 0;
-      const baseProb = baseProbs[combo];
-      score += (0.25 - baseProb)*4.0;
+      const baseProb = histFreq[combo];
+      score += (0.25 - baseProb)*5.0;
       const recentCount = t.comboCount[combo]||0;
       const expectedCount = baseProb * (t.recent?.length || 15);
-      score += (recentCount - expectedCount)*0.5;
+      score += (recentCount - expectedCount)*0.6;
       score += (0.25 - this._transScore(combo, t))*2.5;
       if(t.recent20 && t.recent20.length>=2){
         const key = t.recent20[t.recent20.length-2].combo+'→'+t.recent20[t.recent20.length-1].combo;
@@ -655,11 +728,20 @@ const QianJinU = {
       const w5c = t.wCombo5[combo]||0;
       const w5t = Object.values(t.wCombo5).reduce((a,b)=>a+b,0)||1;
       score += (0.25 - w5c/w5t)*2.0;
-      // v16.0 全局频率保护：历史高频组合不易被误杀（小单/大双等真实高频）
+      // 全局频率保护（降权避免双重惩罚）+ 漂移增强
       if(history && history.length>=20){
         const gf = history.filter(r=>r.combo===combo).length / history.length;
-        score -= (gf - 0.25) * 3.0;
+        const db = this._driftBoost || 0;
+        score -= (gf - 0.25) * (1.5 + db);
       }
+      // v17a 组合条件约束：动态按方向置信度
+      const isB = combo==='大单'||combo==='大双';
+      const isO = combo==='大单'||combo==='小单';
+      const dirConf = Math.abs(t.bigRatio-0.5) + Math.abs(t.oddRatio-0.5);
+      if(isB === pb) score -= (dirConf > 0.3 ? 1.6 : 0.6);
+      if(isO === po) score -= (dirConf > 0.3 ? 1.6 : 0.6);
+      // v17b 后悔机制
+      score += this.getKillRegretScore(combo);
       killScores[combo] = score;
     }
     return Object.entries(killScores).sort((a,b)=>b[1]-a[1])[0][0];
@@ -667,22 +749,33 @@ const QianJinU = {
 
   // ========== 交叉验证权重池（10套） ==========
   _weightPool: [
-    { name:'均衡型', prob:0.5, freq:2.0, gap:0.6, pred:1.8, cluster:0.4, combo:1.0, cold:0.5, trend:0.3, trans:0.7, repeat:0.5, align:0.8 },
-    { name:'激进追热', prob:0.2, freq:4.0, gap:0.3, pred:2.0, cluster:0.3, combo:0.6, cold:0.1, trend:0.2, trans:0.4, repeat:1.2, align:0.5 },
-    { name:'重号优先', prob:0.3, freq:3.0, gap:0.4, pred:1.8, cluster:0.4, combo:0.8, cold:0.2, trend:0.2, trans:0.5, repeat:2.0, align:0.6 },
-    { name:'侧重和值', prob:0.4, freq:1.8, gap:0.5, pred:3.5, cluster:0.5, combo:0.8, cold:0.4, trend:0.4, trans:0.6, repeat:0.6, align:0.6 },
-    { name:'冷热平衡', prob:0.5, freq:2.5, gap:0.8, pred:1.6, cluster:0.4, combo:1.0, cold:1.0, trend:0.3, trans:0.7, repeat:0.8, align:0.8 },
-    { name:'形态+重号', prob:0.4, freq:2.8, gap:0.4, pred:1.5, cluster:0.3, combo:2.0, cold:0.3, trend:0.2, trans:0.6, repeat:1.5, align:1.0 },
-    { name:'智能融合', prob:0.6, freq:2.2, gap:0.5, pred:2.2, cluster:0.5, combo:1.2, cold:0.5, trend:0.4, trans:0.9, repeat:0.7, align:1.4 },
-    { name:'形态驱动', prob:0.4, freq:2.0, gap:0.4, pred:1.6, cluster:0.3, combo:2.4, cold:0.3, trend:0.3, trans:1.2, repeat:0.6, align:1.6 },
-    { name:'趋势跟随', prob:0.3, freq:2.6, gap:0.4, pred:2.6, cluster:0.5, combo:0.7, cold:0.3, trend:1.2, trans:0.6, repeat:0.6, align:0.7 },
-    { name:'稳健防守', prob:0.7, freq:1.8, gap:0.7, pred:1.5, cluster:0.5, combo:1.1, cold:0.6, trend:0.2, trans:0.8, repeat:0.6, align:0.9 },
+    { name:'均衡型', prob:0.5, freq:2.0, gap:0.6, pred:1.8, cluster:0.4, combo:1.0, cold:0.5, trend:0.3, trans:0.7, repeat:0.5, align:0.8, tail:0.5, span:0.3, pair:0.3, range:0.6 },
+    { name:'激进追热', prob:0.2, freq:4.0, gap:0.3, pred:2.0, cluster:0.3, combo:0.6, cold:0.1, trend:0.2, trans:0.4, repeat:1.2, align:0.5, tail:0.4, span:0.2, pair:0.4, range:0.5 },
+    { name:'重号优先', prob:0.3, freq:3.0, gap:0.4, pred:1.8, cluster:0.4, combo:0.8, cold:0.2, trend:0.2, trans:0.5, repeat:2.0, align:0.6, tail:0.3, span:0.2, pair:1.5, range:0.4 },
+    { name:'侧重和值', prob:0.4, freq:1.8, gap:0.5, pred:3.5, cluster:0.5, combo:0.8, cold:0.4, trend:0.4, trans:0.6, repeat:0.6, align:0.6, tail:0.4, span:0.3, pair:0.3, range:1.2 },
+    { name:'冷热平衡', prob:0.5, freq:2.5, gap:0.8, pred:1.6, cluster:0.4, combo:1.0, cold:1.0, trend:0.3, trans:0.7, repeat:0.8, align:0.8, tail:0.6, span:0.4, pair:0.4, range:0.7 },
+    { name:'形态+重号', prob:0.4, freq:2.8, gap:0.4, pred:1.5, cluster:0.3, combo:2.0, cold:0.3, trend:0.2, trans:0.6, repeat:1.5, align:1.0, tail:0.4, span:0.3, pair:1.2, range:0.5 },
+    { name:'智能融合', prob:0.6, freq:2.2, gap:0.5, pred:2.2, cluster:0.5, combo:1.2, cold:0.5, trend:0.4, trans:0.9, repeat:0.7, align:1.4, tail:0.7, span:0.5, pair:0.5, range:0.9 },
+    { name:'形态驱动', prob:0.4, freq:2.0, gap:0.4, pred:1.6, cluster:0.3, combo:2.4, cold:0.3, trend:0.3, trans:1.2, repeat:0.6, align:1.6, tail:0.5, span:0.4, pair:0.5, range:0.8 },
+    { name:'趋势跟随', prob:0.3, freq:2.6, gap:0.4, pred:2.6, cluster:0.5, combo:0.7, cold:0.3, trend:1.2, trans:0.6, repeat:0.6, align:0.7, tail:0.5, span:0.5, pair:0.4, range:0.7 },
+    { name:'稳健防守', prob:0.7, freq:1.8, gap:0.7, pred:1.5, cluster:0.5, combo:1.1, cold:0.6, trend:0.2, trans:0.8, repeat:0.6, align:0.9, tail:0.6, span:0.4, pair:0.4, range:0.8 },
+    { name:'尾数猎手', prob:0.3, freq:2.2, gap:0.5, pred:1.8, cluster:0.4, combo:0.8, cold:0.4, trend:0.3, trans:0.6, repeat:0.6, align:0.7, tail:2.2, span:0.3, pair:0.4, range:0.6 },
+    { name:'跨度专家', prob:0.4, freq:2.0, gap:0.5, pred:1.8, cluster:0.4, combo:0.9, cold:0.4, trend:0.4, trans:0.6, repeat:0.6, align:0.8, tail:0.4, span:2.4, pair:0.4, range:0.6 },
+    { name:'区间分布', prob:0.4, freq:1.8, gap:0.5, pred:2.0, cluster:0.4, combo:0.9, cold:0.4, trend:0.3, trans:0.6, repeat:0.6, align:0.7, tail:0.4, span:0.3, pair:0.4, range:2.6 },
+    { name:'结构追热', prob:0.3, freq:3.2, gap:0.3, pred:1.8, cluster:0.3, combo:0.8, cold:0.2, trend:0.3, trans:0.5, repeat:1.4, align:0.6, tail:0.8, span:0.5, pair:1.2, range:0.6 },
+    { name:'平衡区间', prob:0.5, freq:2.2, gap:0.6, pred:1.8, cluster:0.4, combo:1.0, cold:0.5, trend:0.3, trans:0.7, repeat:0.6, align:0.8, tail:0.5, span:0.4, pair:0.4, range:1.4 },
+    { name:'冷尾补偿', prob:0.5, freq:2.0, gap:0.7, pred:1.6, cluster:0.4, combo:1.0, cold:0.8, trend:0.3, trans:0.7, repeat:0.6, align:0.8, tail:1.6, span:0.4, pair:0.4, range:0.8 },
+    { name:'全维融合', prob:0.5, freq:2.4, gap:0.5, pred:2.0, cluster:0.4, combo:1.1, cold:0.5, trend:0.4, trans:0.8, repeat:0.7, align:1.0, tail:0.9, span:0.7, pair:0.7, range:1.1 },
+    { name:'近远覆盖', prob:0.5, freq:2.0, gap:0.5, pred:2.2, cluster:0.5, combo:0.9, cold:0.4, trend:0.3, trans:0.6, repeat:0.6, align:0.8, tail:0.5, span:0.4, pair:0.4, range:1.6 },
+    { name:'稳中求进', prob:0.6, freq:2.2, gap:0.5, pred:1.9, cluster:0.4, combo:1.1, cold:0.5, trend:0.3, trans:0.7, repeat:0.6, align:0.9, tail:0.6, span:0.4, pair:0.4, range:0.9 },
+    { name:'防守反击', prob:0.7, freq:1.6, gap:0.8, pred:1.5, cluster:0.5, combo:1.2, cold:0.7, trend:0.2, trans:0.8, repeat:0.5, align:0.9, tail:0.6, span:0.5, pair:0.4, range:0.7 },
   ],
 
+  // v17 三段式：train(训练) / validate(选权重) / test(评估) + 漂移检测
   crossValidate(history) {
-    if(history.length < 100) return this._weightPool[1];
+    if(history.length < 45) return this._weightPool[1];
     const total = history.length;
-    const folds = 5;
+    const folds = 4;
     const foldSize = Math.floor(total / folds);
     let bestWeights = null, bestAvgScore = -1;
     for(const w of this._weightPool){
@@ -690,14 +783,21 @@ const QianJinU = {
       for(let f=0; f<folds; f++){
         const testStart = f * foldSize;
         const testEnd = (f+1) * foldSize;
-        const train = history.slice(0, testStart);
-        const test = history.slice(testStart, testEnd);
-        if(train.length < 30 || test.length === 0) continue;
+        // 三段：train 前70% 训练，validate 中间15%，test 最后15% 评估
+        const trainEnd = testStart + Math.floor((testEnd - testStart) * 0.7);
+        const valEnd = testStart + Math.floor((testEnd - testStart) * 0.85);
+        const train = history.slice(0, trainEnd);
+        const val = history.slice(trainEnd, valEnd);
+        const test = history.slice(valEnd, testEnd);
+        if(train.length < 35 || test.length === 0) continue;
         let hit=0, count=0;
-        for(let i=0; i<test.length; i++){
-          const pred = this._predictWithWeights(train.slice(0, testStart + i), w);
+        // 用 validate 段选优（防过拟合）
+        const evalSeg = (val && val.length>=2) ? val : test;
+        const evalStart = (val && val.length>=2) ? trainEnd : valEnd;
+        for(let i=0; i<evalSeg.length; i++){
+          const pred = this._predictWithWeights(train.slice(0, evalStart + i), w);
           if(pred.error) continue;
-          const actual = test[i];
+          const actual = evalSeg[i];
           if(pred.teNumbers.includes(actual.sum)) hit++;
           count++;
         }
@@ -711,7 +811,25 @@ const QianJinU = {
 
   _predictWithWeights(history, weights) {
     if(!history || history.length<5) return { error:'数据不足' };
+    const w = Object.assign({tail:0, span:0, pair:0, range:0}, weights);
     const t = this.analyzeTrend(history);
+    // v17 漂移检测：近15期 vs 全历史组合分布偏差，供策略层参考
+    if(history.length>=30){
+      const recent15 = history.slice(-15);
+      const distAll = {}, distRecent = {};
+      for(const c of ['大单','大双','小单','小双']) { distAll[c]=0; distRecent[c]=0; }
+      for(const r of history) distAll[r.combo]++;
+      for(const r of recent15) distRecent[r.combo]++;
+      const al = history.length, rl = recent15.length;
+      let drift = 0;
+      for(const c of ['大单','大双','小单','小双']){
+        const pa = distAll[c]/al, pr = distRecent[c]/rl;
+        if(pa>0.01) drift += Math.abs(pr - pa);
+      }
+      t._drift = drift;
+      // 漂移大时加强杀码的近期频率权重（在线适应）
+      this._driftBoost = drift > 0.18 ? 0.5 : 0;
+    }
     const killCombo = this.predictKillCombo(t, history);
     const predictBig = this.predictSize(t);
     const predictOdd = this.predictParity(t);
@@ -725,7 +843,7 @@ const QianJinU = {
     const combo1 = selected[0], combo2 = selected[1]||null, combo3 = selected[2]||null;
     const active = [combo1, combo2, combo3].filter(c=>c);
     const predictedSum = this.predictSum(t);
-    const scored = this.pickNumbersGlobal(t, predictedSum, weights, predictBig, predictOdd);
+    const scored = this.pickNumbersGlobal(t, predictedSum, w, predictBig, predictOdd);
     // v16.1 组合中心加权：按训练历史近30期各组合实际开号中心，抑制边界虚高数字（0/1/2/3）
     const centers = {};
     for(const c of ['大单','大双','小单','小双']){
@@ -839,7 +957,7 @@ const CONFIG = {
   AUTO_REFRESH: 10000,
   FETCH_TIMEOUT: 6000,
 };
-const EMBEDDED_DATA = {"countdown":"00:00","data":[{"nbr":"3468379","date":"2026-08-12","time":"02:54:00","number":"4+1+2","num":"7","combination":"小单"},{"nbr":"3468378","date":"2026-08-12","time":"02:50:30","number":"5+1+1","num":"7","combination":"小单"},{"nbr":"3468377","date":"2026-08-12","time":"02:47:00","number":"3+4+5","num":"12","combination":"小双"},{"nbr":"3468376","date":"2026-08-12","time":"02:43:30","number":"7+6+9","num":"22","combination":"大双"},{"nbr":"3468375","date":"2026-08-12","time":"02:40:00","number":"9+1+9","num":"19","combination":"大单"},{"nbr":"3468374","date":"2026-08-12","time":"02:36:30","number":"4+2+1","num":"7","combination":"小单"},{"nbr":"3468373","date":"2026-08-12","time":"02:33:00","number":"4+6+0","num":"10","combination":"小双"},{"nbr":"3468372","date":"2026-08-12","time":"02:29:30","number":"7+0+5","num":"12","combination":"小双"},{"nbr":"3468371","date":"2026-08-12","time":"02:26:00","number":"5+2+4","num":"11","combination":"小单"},{"nbr":"3468370","date":"2026-08-12","time":"02:22:30","number":"7+1+6","num":"14","combination":"大双"},{"nbr":"3468369","date":"2026-08-12","time":"02:19:00","number":"3+4+2","num":"9","combination":"小单"},{"nbr":"3468368","date":"2026-08-12","time":"02:15:30","number":"8+8+0","num":"16","combination":"大双"},{"nbr":"3468367","date":"2026-08-12","time":"02:12:00","number":"3+3+3","num":"9","combination":"小单"},{"nbr":"3468366","date":"2026-08-12","time":"02:08:30","number":"3+9+9","num":"21","combination":"大单"},{"nbr":"3468365","date":"2026-08-12","time":"02:05:00","number":"5+9+3","num":"17","combination":"大单"},{"nbr":"3468364","date":"2026-08-12","time":"02:01:30","number":"2+3+6","num":"11","combination":"小单"},{"nbr":"3468363","date":"2026-08-12","time":"01:58:00","number":"3+8+5","num":"16","combination":"大双"},{"nbr":"3468362","date":"2026-08-12","time":"01:54:30","number":"5+1+6","num":"12","combination":"小双"},{"nbr":"3468361","date":"2026-08-12","time":"01:51:00","number":"6+6+5","num":"17","combination":"大单"},{"nbr":"3468360","date":"2026-08-12","time":"01:47:30","number":"3+5+2","num":"10","combination":"小双"},{"nbr":"3468359","date":"2026-08-12","time":"01:44:00","number":"8+4+9","num":"21","combination":"大单"},{"nbr":"3468358","date":"2026-08-12","time":"01:40:30","number":"8+7+3","num":"18","combination":"大双"},{"nbr":"3468357","date":"2026-08-12","time":"01:37:00","number":"3+1+1","num":"5","combination":"小单"},{"nbr":"3468356","date":"2026-08-12","time":"01:33:30","number":"1+7+3","num":"11","combination":"小单"},{"nbr":"3468355","date":"2026-08-12","time":"01:30:00","number":"7+3+4","num":"14","combination":"大双"},{"nbr":"3468354","date":"2026-08-12","time":"01:26:30","number":"6+1+5","num":"12","combination":"小双"},{"nbr":"3468353","date":"2026-08-12","time":"01:23:00","number":"2+1+8","num":"11","combination":"小单"},{"nbr":"3468352","date":"2026-08-12","time":"01:19:30","number":"0+1+4","num":"5","combination":"小单"},{"nbr":"3468351","date":"2026-08-12","time":"01:16:00","number":"0+1+4","num":"5","combination":"小单"},{"nbr":"3468350","date":"2026-08-12","time":"01:12:30","number":"3+4+9","num":"16","combination":"大双"},{"nbr":"3468349","date":"2026-08-12","time":"01:09:00","number":"8+3+6","num":"17","combination":"大单"},{"nbr":"3468348","date":"2026-08-12","time":"01:05:30","number":"3+7+4","num":"14","combination":"大双"},{"nbr":"3468347","date":"2026-08-12","time":"01:02:00","number":"5+4+1","num":"10","combination":"小双"},{"nbr":"3468346","date":"2026-08-12","time":"00:58:30","number":"7+6+6","num":"19","combination":"大单"},{"nbr":"3468345","date":"2026-08-12","time":"00:55:00","number":"8+1+0","num":"9","combination":"小单"},{"nbr":"3468344","date":"2026-08-12","time":"00:51:30","number":"4+6+8","num":"18","combination":"大双"},{"nbr":"3468343","date":"2026-08-12","time":"00:48:00","number":"2+2+4","num":"8","combination":"小双"},{"nbr":"3468342","date":"2026-08-12","time":"00:44:30","number":"6+2+1","num":"9","combination":"小单"},{"nbr":"3468341","date":"2026-08-12","time":"00:41:00","number":"0+1+7","num":"8","combination":"小双"},{"nbr":"3468340","date":"2026-08-12","time":"00:37:30","number":"7+3+0","num":"10","combination":"小双"},{"nbr":"3468339","date":"2026-08-12","time":"00:34:00","number":"7+2+5","num":"14","combination":"大双"},{"nbr":"3468338","date":"2026-08-12","time":"00:30:30","number":"4+4+6","num":"14","combination":"大双"},{"nbr":"3468337","date":"2026-08-12","time":"00:27:00","number":"2+1+0","num":"3","combination":"小单"},{"nbr":"3468336","date":"2026-08-12","time":"00:23:30","number":"4+3+9","num":"16","combination":"大双"},{"nbr":"3468335","date":"2026-08-12","time":"00:20:00","number":"3+6+1","num":"10","combination":"小双"},{"nbr":"3468334","date":"2026-08-12","time":"00:16:30","number":"5+5+5","num":"15","combination":"大单"},{"nbr":"3468333","date":"2026-08-12","time":"00:13:00","number":"9+3+5","num":"17","combination":"大单"},{"nbr":"3468332","date":"2026-08-12","time":"00:09:30","number":"3+8+0","num":"11","combination":"小单"},{"nbr":"3468331","date":"2026-08-12","time":"00:06:00","number":"2+8+1","num":"11","combination":"小单"},{"nbr":"3468330","date":"2026-08-12","time":"00:02:30","number":"4+7+5","num":"16","combination":"大双"},{"nbr":"3468329","date":"2026-08-11","time":"23:59:00","number":"3+7+1","num":"11","combination":"小单"},{"nbr":"3468328","date":"2026-08-11","time":"23:55:30","number":"5+3+1","num":"9","combination":"小单"},{"nbr":"3468327","date":"2026-08-11","time":"23:52:00","number":"4+9+8","num":"21","combination":"大单"},{"nbr":"3468326","date":"2026-08-11","time":"23:48:30","number":"4+8+1","num":"13","combination":"小单"},{"nbr":"3468325","date":"2026-08-11","time":"23:45:00","number":"9+6+1","num":"16","combination":"大双"},{"nbr":"3468324","date":"2026-08-11","time":"23:41:30","number":"4+1+6","num":"11","combination":"小单"},{"nbr":"3468323","date":"2026-08-11","time":"23:38:00","number":"4+7+6","num":"17","combination":"大单"},{"nbr":"3468322","date":"2026-08-11","time":"23:34:30","number":"4+5+1","num":"10","combination":"小双"},{"nbr":"3468321","date":"2026-08-11","time":"23:31:00","number":"7+5+1","num":"13","combination":"小单"},{"nbr":"3468320","date":"2026-08-11","time":"23:27:30","number":"8+8+7","num":"23","combination":"大单"},{"nbr":"3468319","date":"2026-08-11","time":"23:24:00","number":"8+3+7","num":"18","combination":"大双"},{"nbr":"3468318","date":"2026-08-11","time":"23:20:30","number":"1+4+1","num":"6","combination":"小双"},{"nbr":"3468317","date":"2026-08-11","time":"23:17:00","number":"1+8+1","num":"10","combination":"小双"},{"nbr":"3468316","date":"2026-08-11","time":"23:13:30","number":"1+2+4","num":"7","combination":"小单"},{"nbr":"3468315","date":"2026-08-11","time":"23:10:00","number":"3+8+3","num":"14","combination":"大双"},{"nbr":"3468314","date":"2026-08-11","time":"23:06:30","number":"7+3+3","num":"13","combination":"小单"},{"nbr":"3468313","date":"2026-08-11","time":"23:03:00","number":"3+1+1","num":"5","combination":"小单"},{"nbr":"3468312","date":"2026-08-11","time":"22:59:30","number":"5+5+9","num":"19","combination":"大单"},{"nbr":"3468311","date":"2026-08-11","time":"22:56:00","number":"9+6+0","num":"15","combination":"大单"},{"nbr":"3468310","date":"2026-08-11","time":"22:52:30","number":"5+4+7","num":"16","combination":"大双"},{"nbr":"3468309","date":"2026-08-11","time":"22:49:00","number":"3+0+0","num":"3","combination":"小单"},{"nbr":"3468308","date":"2026-08-11","time":"22:45:30","number":"6+1+5","num":"12","combination":"小双"},{"nbr":"3468307","date":"2026-08-11","time":"22:42:00","number":"5+9+6","num":"20","combination":"大双"},{"nbr":"3468306","date":"2026-08-11","time":"22:38:30","number":"1+2+5","num":"8","combination":"小双"},{"nbr":"3468305","date":"2026-08-11","time":"22:35:00","number":"3+8+0","num":"11","combination":"小单"},{"nbr":"3468304","date":"2026-08-11","time":"22:31:30","number":"3+3+3","num":"9","combination":"小单"},{"nbr":"3468303","date":"2026-08-11","time":"22:28:00","number":"9+6+7","num":"22","combination":"大双"},{"nbr":"3468302","date":"2026-08-11","time":"22:24:30","number":"2+3+9","num":"14","combination":"大双"},{"nbr":"3468301","date":"2026-08-11","time":"22:21:00","number":"1+6+0","num":"7","combination":"小单"},{"nbr":"3468300","date":"2026-08-11","time":"22:17:30","number":"0+8+3","num":"11","combination":"小单"}],"message":"success"};
+const EMBEDDED_DATA = {"countdown": "00:00", "data": [{"nbr": "3468624", "date": "2026-08-12", "time": "17:11:30", "number": "9+7+9", "num": "25", "combination": "大单"}, {"nbr": "3468625", "date": "2026-08-12", "time": "17:15:00", "number": "4+3+5", "num": "12", "combination": "小双"}, {"nbr": "3468626", "date": "2026-08-12", "time": "17:18:30", "number": "2+6+6", "num": "14", "combination": "大双"}, {"nbr": "3468627", "date": "2026-08-12", "time": "17:22:00", "number": "6+7+5", "num": "18", "combination": "大双"}, {"nbr": "3468628", "date": "2026-08-12", "time": "17:25:30", "number": "6+5+1", "num": "12", "combination": "小双"}, {"nbr": "3468629", "date": "2026-08-12", "time": "17:29:00", "number": "6+1+2", "num": "9", "combination": "小单"}, {"nbr": "3468630", "date": "2026-08-12", "time": "17:32:30", "number": "9+9+0", "num": "18", "combination": "大双"}, {"nbr": "3468631", "date": "2026-08-12", "time": "17:36:00", "number": "0+9+9", "num": "18", "combination": "大双"}, {"nbr": "3468632", "date": "2026-08-12", "time": "17:39:30", "number": "7+3+4", "num": "14", "combination": "大双"}, {"nbr": "3468633", "date": "2026-08-12", "time": "17:43:00", "number": "6+1+1", "num": "8", "combination": "小双"}, {"nbr": "3468634", "date": "2026-08-12", "time": "17:46:30", "number": "6+4+0", "num": "10", "combination": "小双"}, {"nbr": "3468635", "date": "2026-08-12", "time": "17:50:00", "number": "1+2+5", "num": "8", "combination": "小双"}, {"nbr": "3468636", "date": "2026-08-12", "time": "17:53:30", "number": "8+6+1", "num": "15", "combination": "大单"}, {"nbr": "3468637", "date": "2026-08-12", "time": "17:57:00", "number": "6+0+5", "num": "11", "combination": "小单"}, {"nbr": "3468638", "date": "2026-08-12", "time": "18:00:30", "number": "4+7+8", "num": "19", "combination": "大单"}, {"nbr": "3468639", "date": "2026-08-12", "time": "18:04:00", "number": "1+8+6", "num": "15", "combination": "大单"}, {"nbr": "3468640", "date": "2026-08-12", "time": "18:07:30", "number": "4+8+7", "num": "19", "combination": "大单"}, {"nbr": "3468641", "date": "2026-08-12", "time": "18:11:00", "number": "9+5+6", "num": "20", "combination": "大双"}, {"nbr": "3468642", "date": "2026-08-12", "time": "18:14:30", "number": "9+6+3", "num": "18", "combination": "大双"}, {"nbr": "3468643", "date": "2026-08-12", "time": "18:18:00", "number": "5+8+1", "num": "14", "combination": "大双"}, {"nbr": "3468644", "date": "2026-08-12", "time": "18:21:30", "number": "6+1+7", "num": "14", "combination": "大双"}, {"nbr": "3468645", "date": "2026-08-12", "time": "18:25:00", "number": "5+4+5", "num": "14", "combination": "大双"}, {"nbr": "3468646", "date": "2026-08-12", "time": "18:28:30", "number": "7+0+6", "num": "13", "combination": "小单"}, {"nbr": "3468647", "date": "2026-08-12", "time": "18:32:00", "number": "9+4+1", "num": "14", "combination": "大双"}, {"nbr": "3468648", "date": "2026-08-12", "time": "18:35:30", "number": "2+5+1", "num": "8", "combination": "小双"}, {"nbr": "3468649", "date": "2026-08-12", "time": "18:39:00", "number": "7+5+7", "num": "19", "combination": "大单"}, {"nbr": "3468650", "date": "2026-08-12", "time": "18:42:30", "number": "7+0+7", "num": "14", "combination": "大双"}, {"nbr": "3468651", "date": "2026-08-12", "time": "18:46:00", "number": "4+9+6", "num": "19", "combination": "大单"}, {"nbr": "3468652", "date": "2026-08-12", "time": "18:49:30", "number": "6+1+4", "num": "11", "combination": "小单"}, {"nbr": "3468653", "date": "2026-08-12", "time": "18:53:00", "number": "9+9+2", "num": "20", "combination": "大双"}, {"nbr": "3468654", "date": "2026-08-12", "time": "18:56:30", "number": "7+9+3", "num": "19", "combination": "大单"}, {"nbr": "3468655", "date": "2026-08-12", "time": "19:33:00", "number": "9+6+6", "num": "21", "combination": "大单"}, {"nbr": "3468656", "date": "2026-08-12", "time": "19:36:30", "number": "8+8+1", "num": "17", "combination": "大单"}, {"nbr": "3468657", "date": "2026-08-12", "time": "19:40:00", "number": "4+9+8", "num": "21", "combination": "大单"}, {"nbr": "3468658", "date": "2026-08-12", "time": "19:43:30", "number": "1+2+5", "num": "8", "combination": "小双"}, {"nbr": "3468659", "date": "2026-08-12", "time": "19:47:00", "number": "2+8+6", "num": "16", "combination": "大双"}, {"nbr": "3468660", "date": "2026-08-12", "time": "19:50:30", "number": "8+7+0", "num": "15", "combination": "大单"}, {"nbr": "3468661", "date": "2026-08-12", "time": "19:54:00", "number": "8+7+6", "num": "21", "combination": "大单"}, {"nbr": "3468662", "date": "2026-08-12", "time": "19:57:30", "number": "4+4+6", "num": "14", "combination": "大双"}, {"nbr": "3468663", "date": "2026-08-12", "time": "20:01:00", "number": "9+1+4", "num": "14", "combination": "大双"}, {"nbr": "3468664", "date": "2026-08-12", "time": "20:04:30", "number": "7+1+1", "num": "9", "combination": "小单"}, {"nbr": "3468665", "date": "2026-08-12", "time": "20:08:00", "number": "0+2+5", "num": "7", "combination": "小单"}, {"nbr": "3468666", "date": "2026-08-12", "time": "20:11:30", "number": "1+6+8", "num": "15", "combination": "大单"}, {"nbr": "3468667", "date": "2026-08-12", "time": "20:15:00", "number": "5+8+6", "num": "19", "combination": "大单"}, {"nbr": "3468668", "date": "2026-08-12", "time": "20:18:30", "number": "9+8+6", "num": "23", "combination": "大单"}, {"nbr": "3468669", "date": "2026-08-12", "time": "20:22:00", "number": "0+9+5", "num": "14", "combination": "大双"}, {"nbr": "3468670", "date": "2026-08-12", "time": "20:25:30", "number": "3+0+7", "num": "10", "combination": "小双"}, {"nbr": "3468671", "date": "2026-08-12", "time": "20:29:00", "number": "2+8+4", "num": "14", "combination": "大双"}, {"nbr": "3468672", "date": "2026-08-12", "time": "20:32:30", "number": "0+7+9", "num": "16", "combination": "大双"}, {"nbr": "3468673", "date": "2026-08-12", "time": "20:36:00", "number": "5+4+4", "num": "13", "combination": "小单"}, {"nbr": "3468674", "date": "2026-08-12", "time": "20:39:30", "number": "7+8+5", "num": "20", "combination": "大双"}, {"nbr": "3468675", "date": "2026-08-12", "time": "20:43:00", "number": "4+7+9", "num": "20", "combination": "大双"}, {"nbr": "3468676", "date": "2026-08-12", "time": "20:46:30", "number": "7+3+8", "num": "18", "combination": "大双"}, {"nbr": "3468677", "date": "2026-08-12", "time": "20:50:00", "number": "0+7+9", "num": "16", "combination": "大双"}, {"nbr": "3468678", "date": "2026-08-12", "time": "20:53:30", "number": "9+2+1", "num": "12", "combination": "小双"}, {"nbr": "3468679", "date": "2026-08-12", "time": "20:57:00", "number": "4+4+3", "num": "11", "combination": "小单"}, {"nbr": "3468680", "date": "2026-08-12", "time": "21:00:30", "number": "4+8+2", "num": "14", "combination": "大双"}, {"nbr": "3468681", "date": "2026-08-12", "time": "21:04:00", "number": "4+5+3", "num": "12", "combination": "小双"}, {"nbr": "3468682", "date": "2026-08-12", "time": "21:07:30", "number": "7+1+0", "num": "8", "combination": "小双"}, {"nbr": "3468683", "date": "2026-08-12", "time": "21:11:00", "number": "2+4+5", "num": "11", "combination": "小单"}, {"nbr": "3468684", "date": "2026-08-12", "time": "21:14:30", "number": "8+4+5", "num": "17", "combination": "大单"}, {"nbr": "3468685", "date": "2026-08-12", "time": "21:18:00", "number": "3+4+3", "num": "10", "combination": "小双"}, {"nbr": "3468686", "date": "2026-08-12", "time": "21:21:30", "number": "1+1+4", "num": "6", "combination": "小双"}, {"nbr": "3468687", "date": "2026-08-12", "time": "21:25:00", "number": "3+6+1", "num": "10", "combination": "小双"}, {"nbr": "3468688", "date": "2026-08-12", "time": "21:28:30", "number": "9+2+6", "num": "17", "combination": "大单"}, {"nbr": "3468689", "date": "2026-08-12", "time": "21:32:00", "number": "0+9+1", "num": "10", "combination": "小双"}, {"nbr": "3468690", "date": "2026-08-12", "time": "21:35:30", "number": "7+7+3", "num": "17", "combination": "大单"}, {"nbr": "3468691", "date": "2026-08-12", "time": "21:39:00", "number": "7+7+2", "num": "16", "combination": "大双"}, {"nbr": "3468692", "date": "2026-08-12", "time": "21:42:30", "number": "8+2+6", "num": "16", "combination": "大双"}, {"nbr": "3468693", "date": "2026-08-12", "time": "21:46:00", "number": "4+1+5", "num": "10", "combination": "小双"}, {"nbr": "3468694", "date": "2026-08-12", "time": "21:49:30", "number": "2+9+9", "num": "20", "combination": "大双"}, {"nbr": "3468695", "date": "2026-08-12", "time": "21:53:00", "number": "2+6+3", "num": "11", "combination": "小单"}, {"nbr": "3468696", "date": "2026-08-12", "time": "21:56:30", "number": "2+5+0", "num": "7", "combination": "小单"}, {"nbr": "3468697", "date": "2026-08-12", "time": "22:00:00", "number": "2+0+6", "num": "8", "combination": "小双"}, {"nbr": "3468698", "date": "2026-08-12", "time": "22:03:30", "number": "9+9+0", "num": "18", "combination": "大双"}, {"nbr": "3468699", "date": "2026-08-12", "time": "22:07:00", "number": "4+4+3", "num": "11", "combination": "小单"}, {"nbr": "3468700", "date": "2026-08-12", "time": "22:10:30", "number": "5+1+0", "num": "6", "combination": "小双"}, {"nbr": "3468701", "date": "2026-08-12", "time": "22:14:00", "number": "9+5+0", "num": "14", "combination": "大双"}, {"nbr": "3468702", "date": "2026-08-12", "time": "22:17:30", "number": "9+9+7", "num": "25", "combination": "大单"}, {"nbr": "3468703", "date": "2026-08-12", "time": "22:21:00", "number": "1+6+4", "num": "11", "combination": "小单"}, {"nbr": "3468704", "date": "2026-08-12", "time": "22:24:30", "number": "4+7+1", "num": "12", "combination": "小双"}, {"nbr": "3468705", "date": "2026-08-12", "time": "22:28:00", "number": "8+6+8", "num": "22", "combination": "大双"}, {"nbr": "3468706", "date": "2026-08-12", "time": "22:31:30", "number": "9+3+3", "num": "15", "combination": "大单"}, {"nbr": "3468707", "date": "2026-08-12", "time": "22:35:00", "number": "7+8+7", "num": "22", "combination": "大双"}, {"nbr": "3468708", "date": "2026-08-12", "time": "22:38:30", "number": "3+6+6", "num": "15", "combination": "大单"}, {"nbr": "3468709", "date": "2026-08-12", "time": "22:42:00", "number": "8+2+5", "num": "15", "combination": "大单"}, {"nbr": "3468710", "date": "2026-08-12", "time": "22:45:30", "number": "4+3+3", "num": "10", "combination": "小双"}, {"nbr": "3468711", "date": "2026-08-12", "time": "22:49:00", "number": "0+9+8", "num": "17", "combination": "大单"}, {"nbr": "3468712", "date": "2026-08-12", "time": "22:52:30", "number": "4+3+0", "num": "7", "combination": "小单"}, {"nbr": "3468713", "date": "2026-08-12", "time": "22:56:00", "number": "0+7+0", "num": "7", "combination": "小单"}, {"nbr": "3468714", "date": "2026-08-12", "time": "22:59:30", "number": "6+8+7", "num": "21", "combination": "大单"}, {"nbr": "3468715", "date": "2026-08-12", "time": "23:03:00", "number": "5+4+8", "num": "17", "combination": "大单"}, {"nbr": "3468716", "date": "2026-08-12", "time": "23:06:30", "number": "3+3+2", "num": "8", "combination": "小双"}, {"nbr": "3468717", "date": "2026-08-12", "time": "23:10:00", "number": "6+4+2", "num": "12", "combination": "小双"}, {"nbr": "3468718", "date": "2026-08-12", "time": "23:13:30", "number": "4+2+9", "num": "15", "combination": "大单"}, {"nbr": "3468719", "date": "2026-08-12", "time": "23:17:00", "number": "0+4+1", "num": "5", "combination": "小单"}, {"nbr": "3468720", "date": "2026-08-12", "time": "23:20:30", "number": "7+1+8", "num": "16", "combination": "大双"}, {"nbr": "3468721", "date": "2026-08-12", "time": "23:24:00", "number": "1+5+7", "num": "13", "combination": "小单"}, {"nbr": "3468722", "date": "2026-08-12", "time": "23:27:30", "number": "2+6+3", "num": "11", "combination": "小单"}, {"nbr": "3468723", "date": "2026-08-12", "time": "23:31:00", "number": "8+5+9", "num": "22", "combination": "大双"}]};
 
 const app = {
   history: [],
