@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>千金U · 双组特码 · 玻璃液态版</title>
+<title>千金U · 双组特码 · 玻璃液态版 v18</title>
 <style>
 /* ========== 玻璃液态主题 v16.0 ========== */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -182,6 +182,19 @@ body{
 .data-info{font-size:10px;color:var(--text-muted);text-align:center;padding:10px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;letter-spacing:.3px}
 .skeleton{display:inline-block;background:linear-gradient(90deg,rgba(255,255,255,0.06) 25%,rgba(255,255,255,0.13) 50%,rgba(255,255,255,0.06) 75%);background-size:200% 100%;animation:shimmer 1.6s infinite;border-radius:8px}
 @keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+
+/* ---------- 开奖结果比对 ---------- */
+.result-overview{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.result-stat{text-align:center;padding:12px 4px;border-radius:var(--radius-sm);background:rgba(255,255,255,0.035);border:1px solid rgba(255,255,255,0.06)}
+.result-val{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums}
+.result-lbl{font-size:9px;color:var(--text-muted);margin-top:3px}
+.result-chart{display:flex;align-items:flex-end;gap:3px;height:60px;padding:8px 4px;border-radius:var(--radius-sm);background:rgba(255,255,255,0.02);margin-bottom:12px;overflow:hidden}
+.result-bar{flex:1;border-radius:3px 3px 0 0;transition:height .5s ease;min-height:2px}
+.result-bar.hit{background:linear-gradient(180deg,var(--c5),rgba(52,211,153,0.3))}
+.result-bar.miss{background:linear-gradient(180deg,var(--c7),rgba(248,113,113,0.3))}
+.result-last{padding:10px 12px;border-radius:var(--radius-sm);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);font-size:13px;line-height:1.8}
+.result-last .tag-hit{display:inline-block;padding:2px 8px;border-radius:6px;background:rgba(52,211,153,0.15);color:#6ee7b7;font-weight:800;font-size:11px;margin-right:6px}
+.result-last .tag-miss{display:inline-block;padding:2px 8px;border-radius:6px;background:rgba(248,113,113,0.15);color:#fca5a5;font-weight:800;font-size:11px;margin-right:6px}
 </style>
 </head>
 <body>
@@ -193,7 +206,7 @@ body{
   <div class="navbar">
     <div style="display:flex;align-items:center;gap:10px">
       <div class="nav-logo">💰</div>
-      <div><div class="nav-title liquid-text">千金U · 双组特码</div><div class="nav-sub">v17.0 玻璃液态版 · 算法融合升级</div></div>
+      <div><div class="nav-title liquid-text">千金U · 双组特码</div><div class="nav-sub">v18.0 玻璃液态版 · 12路模型+开奖比对</div></div>
     </div>
     <div class="status-badge" id="status-badge" onclick="app.refresh()">
       <span class="status-dot loading" id="status-dot"></span>
@@ -259,6 +272,21 @@ body{
     <div style="text-align:center;font-size:10px;color:var(--text-muted)" id="cv-info">交叉验证准确率：--</div>
   </div>
 
+
+  <div class="glass" style="animation-delay:.27s">
+    <div class="card-title">🎯 开奖结果比对</div>
+    <div id="result-card">
+      <div class="result-overview">
+        <div class="result-stat"><div class="result-val" id="res-total">--</div><div class="result-lbl">总期数</div></div>
+        <div class="result-stat"><div class="result-val" id="res-hit" style="color:var(--success)">--</div><div class="result-lbl">命中</div></div>
+        <div class="result-stat"><div class="result-val" id="res-exact" style="color:var(--warning)">--</div><div class="result-lbl">特中</div></div>
+        <div class="result-stat"><div class="result-val" id="res-rate" style="color:var(--c4)">--</div><div class="result-lbl">命中率</div></div>
+      </div>
+      <div class="result-chart" id="result-chart"></div>
+      <div class="result-last" id="result-last"></div>
+    </div>
+  </div>
+
   <div class="glass" style="animation-delay:.3s">
     <div class="card-title">📋 预测记录（最近20期）</div>
     <div style="max-height:400px;overflow-y:auto;border-radius:8px" id="history-list"><div style="color:var(--text-muted);padding:24px;text-align:center">加载中...</div></div>
@@ -274,15 +302,15 @@ body{
 
 <script>
 // ============================================================
-// 算法核心 — 双组特码 v17.0（玻璃液态版 · 多模型融合 + 三组合覆盖强化 + 杀码频率保护 + 组合中心加权）
+// 算法核心 — 双组特码 v18.0（玻璃液态版 · 12路模型 + 开奖比对 + 尾数去重 + 智能分配）
 // 升级要点：
-//  1. 多窗口频率（5/10/15/20/30期）+ 双衰减加权
-//  2. 9路模型集成投票（频率/动量/均值回归/一阶二阶转移/连龙/交替/RSI/偏度）
-//  3. 和值预测强化均值回归（理论期望13.5牵引）
-//  4. 特征新增"预测方向一致性"，杀码多信号融合
-//  5. 权重池扩充至10套，walk-forward交叉验证自动选优
-//  6. 组合排序加入奇偶方向一致性增强（v14.1）
-//  7. 号码分配升级为三组合 2+2+2 覆盖，双组阈值 70→80（v15.0）
+//  1. 12路模型集成投票（新增：三阶转移/熵驱动/自相关/锯齿检测）
+//  2. 20套交叉验证权重池（含尾数/跨度/区间/连号专项）
+//  3. 六折交叉验证 + 改进评分（特码2分/组1分）
+//  4. 智能号码分配（按置信度 3+2+1 或 2+2+2）
+//  5. 尾数去重机制（同一尾数只取最高分号码）
+//  6. 开奖结果自动比对 + localStorage 持久化
+//  7. 组合中心加权 + 漂移检测增强
 // ============================================================
 const QianJinU = {
 
@@ -460,22 +488,58 @@ const QianJinU = {
     // 近5期跨度趋势
     const span5 = recentSpan.slice(-5);
     const spanTrend = span5.length>=2 ? span5[span5.length-1]-span5[0] : 0;
-    // 尾数最近出现
+    // v18 新增特征计算（必须在 tailGaps 循环前，避免 t 被遮蔽）
+    // v18 新增：三阶转移矩阵
+    const transMatrix3 = {};
+    for(let i=3;i<recent20.length;i++){
+      const key = recent20[i-3].combo+'→'+recent20[i-2].combo+'→'+recent20[i-1].combo;
+      const curr = recent20[i].combo;
+      if(!transMatrix3[key]) transMatrix3[key]={};
+      transMatrix3[key][curr]=(transMatrix3[key][curr]||0)+1;
+    }
+    // v18 新增：组合熵（衡量分布均匀度）— 用 comboCount 局部变量
+    let entropy = 0;
+    {
+      const ecounts = ['大单','大双','小单','小双'].map(c => comboCount[c]||0);
+      const etotal = ecounts.reduce((a,b)=>a+b,0) || 1;
+      for(const c of ecounts){ const ep = c/etotal; if(ep>0) entropy -= ep * Math.log2(ep); }
+    }
+    // v18 新增：自相关（lag-1）
+    let autocorr = 0;
+    if(sums15.length >= 6){
+      const m = this._avg(sums15);
+      let num=0, den=0;
+      for(let i=1;i<sums15.length;i++){ num += (sums15[i]-m)*(sums15[i-1]-m); }
+      for(let i=0;i<sums15.length;i++){ den += (sums15[i]-m)**2; }
+      autocorr = den>0 ? num/den : 0;
+    }
+    // v18 新增：锯齿检测（相邻交替次数）
+    let zigzag = 0;
+    for(let i=2;i<sums15.length;i++){
+      const d1 = sums15[i-1]-sums15[i-2];
+      const d2 = sums15[i]-sums15[i-1];
+      if(d1*d2 < 0) zigzag++; // 符号相反 = 锯齿
+    }
+    const zigzagRate = sums15.length>=3 ? zigzag/(sums15.length-2) : 0;
+
+    // 尾数最近出现（循环变量用 tailIdx 避免遮蔽外层 t）
     const tailGaps = {};
-    for(let t=0;t<=9;t++){
+    for(let tailIdx=0;tailIdx<=9;tailIdx++){
       let gap=999;
-      for(let i=recent.length-1;i>=0;i--){ const n=(recent[i].sum)%10; if(n===t){ gap=recent.length-1-i; break; } }
-      tailGaps[t]=gap;
+      for(let i=recent.length-1;i>=0;i--){ const n=(recent[i].sum)%10; if(n===tailIdx){ gap=recent.length-1-i; break; } }
+      tailGaps[tailIdx]=gap;
     }
     const lastTail = recent.length ? (recent[recent.length-1].sum%10) : 0;
     const lastRepeat = repeatStats;
     const lastSpanVal = lastSpan;
 
+
     return { comboCount, wCombo, wCombo5, wNumberCount, numberCount, bigRatio, oddRatio, winRatio, lastCombo, lastIsBig, lastIsOdd,
              streak, bigStreak, oddStreak, altBig, altOdd, mean30, mean15, median15, stdDev, skew, ma5, ma10, rsi,
-             transMatrix, transMatrix2, transBigProb, transOddProb, gaps, recent, recent20, recent30, wma5,
+             transMatrix, transMatrix2, transMatrix3, transBigProb, transOddProb, gaps, recent, recent20, recent30, wma5,
              deltaTrend, comboProbs, sums15, sums30, topWeightedSums, coldSums,
-             spanStats, tailStats, repeatStats, spanMean, spanTrend, tailGaps, lastTail, lastSpan, recentSpan };
+             spanStats, tailStats, repeatStats, spanMean, spanTrend, tailGaps, lastTail, lastSpan, recentSpan,
+             entropy, autocorr, zigzagRate };
   },
 
   _estimateComboProbs(wCombo, wCombo5, transMatrix, transMatrix2, lastCombo, recent20, ratio) {
@@ -511,26 +575,29 @@ const QianJinU = {
   // ----- 9路模型集成投票 -----
   _modelVotes(t) {
     let sizeScore = 0, parityScore = 0;
-    // M1 频率（15期衰减 + 5期热）
+    // M1 频率（15期衰减 + 5/10/20期多窗口）
     sizeScore += (t.bigRatio - 0.5) * 5.0;
     parityScore += (t.oddRatio - 0.5) * 5.0;
     const w5 = t.winRatio['5'];
     sizeScore += (w5.big - 0.5) * 2.0;
     parityScore += (w5.odd - 0.5) * 2.0;
-    // M2 均值回归（和值低于13.5 → 偏大）
+    const w10 = t.winRatio['10'];
+    sizeScore += (w10.big - 0.5) * 1.0;
+    parityScore += (w10.odd - 0.5) * 1.0;
+    // M2 均值回归（和值偏离13.5 → 反向修正）
     const revert = (13.5 - t.mean30) * 0.45;
     sizeScore += this._clamp(revert, -1.8, 1.8);
     // M3 移动平均动量
     sizeScore += (t.ma5 - t.ma10) * 0.6;
     const maGap = Math.abs(t.ma5 - t.ma10);
     parityScore += (((t.ma5 - t.ma10) % 2 !== 0) ? 0.25 : -0.2) * Math.min(1, maGap);
-    // M4 转移矩阵
+    // M4 一阶转移矩阵
     sizeScore += (t.transBigProb - 0.5) * 3.2;
     parityScore += (t.transOddProb - 0.5) * 3.2;
-    // M5 连龙惩罚
+    // M5 连龙惩罚（概率回归）
     if(t.bigStreak >= 4) sizeScore -= 1.2 + (t.bigStreak-4)*0.45;
     if(t.oddStreak >= 4) parityScore -= 1.2 + (t.oddStreak-4)*0.45;
-    // M6 交替
+    // M6 交替反转
     if(t.altBig >= 8) sizeScore += t.lastIsBig ? -0.9 : 0.9;
     if(t.altOdd >= 8) parityScore += t.lastIsOdd ? -0.9 : 0.9;
     // M7 RSI 反转
@@ -549,6 +616,35 @@ const QianJinU = {
           parityScore += (oddNext/total-0.5)*2.0;
         }
       }
+    }
+    // M10 三阶转移（v18新增）
+    if(t.recent20 && t.recent20.length>=3){
+      const key3 = t.recent20[t.recent20.length-3].combo+'→'+t.recent20[t.recent20.length-2].combo+'→'+t.recent20[t.recent20.length-1].combo;
+      if(t.transMatrix3 && t.transMatrix3[key3]){
+        const row=t.transMatrix3[key3]; const total=Object.values(row).reduce((a,b)=>a+b,0);
+        if(total>0){
+          const bigNext=(row['大单']||0)+(row['大双']||0);
+          const oddNext=(row['大单']||0)+(row['小单']||0);
+          sizeScore += (bigNext/total-0.5)*1.5;
+          parityScore += (oddNext/total-0.5)*1.5;
+        }
+      }
+    }
+    // M11 熵驱动（v18新增）：低熵→趋势强，高熵→随机
+    if(t.entropy !== undefined){
+      const entropyNorm = t.entropy / 2.0; // 0~1
+      if(entropyNorm < 0.6){ // 低熵，趋势明确
+        sizeScore *= 1.1;
+        parityScore *= 1.1;
+      }
+    }
+    // M12 自相关+锯齿（v18新增）
+    if(t.autocorr !== undefined){
+      sizeScore += t.autocorr * 0.8; // 正相关→延续趋势
+    }
+    if(t.zigzagRate !== undefined && t.zigzagRate > 0.6){
+      // 高锯齿→反转信号
+      sizeScore *= -0.3;
     }
     return { sizeScore, parityScore };
   },
@@ -657,10 +753,16 @@ const QianJinU = {
                     weights.cold*feat.coldScore + weights.trend*feat.trendScore + weights.trans*feat.transScore +
                     weights.repeat*feat.repeatScore + weights.align*feat.alignScore +
                     weights.tail*feat.tailScore + weights.span*feat.spanScore + weights.pair*feat.pairScore + weights.range*feat.rangeScore;
-      scored.push({num:n, score});
+      scored.push({num:n, score, tail:n%10});
     }
     scored.sort((a,b)=>b.score-a.score);
-    return scored;
+    // v18 尾数去重：同一尾数只保留最高分
+    const tailSeen = {};
+    const deduped = [];
+    for(const s of scored){
+      if(!tailSeen[s.tail]){ tailSeen[s.tail]=true; deduped.push(s); }
+    }
+    return deduped;
   },
 
   // ----- 杀码（多信号融合） -----
@@ -769,42 +871,45 @@ const QianJinU = {
     { name:'近远覆盖', prob:0.5, freq:2.0, gap:0.5, pred:2.2, cluster:0.5, combo:0.9, cold:0.4, trend:0.3, trans:0.6, repeat:0.6, align:0.8, tail:0.5, span:0.4, pair:0.4, range:1.6 },
     { name:'稳中求进', prob:0.6, freq:2.2, gap:0.5, pred:1.9, cluster:0.4, combo:1.1, cold:0.5, trend:0.3, trans:0.7, repeat:0.6, align:0.9, tail:0.6, span:0.4, pair:0.4, range:0.9 },
     { name:'防守反击', prob:0.7, freq:1.6, gap:0.8, pred:1.5, cluster:0.5, combo:1.2, cold:0.7, trend:0.2, trans:0.8, repeat:0.5, align:0.9, tail:0.6, span:0.5, pair:0.4, range:0.7 },
+    { name:'三阶专家', prob:0.4, freq:2.0, gap:0.4, pred:1.8, cluster:0.4, combo:1.0, cold:0.4, trend:0.5, trans:1.5, repeat:0.6, align:1.0, tail:0.5, span:0.4, pair:0.4, range:0.8 },
+    { name:'熵感知', prob:0.5, freq:2.0, gap:0.5, pred:2.0, cluster:0.5, combo:1.0, cold:0.5, trend:0.6, trans:0.8, repeat:0.6, align:1.0, tail:0.6, span:0.4, pair:0.4, range:1.0 },
+    { name:'自相关王', prob:0.3, freq:2.2, gap:0.4, pred:2.4, cluster:0.5, combo:0.8, cold:0.3, trend:0.8, trans:0.6, repeat:0.6, align:0.8, tail:0.5, span:0.4, pair:0.4, range:0.7 },
+    { name:'锯齿猎人', prob:0.4, freq:2.0, gap:0.5, pred:2.2, cluster:0.4, combo:0.9, cold:0.4, trend:0.9, trans:0.6, repeat:0.6, align:0.8, tail:0.5, span:0.4, pair:0.4, range:0.8 },
   ],
 
   // v17 三段式：train(训练) / validate(选权重) / test(评估) + 漂移检测
   crossValidate(history) {
-    if(history.length < 45) return this._weightPool[1];
+    if(history.length < 60) return this._weightPool[1];
     const total = history.length;
-    const folds = 4;
+    const folds = 6;
     const foldSize = Math.floor(total / folds);
     let bestWeights = null, bestAvgScore = -1;
     for(const w of this._weightPool){
-      let totalHit=0, totalCount=0;
+      let totalScore = 0, totalCount = 0;
       for(let f=0; f<folds; f++){
         const testStart = f * foldSize;
         const testEnd = (f+1) * foldSize;
-        // 三段：train 前70% 训练，validate 中间15%，test 最后15% 评估
         const trainEnd = testStart + Math.floor((testEnd - testStart) * 0.7);
         const valEnd = testStart + Math.floor((testEnd - testStart) * 0.85);
         const train = history.slice(0, trainEnd);
         const val = history.slice(trainEnd, valEnd);
         const test = history.slice(valEnd, testEnd);
-        if(train.length < 35 || test.length === 0) continue;
-        let hit=0, count=0;
-        // 用 validate 段选优（防过拟合）
-        const evalSeg = (val && val.length>=2) ? val : test;
-        const evalStart = (val && val.length>=2) ? trainEnd : valEnd;
+        if(train.length < 40 || test.length === 0) continue;
+        const evalSeg = (val && val.length>=3) ? val : test;
+        const evalStart = (val && val.length>=3) ? trainEnd : valEnd;
+        let foldScore = 0, foldCount = 0;
         for(let i=0; i<evalSeg.length; i++){
           const pred = this._predictWithWeights(train.slice(0, evalStart + i), w);
           if(pred.error) continue;
           const actual = evalSeg[i];
-          if(pred.teNumbers.includes(actual.sum)) hit++;
-          count++;
+          if(pred.teNumbers.includes(actual.sum)) foldScore += 2; // 特码2分
+          else if([pred.combo1, pred.combo2, pred.combo3].filter(c=>c).includes(actual.combo)) foldScore += 1; // 组1分
+          foldCount++;
         }
-        if(count>0){ totalHit += hit; totalCount += count; }
+        if(foldCount > 0){ totalScore += foldScore; totalCount += foldCount; }
       }
-      const avgHitRate = totalCount>0 ? totalHit/totalCount : 0;
-      if(avgHitRate > bestAvgScore){ bestAvgScore = avgHitRate; bestWeights = w; }
+      const avgScore = totalCount > 0 ? totalScore / totalCount : 0;
+      if(avgScore > bestAvgScore){ bestAvgScore = avgScore; bestWeights = w; }
     }
     return bestWeights || this._weightPool[1];
   },
@@ -813,7 +918,7 @@ const QianJinU = {
     if(!history || history.length<5) return { error:'数据不足' };
     const w = Object.assign({tail:0, span:0, pair:0, range:0}, weights);
     const t = this.analyzeTrend(history);
-    // v17 漂移检测：近15期 vs 全历史组合分布偏差，供策略层参考
+    // v18 漂移检测增强
     if(history.length>=30){
       const recent15 = history.slice(-15);
       const distAll = {}, distRecent = {};
@@ -827,14 +932,14 @@ const QianJinU = {
         if(pa>0.01) drift += Math.abs(pr - pa);
       }
       t._drift = drift;
-      // 漂移大时加强杀码的近期频率权重（在线适应）
       this._driftBoost = drift > 0.18 ? 0.5 : 0;
     }
     const killCombo = this.predictKillCombo(t, history);
     const predictBig = this.predictSize(t);
     const predictOdd = this.predictParity(t);
     const confidence = this.calcConfidence(t, predictBig, predictOdd);
-    const groupCount = confidence >= 80 ? 2 : 3;
+    // v18 智能分配：置信度>=85 → 3+2+1, 70~84 → 2+2+2, <70 → 2+2+2+保留
+    const groupCount = confidence >= 85 ? 3 : (confidence >= 70 ? 3 : 2);
     const allCombos = ['大单','大双','小单','小双'];
     const remaining = allCombos.filter(c=>c!==killCombo);
     const baseProbs = this.getComboBaseProbs();
@@ -844,12 +949,12 @@ const QianJinU = {
     const active = [combo1, combo2, combo3].filter(c=>c);
     const predictedSum = this.predictSum(t);
     const scored = this.pickNumbersGlobal(t, predictedSum, w, predictBig, predictOdd);
-    // v16.1 组合中心加权：按训练历史近30期各组合实际开号中心，抑制边界虚高数字（0/1/2/3）
+    // v18 组合中心加权
     const centers = {};
     for(const c of ['大单','大双','小单','小双']){
-      let wsum=0, w=1, cnt=0;
+      let wsum=0, ww=1, cnt=0;
       for(let i=history.length-1; i>=Math.max(0,history.length-30); i--){
-        if(history[i].combo===c){ wsum+=history[i].sum*w; w*=0.95; cnt++; }
+        if(history[i].combo===c){ wsum+=history[i].sum*ww; ww*=0.95; cnt++; }
       }
       centers[c] = cnt ? wsum/((1-Math.pow(0.95,cnt))/(1-0.95)) : 14;
     }
@@ -860,8 +965,8 @@ const QianJinU = {
       return {...s, distWeight: d, centerW: cw};
     });
     scoredWithDist.sort((a,b)=>(b.score*b.distWeight*b.centerW)-(a.score*a.distWeight*a.centerW));
-
-    const allocNums = active.length>=3 ? [2,2,2] : [3,3];
+    // v18 智能分配：高置信度 3+2+1，否则 2+2+2
+    const allocNums = confidence >= 85 ? [3,2,1] : [2,2,2];
     const pools = {};
     for(const s of scoredWithDist){ const c=this.judgeCombo(s.num); (pools[c]=pools[c]||[]).push(s.num); }
     let teNumbers = [];
@@ -871,6 +976,7 @@ const QianJinU = {
       let cnt=0;
       for(const n of pool){ if(cnt>=need) break; if(!teNumbers.includes(n)){ teNumbers.push(n); cnt++; } }
     }
+    // 补足6个
     if (teNumbers.length < 6) {
       for(const s of scoredWithDist){
         if(!teNumbers.includes(s.num)){ teNumbers.push(s.num); if(teNumbers.length >= 6) break; }
@@ -966,6 +1072,86 @@ const app = {
   countdownTimer: null,
   _source: '未知',
   _lock: false,
+
+  // v18 开奖比对
+  _resultHistory: null,
+  _storageKey: 'qianjinu_v18_results',
+
+  loadResultHistory() {
+    try {
+      const raw = localStorage.getItem(this._storageKey);
+      this._resultHistory = raw ? JSON.parse(raw) : [];
+    } catch(e) { this._resultHistory = []; }
+  },
+
+  saveResultHistory() {
+    try { localStorage.setItem(this._storageKey, JSON.stringify(this._resultHistory || [])); } catch(e) {}
+  },
+
+  checkAndRecordResult() {
+    if (!this.history || this.history.length < 1) return;
+    const latest = this.history[this.history.length - 1];
+    if (!latest || !latest.period) return;
+    // 检查是否已记录
+    const rec = (this._resultHistory || []).find(r => r.period === latest.period);
+    if (rec) return; // 已记录
+    // 需要当前预测
+    const pred = this.currentPred;
+    if (!pred) return;
+    const h = QianJinU.checkHit(pred, latest);
+    const record = {
+      period: latest.period,
+      date: latest.date,
+      time: latest.time,
+      predictedCombos: pred.combos,
+      teNumbers: pred.teNumbersStr,
+      killCombo: pred.killCombo,
+      actualSum: latest.sum,
+      actualCombo: latest.combo,
+      hitType: h.hitType,
+      isHit: h.isHit,
+      killCorrect: h.killCorrect,
+      timestamp: Date.now()
+    };
+    (this._resultHistory = this._resultHistory || []).push(record);
+    // 只保留最近100条
+    if (this._resultHistory.length > 100) this._resultHistory = this._resultHistory.slice(-100);
+    this.saveResultHistory();
+  },
+
+  renderResultCard() {
+    const rh = this._resultHistory || [];
+    const total = rh.length;
+    const hits = rh.filter(r => r.isHit).length;
+    const exacts = rh.filter(r => r.hitType === '特').length;
+    const rate = total > 0 ? (hits / total * 100).toFixed(1) : '--';
+    const set = (id, txt) => { const el = document.getElementById(id); if(el) el.textContent = txt; };
+    set('res-total', total);
+    set('res-hit', hits);
+    set('res-exact', exacts);
+    set('res-rate', rate + '%');
+    // 走势图（最近20期）
+    const chart = document.getElementById('result-chart');
+    if (chart) {
+      const recent = rh.slice(-20);
+      chart.innerHTML = recent.map(r => {
+        const h = r.isHit ? 100 : 30;
+        const cls = r.isHit ? 'hit' : 'miss';
+        return '<div class="result-bar ' + cls + '" style="height:' + h + '%" title="期' + r.period.slice(-3) + ' ' + r.hitType + '"></div>';
+      }).join('');
+    }
+    // 最近一期结果
+    const last = document.getElementById('result-last');
+    if (last && rh.length > 0) {
+      const r = rh[rh.length - 1];
+      const tagCls = r.isHit ? 'tag-hit' : 'tag-miss';
+      const tagTxt = r.isHit ? (r.hitType === '特' ? '✓ 特中' : '✓ 组命中') : '✗ 未中';
+      last.innerHTML = '<span class="' + tagCls + '">' + tagTxt + '</span>' +
+        '期' + r.period.slice(-3) + ' 预测[' + r.predictedCombos + '] 杀' + r.killCombo +
+        ' → 实际 ' + r.actualSum + r.actualCombo +
+        (r.killCorrect ? ' · 杀码✓' : ' · 杀码✗');
+    }
+  },
 
   normalize(raw) {
     const list = raw && (raw.data || raw.list) || (Array.isArray(raw) ? raw : []);
@@ -1068,7 +1254,9 @@ const app = {
       if (pred.error) throw new Error(pred.error);
       this.currentPred = pred;
       this.btResult = QianJinU.backtest(hist, 30);
+      this.checkAndRecordResult();
       this.renderAll(pred);
+      this.renderResultCard();
       this.setStatus(this._source === '实时API' ? '实时' : '离线');
       this.scheduleCountdown();
       if (this._source !== '实时API') this.showToast('已使用离线数据（API暂不可用）');
@@ -1124,6 +1312,7 @@ const app = {
     this.renderBacktest();
     this.renderHistory();
     this.renderDataInfo();
+    this.renderResultCard();
   },
 
   renderPrediction(pred) {
@@ -1217,7 +1406,10 @@ const app = {
 };
 
 window.app = app;
-document.addEventListener('DOMContentLoaded', () => app.refresh());
+document.addEventListener('DOMContentLoaded', () => {
+  app.loadResultHistory();
+  app.refresh();
+});
 setInterval(() => { if (!app._lock) app.refresh(); }, CONFIG.AUTO_REFRESH);
 </script>
 </body>
