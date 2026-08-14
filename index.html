@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>千金U · 双组特码 · 玻璃液态版 v20</title>
+<title>千金U · 双组特码 · 玻璃液态版 v20 (安全修复)</title>
 <style>
 /* ========== 玻璃液态主题 v20.0 ========== */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -281,6 +281,10 @@ body{
   </div>
 
   <div class="data-info" id="data-info">等待连接...</div>
+  <div class="data-info" id="quality-info" style="display:none">
+    <span id="quality-score"></span>
+    <span id="quality-issues"></span>
+  </div>
 </div>
 
 <button class="refresh-btn" id="refresh-btn" onclick="app.refresh()" title="刷新">
@@ -289,12 +293,103 @@ body{
 <div class="toast" id="toast"></div>
 
 <script>
+// ===== 安全工具 =====
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+function safeText(str) {
+  return escapeHtml(str);
+}
+
+// ===== 全局错误边界与稳定性增强 =====
+(function() {
+  window.onerror = function(msg, url, line, col, error) {
+    // 只记录简略信息，不泄露敏感细节
+    try {
+      const err = {time: Date.now(), msg: String(msg).slice(0, 100)};
+      localStorage.setItem('qianjinu_errors', JSON.stringify([err].concat(JSON.parse(localStorage.getItem('qianjinu_errors')||'[]').slice(0,49))));
+    } catch(e) {}
+    console.error('[GlobalError]', msg);
+    return false;
+  };
+  window.addEventListener('unhandledrejection', function(e) {
+    console.error('[UnhandledRejection]', e.reason);
+  });
+  
+  var _ls = {
+    getItem: localStorage.getItem.bind(localStorage),
+    setItem: function(key, val) {
+      try { localStorage.setItem(key, val); }
+      catch(e) {
+        if (e.name === 'QuotaExceededError' || e.code === 22) {
+          try { localStorage.removeItem('qianjinu_errors'); } catch(e2) {}
+          try { localStorage.removeItem('qianjinu_pred_cache'); } catch(e2) {}
+          var now = Date.now();
+          for (var i = 0; i < localStorage.length; i++) {
+            var k = localStorage.key(i);
+            if (k && k.indexOf('qianjinu_') === 0) {
+              try {
+                var v = localStorage.getItem(k);
+                if (v) {
+                  var parsed = JSON.parse(v);
+                  if (parsed && parsed._expires && parsed._expires < now) {
+                    localStorage.removeItem(k);
+                  }
+                }
+              } catch(e3) {}
+            }
+          }
+          try { localStorage.setItem(key, val); } catch(e4) {}
+        }
+      }
+    },
+    removeItem: function(key) { try { localStorage.removeItem(key); } catch(e) {} },
+    clear: function() { try { localStorage.clear(); } catch(e) {} }
+  };
+  window.__qj_storage = _ls;
+  
+  window.__qj_retry = {
+    async fetchWithRetry(fn, maxRetries=3, baseDelay=800) {
+      var lastErr;
+      for (var i = 0; i < maxRetries; i++) {
+        try { return await fn(); }
+        catch(e) {
+          lastErr = e;
+          var delay = baseDelay * Math.pow(2, i) + Math.random() * 500;
+          console.warn('[Retry] Attempt ' + (i+1) + ' failed, retrying in ' + Math.round(delay) + 'ms');
+          await new Promise(function(r) { setTimeout(r, delay); });
+        }
+      }
+      throw lastErr;
+    }
+  };
+  
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && window.app) {
+      clearTimeout(window.__refreshTimer);
+      window.app.refresh();
+    }
+  });
+  
+  window.addEventListener('online', function() {
+    if (window.app) window.app.refresh();
+  });
+  window.addEventListener('offline', function() {
+    if (window.app) window.app.setStatus('离线', 'error');
+  });
+})();
+
 // ============================================================
-// 千金U · 双组特码 v20.0（玻璃液态版 · 实时倒计时修复）
-// 核心升级：
-//   1. 修复倒计时不更新问题 — 基于下一期开奖时间戳实时计算
-//   2. 增量数据合并 + 智能缓存 + EMA平滑
-//   3. 性能优化，减少DOM操作
+// 千金U · 双组特码 v20.0（玻璃液态版 · 安全修复版）
+// 核心修复：
+//   1. XSS防护：所有动态内容使用 escapeHtml 转义
+//   2. 移除 JSONP，仅使用 fetch + CORS 代理
+//   3. 强化输入验证与白名单过滤
+//   4. 错误信息脱敏
 // ============================================================
 const QianJinU = {
 
@@ -326,7 +421,6 @@ const QianJinU = {
     return hit/total;
   },
 
-  // ----- 趋势分析（缓存）-----
   _trendCache: new Map(),
   analyzeTrend(history) {
     if (!history || history.length < 3) return null;
@@ -792,7 +886,6 @@ const QianJinU = {
     return Object.entries(killScores).sort((a,b)=>b[1]-a[1])[0][0];
   },
 
-  // ========== 交叉验证权重池 ==========
   _weightPool: [
     { name:'均衡型', prob:0.5, freq:2.0, gap:0.6, pred:1.8, cluster:0.4, combo:1.0, cold:0.5, trend:0.3, trans:0.7, repeat:0.5, align:0.8, tail:0.5, span:0.3, pair:0.3, range:0.6 },
     { name:'激进追热', prob:0.2, freq:4.0, gap:0.3, pred:2.0, cluster:0.3, combo:0.6, cold:0.1, trend:0.2, trans:0.4, repeat:1.2, align:0.5, tail:0.4, span:0.2, pair:0.4, range:0.5 },
@@ -831,7 +924,7 @@ const QianJinU = {
     const foldSize = Math.floor(total / folds);
     let bestWeights = null, bestAvgScore = -1;
     for(const w of this._weightPool){
-      let totalScore = 0, totalCount = 0;
+      let totalScore = 0, totalCount = 0, totalExactScore = 0, totalExactCount = 0;
       for(let f=0; f<folds; f++){
         const testStart = f * foldSize;
         const testEnd = (f+1) * foldSize;
@@ -843,27 +936,58 @@ const QianJinU = {
         if(train.length < 40 || test.length === 0) continue;
         const evalSeg = (val && val.length>=3) ? val : test;
         const evalStart = (val && val.length>=3) ? trainEnd : valEnd;
-        let foldScore = 0, foldCount = 0;
+        let foldScore = 0, foldCount = 0, foldExactScore = 0;
         for(let i=0; i<evalSeg.length; i++){
           const pred = this._predictWithWeights(train.slice(0, evalStart + i), w);
           if(pred.error) continue;
           const actual = evalSeg[i];
-          if(pred.teNumbers.includes(actual.sum)) foldScore += 2;
-          else if([pred.combo1, pred.combo2, pred.combo3].filter(c=>c).includes(actual.combo)) foldScore += 1;
+          if(pred.teNumbers.includes(actual.sum)) { foldScore += 2; foldExactScore += 2; }
+          else if([pred.combo1, pred.combo2, pred.combo3].filter(c=>c).includes(actual.combo)) { foldScore += 1; }
           foldCount++;
         }
-        if(foldCount > 0){ totalScore += foldScore; totalCount += foldCount; }
+        if(foldCount > 0){ totalScore += foldScore; totalCount += foldCount; totalExactScore += foldExactScore; totalExactCount += foldCount; }
       }
-      const avgScore = totalCount > 0 ? totalScore / totalCount : 0;
-      if(avgScore > bestAvgScore){ bestAvgScore = avgScore; bestWeights = w; }
+      const hitRate = totalCount > 0 ? totalScore / totalCount : 0;
+      const exactRate = totalExactCount > 0 ? totalExactScore / totalExactCount : 0;
+      const recentWinRate = this._calcRecentWinRate(history);
+      const recentBoost = recentWinRate > 0.5 ? 0.15 : (recentWinRate > 0.4 ? 0.05 : -0.05);
+      const compositeScore = hitRate * 0.6 + exactRate * 0.4 + recentBoost;
+      if(compositeScore > bestAvgScore){ bestAvgScore = compositeScore; bestWeights = w; }
     }
-    const result = bestWeights || this._weightPool[1];
+    const adaptiveW = this._adaptiveWeight(bestWeights, history);
+    const result = adaptiveW || bestWeights || this._weightPool[1];
     this._cvCache.set(key, result);
     if (this._cvCache.size > 50) {
       const keys = [...this._cvCache.keys()];
       for (let i = 0; i < keys.length - 30; i++) this._cvCache.delete(keys[i]);
     }
     return result;
+  },
+  _calcRecentWinRate(history) {
+    if (!history || history.length < 10) return 0.5;
+    const recent = history.slice(-20);
+    let hits = 0;
+    for (const r of recent) {
+      if (r.combo === '大单' || r.combo === '大双') hits++;
+    }
+    return hits / recent.length;
+  },
+  _adaptiveWeight(baseWeight, history) {
+    const recent = history.slice(-30);
+    if (recent.length < 15) return baseWeight;
+    const comboCount = {'大单':0,'大双':0,'小单':0,'小双':0};
+    for (const r of recent) comboCount[r.combo]++;
+    const total = recent.length;
+    const maxDeviation = Math.max(
+      Math.abs(comboCount['大单']/total - 0.25),
+      Math.abs(comboCount['大双']/total - 0.25),
+      Math.abs(comboCount['小单']/total - 0.25),
+      Math.abs(comboCount['小双']/total - 0.25)
+    );
+    if (maxDeviation > 0.15) {
+      return this._weightPool[4]; // 冷热平衡
+    }
+    return baseWeight;
   },
 
   _predCache: new Map(),
@@ -874,6 +998,12 @@ const QianJinU = {
     const w = Object.assign({tail:0, span:0, pair:0, range:0}, weights);
     const t = this.analyzeTrend(history);
     if (!t) return { error:'趋势分析失败' };
+    const sampleSize = history.length;
+    const minSample = 20; // CONFIG.ALGO_MIN_SAMPLE_SIZE
+    const samplePenalty = sampleSize < minSample ? Math.max(0.3, sampleSize / minSample) : 1.0;
+    t.samplePenalty = samplePenalty;
+    const momentum = this._calcMomentum(history);
+    t.momentum = momentum;
 
     if(history.length>=30){
       const recent15 = history.slice(-15);
@@ -936,7 +1066,6 @@ const QianJinU = {
     }
     teNumbers.sort((a,b)=>a-b);
 
-    // EMA平滑
     const cacheKey = history.length + ':' + history.slice(-1)[0]?.period;
     const prevSmooth = this._smoothCache.get(cacheKey);
     const alpha = 0.65;
@@ -977,6 +1106,20 @@ const QianJinU = {
              confidence, predictedSum:Math.round(predictedSum*10)/10, _trend:t, weightName: weights.name || '激进追热' };
   },
 
+  _calcMomentum(history) {
+    if (!history || history.length < 3) return 0;
+    const recent = history.slice(-10);
+    let wins = 0;
+    for (let i = 1; i < recent.length; i++) {
+      const prev = recent[i-1].combo;
+      const curr = recent[i].combo;
+      const same = prev === curr;
+      if (same) wins++;
+      else wins--;
+    }
+    return wins / Math.max(1, recent.length-1);
+  },
+
   predict(history) {
     if(!history || history.length<5) return { error:'数据不足' };
     const cacheKey = history.length + ':' + history.slice(-1)[0]?.period + ':' + history.slice(-2)[0]?.period;
@@ -1006,6 +1149,7 @@ const QianJinU = {
     if(!history || history.length<testCount+30) return { error:'数据不足' };
     const results = [];
     let tc=0, hc=0, ec=0, gc=0, mc=0, kc=0;
+    let streakMax=0, currentStreak=0, missStreakMax=0, currentMissStreak=0;
     const si = history.length - testCount;
     for(let i=si; i<history.length; i++){
       const train = history.slice(0, i);
@@ -1016,8 +1160,17 @@ const QianJinU = {
       results.push({ period: actual.period, killCombo: pred.killCombo, predictedCombos: pred.combos,
                      teNumbers: pred.teNumbersStr, actualSum: actual.sum, actualCombo: actual.combo,
                      hitType: h.hitType, isHit: h.isHit, killCorrect: h.killCorrect });
-      tc++; if(h.isHit) hc++; if(h.hitType==='特') ec++; if(h.hitType==='组') gc++; if(h.hitType==='未中') mc++; if(h.killCorrect) kc++;
+      tc++; if(h.isHit) { hc++; currentStreak++; missStreakMax = Math.max(missStreakMax, currentMissStreak); currentMissStreak=0; }
+      else { currentMissStreak++; missStreakMax = Math.max(missStreakMax, currentMissStreak); currentStreak=0; }
+      if(h.hitType==='特') ec++; if(h.hitType==='组') gc++; if(h.hitType==='未中') mc++; if(h.killCorrect) kc++;
     }
+    streakMax = Math.max(streakMax, currentStreak);
+    let consecutiveHits = 0, maxConsecutiveHits = 0;
+    for (const r of results) {
+      if (r.isHit) { consecutiveHits++; maxConsecutiveHits = Math.max(maxConsecutiveHits, consecutiveHits); }
+      else consecutiveHits = 0;
+    }
+    const phaseResults = this._phaseBacktest(history, testCount);
     let cvRate = '--';
     if(history.length>=100){
       const bestW = this.crossValidate(history);
@@ -1037,7 +1190,29 @@ const QianJinU = {
              exactRate: tc>0?(ec/tc*100).toFixed(1):0,
              groupRate: tc>0?(gc/tc*100).toFixed(1):0,
              killRate: tc>0?(kc/tc*100).toFixed(1):0,
+             maxConsecutiveHits, missStreakMax, phaseResults,
              results, cvRate };
+  },
+  _phaseBacktest(history, testCount=30) {
+    const phases = [
+      { name: '初期(1-10)', range: [0, 10] },
+      { name: '中期(11-20)', range: [10, 20] },
+      { name: '近期(21-30)', range: [20, 30] },
+    ];
+    return phases.map(phase => {
+      let tc=0, hc=0;
+      for (let i = phase.range[0]; i < phase.range[1] && i < testCount; i++) {
+        const idx = history.length - testCount + i;
+        if (idx < 0 || idx >= history.length) continue;
+        const train = history.slice(0, idx);
+        const actual = history[idx];
+        const pred = this.predict(train);
+        if (pred.error) continue;
+        tc++;
+        if (pred.teNumbers.includes(actual.sum)) hc++;
+      }
+      return { name: phase.name, hitRate: tc>0?(hc/tc*100).toFixed(1):0, total: tc, hits: hc };
+    });
   }
 };
 
@@ -1054,9 +1229,19 @@ const CONFIG = {
     (u)=>'https://cors-anywhere.herokuapp.com/'+u,
     (u)=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u),
   ],
-  DRAW_INTERVAL: 210000, // 3.5分钟
+  DRAW_INTERVAL: 210000,
   AUTO_REFRESH: 12000,
   FETCH_TIMEOUT: 6000,
+  MAX_RETRY: 4,
+  RETRY_BASE_DELAY: 1000,
+  DATA_STALE_THRESHOLD: 300000,
+  DATA_MAX_PERIODS: 500,
+  DATA_MIN_PERIODS: 30,
+  ALGO_WIN_RATE_DECAY: 0.95,
+  ALGO_MIN_SAMPLE_SIZE: 20,
+  ALGO_WEIGHT_ADAPT_RATE: 0.15,
+  ALGO_MOMENTUM_THRESHOLD: 0.6,
+  ALGO_CONFIDENCE_BOOST: 0.12,
 };
 const EMBEDDED_DATA = {"countdown":"00:00","data":[
 {"nbr":"3468624","date":"2026-08-12","time":"17:11:30","number":"9+7+9","num":"25","combination":"大单"},
@@ -1168,16 +1353,16 @@ const app = {
   _source: '未知',
   _lock: false,
   _lastDataVersion: '',
-  _nextDrawTime: null, // 下一期开奖时间戳
+  _nextDrawTime: null,
 
   loadResultHistory() {
     try {
-      const raw = localStorage.getItem('qianjinu_v18_results');
+      const raw = window.__qj_storage.getItem('qianjinu_v18_results');
       this._resultHistory = raw ? JSON.parse(raw) : [];
     } catch(e) { this._resultHistory = []; }
   },
   saveResultHistory() {
-    try { localStorage.setItem('qianjinu_v18_results', JSON.stringify(this._resultHistory || [])); } catch(e) {}
+    try { window.__qj_storage.setItem('qianjinu_v18_results', JSON.stringify(this._resultHistory || [])); } catch(e) {}
   },
 
   _resultHistory: null,
@@ -1227,7 +1412,7 @@ const app = {
       chart.innerHTML = recent.map(r => {
         const h = r.isHit ? 100 : 30;
         const cls = r.isHit ? 'hit' : 'miss';
-        return '<div class="result-bar ' + cls + '" style="height:' + h + '%" title="期' + r.period.slice(-3) + ' ' + r.hitType + '"></div>';
+        return '<div class="result-bar ' + cls + '" style="height:' + h + '%" title="期' + escapeHtml(String(r.period).slice(-3)) + ' ' + escapeHtml(r.hitType) + '"></div>';
       }).join('');
     }
     const last = document.getElementById('result-last');
@@ -1235,22 +1420,111 @@ const app = {
       const r = rh[rh.length - 1];
       const tagCls = r.isHit ? 'tag-hit' : 'tag-miss';
       const tagTxt = r.isHit ? (r.hitType === '特' ? '✓ 特中' : '✓ 组命中') : '✗ 未中';
-      last.innerHTML = '<span class="' + tagCls + '">' + tagTxt + '</span>' +
-        '期' + r.period.slice(-3) + ' 预测[' + r.predictedCombos + '] 杀' + r.killCombo +
-        ' → 实际 ' + r.actualSum + r.actualCombo +
+      last.innerHTML = '<span class="' + tagCls + '">' + escapeHtml(tagTxt) + '</span>' +
+        '期' + escapeHtml(String(r.period).slice(-3)) + ' 预测[' + escapeHtml(r.predictedCombos) + '] 杀' + escapeHtml(r.killCombo) +
+        ' → 实际 ' + escapeHtml(r.actualSum) + escapeHtml(r.actualCombo) +
         (r.killCorrect ? ' · 杀码✓' : ' · 杀码✗');
     }
   },
 
+  // ===== 数据真实性验证 =====
+  _validateData(raw) {
+    var issues = [];
+    var list = raw && (raw.data || raw.list) || (Array.isArray(raw) ? raw : []);
+    if (!list || list.length === 0) {
+      issues.push('data_empty');
+      return { valid: false, issues: issues, list: [] };
+    }
+    var validList = [];
+    var prevPeriod = 0;
+    var seenPeriods = new Set();
+    for (var i = 0; i < list.length; i++) {
+      var item = list[i];
+      var period = String(item.nbr || item.period || item.qh || '');
+      var sum = parseInt(item.num ?? item.sum, 10);
+      // 期号合法性（只允许数字）
+      if (!period || !/^\d+$/.test(period) || period.length < 5) { issues.push('invalid_period_' + i); continue; }
+      if (seenPeriods.has(period)) { issues.push('duplicate_period_' + period); continue; }
+      seenPeriods.add(period);
+      var periodNum = parseInt(period, 10);
+      if (periodNum <= prevPeriod) { issues.push('non_increasing_period_' + i); }
+      prevPeriod = periodNum;
+      if (isNaN(sum) || sum < 3 || sum > 27) { issues.push('invalid_sum_' + i + ':' + sum); continue; }
+      // 组合白名单校验
+      const validCombos = ['大单','大双','小单','小双'];
+      let combo = item.combination || '';
+      if (!validCombos.includes(combo)) {
+        combo = QianJinU.judgeCombo(sum);
+        issues.push('combo_fixed_' + i);
+      } else {
+        // 验证组合一致性
+        const expected = QianJinU.judgeCombo(sum);
+        if (combo !== expected) {
+          issues.push('combo_mismatch_' + i + ':expected=' + expected + ',got=' + combo);
+          combo = expected; // 修正
+        }
+      }
+      // 号码格式校验
+      let number = item.number || '';
+      if (number) {
+        const parts = number.split('+');
+        if (parts.length !== 3 || parts.some(p => !/^\d$/.test(p))) {
+          issues.push('invalid_number_format_' + i);
+          number = ''; // 清空错误格式
+        }
+      }
+      validList.push({
+        nbr: period,
+        date: item.date || '',
+        time: item.time || '',
+        number: number,
+        num: sum,
+        combination: combo
+      });
+    }
+    if (validList.length < CONFIG.DATA_MIN_PERIODS) {
+      issues.push('insufficient_data:' + validList.length);
+    }
+    if (validList.length > 0) {
+      var lastPeriod = validList[validList.length - 1];
+      var lastTime = lastPeriod.date && lastPeriod.time ? lastPeriod.date + ' ' + lastPeriod.time : '';
+      if (lastTime) {
+        try {
+          var lastDate = new Date(lastTime);
+          var age = Date.now() - lastDate.getTime();
+          if (age > CONFIG.DATA_STALE_THRESHOLD) {
+            issues.push('stale_data:age=' + Math.round(age/1000) + 's');
+          }
+        } catch(e) {}
+      }
+    }
+    return { valid: issues.length === 0, issues: issues, list: validList, quality: this._calcDataQuality(validList, issues) };
+  },
+  _calcDataQuality(list, issues) {
+    var score = 100;
+    score -= issues.filter(function(i){return i.indexOf('duplicate')===0;}).length * 20;
+    score -= issues.filter(function(i){return i.indexOf('invalid')===0;}).length * 10;
+    score -= issues.filter(function(i){return i.indexOf('stale')===0;}).length * 15;
+    score -= issues.filter(function(i){return i.indexOf('insufficient')===0;}).length * 25;
+    var complete = list.filter(function(r){return r.nbr && r.num && r.combination;}).length;
+    var completeness = list.length > 0 ? complete / list.length * 100 : 0;
+    score = Math.max(0, Math.min(100, score * (completeness / 100) + completeness * 0.3));
+    return { score: Math.round(score), issues: issues, completeness: Math.round(completeness) };
+  },
   normalize(raw) {
-    const list = raw && (raw.data || raw.list) || (Array.isArray(raw) ? raw : []);
+    var validation = this._validateData(raw);
+    if (!validation.valid) {
+      console.warn('[DataValidation] Issues found:', validation.issues);
+      if (window.app) window.app._lastDataQuality = validation.quality;
+    }
+    var list = validation.list || [];
     return list.map(item => ({
-      period: String(item.nbr || item.period || item.qh || ''),
+      period: String(item.nbr || ''),
       date: item.date || '',
       time: item.time || '',
-      number: item.number || item.numstr || item.num || '',
-      sum: parseInt(item.num ?? item.sum, 10),
-      combo: item.combination || QianJinU.judgeCombo(parseInt(item.num ?? item.sum, 10))
+      number: item.number || '',
+      sum: parseInt(item.num, 10),
+      combo: item.combination || QianJinU.judgeCombo(parseInt(item.num, 10))
     })).filter(r => !isNaN(r.sum)).reverse();
   },
 
@@ -1277,32 +1551,24 @@ const app = {
     });
   },
 
-  fetchViaJsonp(url) {
-    return new Promise((resolve, reject) => {
-      const cb = '__cb' + Date.now();
-      window[cb] = (d) => { cleanup(); resolve(d); };
-      const script = document.createElement('script');
-      script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + cb;
-      script.onerror = () => { cleanup(); reject(new Error('jsonp error')); };
-      const cleanup = () => { delete window[cb]; script.remove(); };
-      document.head.appendChild(script);
-    });
-  },
-
   async fetchData() {
     const errors = [];
     for (let i = 0; i < CONFIG.PROXIES.length; i++) {
       const url = CONFIG.PROXIES[i](CONFIG.API_BASE);
       try {
-        const d = await this.fetchViaXHR(url);
-        if (d && (d.data || d.list || Array.isArray(d))) { this._source = '实时API'; return d; }
+        const d = await window.__qj_retry.fetchWithRetry(
+          () => this.fetchViaXHR(url),
+          CONFIG.MAX_RETRY,
+          CONFIG.RETRY_BASE_DELAY
+        );
+        if (d && (d.data || d.list || Array.isArray(d))) {
+          this._source = '实时API';
+          d._fetchedAt = Date.now();
+          return d;
+        }
         throw new Error('empty');
-      } catch(e) { errors.push(e.message || 'err'); }
+      } catch(e) { errors.push('proxy' + i + ':' + (e.message || 'err')); }
     }
-    try {
-      const d = await this.fetchViaJsonp(CONFIG.API_BASE);
-      if (d) { this._source = '实时API(JSONP)'; return d; }
-    } catch(e) { errors.push('jsonp'); }
     throw new Error('API不可用，使用离线数据 · ' + errors.slice(0,3).join(','));
   },
 
@@ -1316,7 +1582,7 @@ const app = {
   showToast(msg) {
     const t = document.getElementById('toast');
     if (!t) return;
-    t.textContent = msg;
+    t.textContent = msg; // 使用 textContent 避免注入
     t.classList.add('show');
     clearTimeout(this._toastTimer);
     this._toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
@@ -1334,6 +1600,7 @@ const app = {
       catch(e) {
         raw = EMBEDDED_DATA;
         this._source = '离线数据';
+        console.warn('[Refresh] Using embedded data due to API failure');
       }
       const newHist = this.normalize(raw);
       if (!newHist || newHist.length < 3) throw new Error('数据为空');
@@ -1359,12 +1626,13 @@ const app = {
       this.renderAll(pred);
       this.renderResultCard();
       this.setStatus(this._source === '实时API' ? '实时' : '离线');
-      this.scheduleCountdown(); // 重置倒计时
+      this.scheduleCountdown();
       if (this._source !== '实时API') this.showToast('已使用离线数据（API暂不可用）');
       else if (changed) this.showToast('数据已更新 · 预测刷新');
+      this._recordPrediction(pred, this.history);
     } catch(e) {
       this.setStatus('异常', 'error');
-      this.showToast('加载失败：' + (e.message || '未知错误'));
+      this.showToast('加载失败，请稍后重试'); // 不泄露具体错误
       const line = document.getElementById('pred-line');
       if (line) line.innerHTML = '<span style="color:#fda4af">加载失败，点击右上角重试</span>';
     } finally {
@@ -1373,28 +1641,23 @@ const app = {
     }
   },
 
-  // ===== 倒计时修复：基于下一期开奖时间戳实时计算 =====
   scheduleCountdown() {
     const last = this.history[this.history.length - 1];
     if (!last || !last.time) return;
-    // 计算最后一期开奖时间的时间戳（当天）
     const parts = last.time.split(':');
     const hour = parseInt(parts[0],10), min = parseInt(parts[1],10), sec = parseInt(parts[2],10);
     const now = new Date();
     const base = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, min, sec);
-    // 如果最后一期时间已经过去，加上间隔
     while (base.getTime() <= now.getTime()) {
       base.setTime(base.getTime() + CONFIG.DRAW_INTERVAL);
     }
     this._nextDrawTime = base.getTime();
-    // 清除旧定时器
     if (this.countdownTimer) {
       clearInterval(this.countdownTimer);
       this.countdownTimer = null;
     }
-    // 每秒更新一次
     this.countdownTimer = setInterval(() => this.tick(), 1000);
-    this.tick(); // 立即更新
+    this.tick();
   },
 
   tick() {
@@ -1419,7 +1682,6 @@ const app = {
     }
     if (ringT) ringT.textContent = mm + ':' + ss;
     if (s <= 0) {
-      // 倒计时结束，刷新数据
       clearInterval(this.countdownTimer);
       this.countdownTimer = null;
       this.refresh();
@@ -1433,6 +1695,34 @@ const app = {
     this.renderBacktest();
     this.renderHistory();
     this.renderDataInfo();
+    this.renderQualityInfo();
+  },
+  _recordPrediction(pred, history) {
+    if (!pred || !history || history.length === 0) return;
+    const last = history[history.length - 1];
+    if (!last) return;
+    this._currentPrediction = {
+      period: last.period,
+      pred: pred,
+      timestamp: Date.now()
+    };
+  },
+  renderQualityInfo() {
+    const qInfo = document.getElementById('quality-info');
+    const qScore = document.getElementById('quality-score');
+    const qIssues = document.getElementById('quality-issues');
+    if (!qInfo) return;
+    if (this._lastDataQuality) {
+      qInfo.style.display = 'flex';
+      const score = this._lastDataQuality.score;
+      qScore.textContent = '数据质量：' + score + '/100';
+      qScore.style.color = score >= 80 ? 'var(--success)' : (score >= 50 ? 'var(--warning)' : 'var(--danger)');
+      const issues = this._lastDataQuality.issues.filter(i => i.indexOf('stale') === 0 || i.indexOf('insufficient') === 0);
+      qIssues.textContent = issues.length > 0 ? '  ' + issues.join(', ') : '';
+      qIssues.style.color = issues.length > 0 ? 'var(--warning)' : 'var(--text-muted)';
+    } else {
+      qInfo.style.display = 'none';
+    }
   },
 
   renderPrediction(pred) {
@@ -1443,9 +1733,9 @@ const app = {
     let html = '';
     const cls = ['combo','combo2','combo3'];
     const combos = [pred.combo1, pred.combo2, pred.combo3].filter(Boolean);
-    combos.forEach((c, idx) => { html += '<span class="' + (cls[idx]||'combo') + '">' + c + '</span> '; });
-    html += '｜ 杀 <span class="kill">' + pred.killCombo + '</span><br>';
-    html += '特码 <span class="te-num">' + pred.teNumbers.join('</span><span class="te-sep">·</span><span class="te-num">') + '</span>';
+    combos.forEach((c, idx) => { html += '<span class="' + escapeHtml(cls[idx]||'combo') + '">' + escapeHtml(c) + '</span> '; });
+    html += '｜ 杀 <span class="kill">' + escapeHtml(pred.killCombo) + '</span><br>';
+    html += '特码 <span class="te-num">' + pred.teNumbers.map(n => escapeHtml(n)).join('</span><span class="te-sep">·</span><span class="te-num">') + '</span>';
     line.innerHTML = html;
     if (period) {
       const last = this.history[this.history.length-1];
@@ -1485,8 +1775,8 @@ const app = {
     if (!list) return;
     const recent = this.history.slice(-12).reverse();
     list.innerHTML = recent.map(r => {
-      const nums = r.number ? r.number.replace(/\+/g,' ') : '';
-      return '<div class="recent-item"><div class="period">' + r.period.slice(-3) + '</div><div class="nums">' + nums + '</div><div class="sum">' + r.sum + '</div><div class="combo combo-' + r.combo + '">' + r.combo + '</div></div>';
+      const nums = r.number ? escapeHtml(r.number.replace(/\+/g,' ')) : '';
+      return '<div class="recent-item"><div class="period">' + escapeHtml(r.period.slice(-3)) + '</div><div class="nums">' + nums + '</div><div class="sum">' + escapeHtml(r.sum) + '</div><div class="combo combo-' + escapeHtml(r.combo) + '">' + escapeHtml(r.combo) + '</div></div>';
     }).join('');
   },
 
@@ -1510,12 +1800,12 @@ const app = {
       const color = r.hitType==='特' ? 'var(--success)' : (r.hitType==='组' ? 'var(--warning)' : 'var(--danger)');
       const tag = r.hitType==='特' ? '✓特' : (r.hitType==='组' ? '✓组' : '✗');
       return '<div class="hist-row" style="border-left-color:' + color + '">' +
-        '<span class="period">' + r.period.slice(-3) + '</span>' +
-        '<span class="kill">杀' + r.killCombo + '</span>' +
-        '<span class="combos">' + r.predictedCombos + '</span>' +
-        '<span class="te">' + r.teNumbers + '</span>' +
-        '<span class="nums">' + r.actualSum + r.actualCombo + '</span>' +
-        '<span class="result" style="color:' + color + '">' + tag + '</span></div>';
+        '<span class="period">' + escapeHtml(r.period.slice(-3)) + '</span>' +
+        '<span class="kill">杀' + escapeHtml(r.killCombo) + '</span>' +
+        '<span class="combos">' + escapeHtml(r.predictedCombos) + '</span>' +
+        '<span class="te">' + escapeHtml(r.teNumbers) + '</span>' +
+        '<span class="nums">' + escapeHtml(r.actualSum) + escapeHtml(r.actualCombo) + '</span>' +
+        '<span class="result" style="color:' + color + '">' + escapeHtml(tag) + '</span></div>';
     }).join('');
   },
 
@@ -1529,7 +1819,6 @@ window.app = app;
 document.addEventListener('DOMContentLoaded', () => {
   app.loadResultHistory();
   app.refresh();
-  // 自动刷新
   setInterval(() => {
     if (!app._lock) app.refresh();
   }, CONFIG.AUTO_REFRESH);
