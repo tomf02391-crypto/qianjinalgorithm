@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>千金U · 双组特码 · 玻璃液态版 v20</title>
+<title>千金U · 双组四码 · 玻璃液态版 v21</title>
 <style>
-/* ========== 玻璃液态主题 v20.0 ========== */
+/* ========== 玻璃液态主题 v21.0 ========== */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
   --text:#f4f6ff; --text-muted:rgba(244,246,255,0.58); --text-dim:rgba(244,246,255,0.32);
@@ -195,7 +195,7 @@ body{
   <div class="navbar">
     <div style="display:flex;align-items:center;gap:10px">
       <div class="nav-logo">💰</div>
-      <div><div class="nav-title liquid-text">千金U · 双组特码</div><div class="nav-sub">v20.0 实时倒计时 · 增量预测+平滑算法</div></div>
+      <div><div class="nav-title liquid-text">千金U · 双组四码</div><div class="nav-sub">v21.0 双组+4特码 · 实时倒计时</div></div>
     </div>
     <div class="status-badge" id="status-badge" onclick="app.refresh()">
       <span class="status-dot loading" id="status-dot"></span>
@@ -290,11 +290,12 @@ body{
 
 <script>
 // ============================================================
-// 千金U · 双组特码 v20.0（玻璃液态版 · 实时倒计时修复）
-// 核心升级：
-//   1. 修复倒计时不更新问题 — 基于下一期开奖时间戳实时计算
-//   2. 增量数据合并 + 智能缓存 + EMA平滑
-//   3. 性能优化，减少DOM操作
+// 千金U · 双组四码 v21.0
+// 核心特性：
+//   - 预测输出：2个形态组合（双组）+ 4个特码（每组2个）
+//   - 实时倒计时修复（每秒更新）
+//   - 增量数据合并 + 智能缓存 + EMA平滑
+//   - 12路模型集成 + 24套权重池
 // ============================================================
 const QianJinU = {
 
@@ -849,7 +850,7 @@ const QianJinU = {
           if(pred.error) continue;
           const actual = evalSeg[i];
           if(pred.teNumbers.includes(actual.sum)) foldScore += 2;
-          else if([pred.combo1, pred.combo2, pred.combo3].filter(c=>c).includes(actual.combo)) foldScore += 1;
+          else if([pred.combo1, pred.combo2].filter(c=>c).includes(actual.combo)) foldScore += 1;
           foldCount++;
         }
         if(foldCount > 0){ totalScore += foldScore; totalCount += foldCount; }
@@ -894,14 +895,24 @@ const QianJinU = {
     const predictBig = this.predictSize(t);
     const predictOdd = this.predictParity(t);
     const confidence = this.calcConfidence(t, predictBig, predictOdd);
-    const groupCount = confidence >= 85 ? 3 : (confidence >= 70 ? 3 : 2);
+    
+    // ---- 核心改动：固定取2个组合，每个组合2个特码 ----
     const allCombos = ['大单','大双','小单','小双'];
     const remaining = allCombos.filter(c=>c!==killCombo);
     const baseProbs = this.getComboBaseProbs();
-    remaining.sort((a,b)=>{ let sa=(t.comboProbs[a]||0.25)*0.4+(baseProbs[a]||0.25)*0.25+this._transScore(a,t)*0.35; let sb=(t.comboProbs[b]||0.25)*0.4+(baseProbs[b]||0.25)*0.25+this._transScore(b,t)*0.35; const oa=(a==='大单'||a==='小单'), ob=(b==='大单'||b==='小单'); sa+=(oa===predictOdd?0.25:0); sb+=(ob===predictOdd?0.25:0); return sb-sa; });
-    const selected = remaining.slice(0, groupCount);
-    const combo1 = selected[0], combo2 = selected[1]||null, combo3 = selected[2]||null;
-    const active = [combo1, combo2, combo3].filter(c=>c);
+    remaining.sort((a,b)=>{ 
+      let sa=(t.comboProbs[a]||0.25)*0.4+(baseProbs[a]||0.25)*0.25+this._transScore(a,t)*0.35; 
+      let sb=(t.comboProbs[b]||0.25)*0.4+(baseProbs[b]||0.25)*0.25+this._transScore(b,t)*0.35; 
+      const oa=(a==='大单'||a==='小单'), ob=(b==='大单'||b==='小单'); 
+      sa+=(oa===predictOdd?0.25:0); sb+=(ob===predictOdd?0.25:0); 
+      return sb-sa; 
+    });
+    // 只取前两个组合
+    const selected = remaining.slice(0, 2);
+    const combo1 = selected[0] || null;
+    const combo2 = selected[1] || null;
+    const combo3 = null; // 不使用第三个
+    const active = [combo1, combo2].filter(c=>c);
     const predictedSum = this.predictSum(t);
     const scored = this.pickNumbersGlobal(t, predictedSum, w, predictBig, predictOdd);
     const centers = {};
@@ -919,7 +930,9 @@ const QianJinU = {
       return {...s, distWeight: d, centerW: cw};
     });
     scoredWithDist.sort((a,b)=>(b.score*b.distWeight*b.centerW)-(a.score*a.distWeight*a.centerW));
-    const allocNums = confidence >= 85 ? [3,2,1] : [2,2,2];
+    
+    // 每个组合分配2个特码
+    const allocNums = [2, 2]; // 固定每组2个
     const pools = {};
     for(const s of scoredWithDist){ const c=this.judgeCombo(s.num); (pools[c]=pools[c]||[]).push(s.num); }
     let teNumbers = [];
@@ -929,14 +942,20 @@ const QianJinU = {
       let cnt=0;
       for(const n of pool){ if(cnt>=need) break; if(!teNumbers.includes(n)){ teNumbers.push(n); cnt++; } }
     }
-    if (teNumbers.length < 6) {
+    // 如果不足4个，从剩余号码中补足（按分数）
+    if (teNumbers.length < 4) {
       for(const s of scoredWithDist){
-        if(!teNumbers.includes(s.num)){ teNumbers.push(s.num); if(teNumbers.length >= 6) break; }
+        if(!teNumbers.includes(s.num)){ teNumbers.push(s.num); if(teNumbers.length >= 4) break; }
       }
     }
     teNumbers.sort((a,b)=>a-b);
+    // 保证至少4个
+    while (teNumbers.length < 4) {
+      for (let n=0; n<=27; n++) { if(!teNumbers.includes(n)) { teNumbers.push(n); break; } }
+    }
+    teNumbers = teNumbers.slice(0,4).sort((a,b)=>a-b);
 
-    // EMA平滑
+    // EMA平滑（保持与原逻辑兼容）
     const cacheKey = history.length + ':' + history.slice(-1)[0]?.period;
     const prevSmooth = this._smoothCache.get(cacheKey);
     const alpha = 0.65;
@@ -953,16 +972,16 @@ const QianJinU = {
         smoothed.push(this._clamp(emaVal, 0, 27));
       }
       const unique = [...new Set(smoothed)];
-      if (unique.length === 6) teNumbers = unique;
+      if (unique.length === 4) teNumbers = unique;
       else {
         const fill = [];
         for (const n of teNumbers) if (!unique.includes(n)) fill.push(n);
         const merged = [...unique];
         for (const f of fill) { if (!merged.includes(f)) merged.push(f); }
-        while (merged.length < 6) {
+        while (merged.length < 4) {
           for (const s of scoredWithDist) { if (!merged.includes(s.num)) { merged.push(s.num); break; } }
         }
-        teNumbers = merged.slice(0, 6).sort((a,b)=>a-b);
+        teNumbers = merged.slice(0, 4).sort((a,b)=>a-b);
       }
     }
     const smoothKey = history.slice(-1)[0]?.period || Date.now();
@@ -996,7 +1015,7 @@ const QianJinU = {
   },
 
   checkHit(pred, actual) {
-    const active = [pred.combo1, pred.combo2, pred.combo3].filter(c=>c);
+    const active = [pred.combo1, pred.combo2].filter(c=>c);
     const inGroup = active.includes(actual.combo);
     const inTe = inGroup && pred.teNumbers.includes(actual.sum);
     return { isHit: inGroup, hitType: inTe ? '特' : (inGroup ? '组' : '未中'), killCorrect: actual.combo !== pred.killCombo };
@@ -1054,7 +1073,7 @@ const CONFIG = {
     (u)=>'https://cors-anywhere.herokuapp.com/'+u,
     (u)=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u),
   ],
-  DRAW_INTERVAL: 210000, // 3.5分钟
+  DRAW_INTERVAL: 210000,
   AUTO_REFRESH: 12000,
   FETCH_TIMEOUT: 6000,
 };
@@ -1168,7 +1187,7 @@ const app = {
   _source: '未知',
   _lock: false,
   _lastDataVersion: '',
-  _nextDrawTime: null, // 下一期开奖时间戳
+  _nextDrawTime: null,
 
   loadResultHistory() {
     try {
@@ -1359,7 +1378,7 @@ const app = {
       this.renderAll(pred);
       this.renderResultCard();
       this.setStatus(this._source === '实时API' ? '实时' : '离线');
-      this.scheduleCountdown(); // 重置倒计时
+      this.scheduleCountdown();
       if (this._source !== '实时API') this.showToast('已使用离线数据（API暂不可用）');
       else if (changed) this.showToast('数据已更新 · 预测刷新');
     } catch(e) {
@@ -1373,28 +1392,23 @@ const app = {
     }
   },
 
-  // ===== 倒计时修复：基于下一期开奖时间戳实时计算 =====
   scheduleCountdown() {
     const last = this.history[this.history.length - 1];
     if (!last || !last.time) return;
-    // 计算最后一期开奖时间的时间戳（当天）
     const parts = last.time.split(':');
     const hour = parseInt(parts[0],10), min = parseInt(parts[1],10), sec = parseInt(parts[2],10);
     const now = new Date();
     const base = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, min, sec);
-    // 如果最后一期时间已经过去，加上间隔
     while (base.getTime() <= now.getTime()) {
       base.setTime(base.getTime() + CONFIG.DRAW_INTERVAL);
     }
     this._nextDrawTime = base.getTime();
-    // 清除旧定时器
     if (this.countdownTimer) {
       clearInterval(this.countdownTimer);
       this.countdownTimer = null;
     }
-    // 每秒更新一次
     this.countdownTimer = setInterval(() => this.tick(), 1000);
-    this.tick(); // 立即更新
+    this.tick();
   },
 
   tick() {
@@ -1419,7 +1433,6 @@ const app = {
     }
     if (ringT) ringT.textContent = mm + ':' + ss;
     if (s <= 0) {
-      // 倒计时结束，刷新数据
       clearInterval(this.countdownTimer);
       this.countdownTimer = null;
       this.refresh();
@@ -1441,8 +1454,8 @@ const app = {
     const weight = document.getElementById('pred-weight');
     if (!line) return;
     let html = '';
-    const cls = ['combo','combo2','combo3'];
-    const combos = [pred.combo1, pred.combo2, pred.combo3].filter(Boolean);
+    const cls = ['combo','combo2'];
+    const combos = [pred.combo1, pred.combo2].filter(Boolean);
     combos.forEach((c, idx) => { html += '<span class="' + (cls[idx]||'combo') + '">' + c + '</span> '; });
     html += '｜ 杀 <span class="kill">' + pred.killCombo + '</span><br>';
     html += '特码 <span class="te-num">' + pred.teNumbers.join('</span><span class="te-sep">·</span><span class="te-num">') + '</span>';
@@ -1474,7 +1487,7 @@ const app = {
         if (chips[i]) {
           chips[i].querySelector('.count').textContent = count;
           chips[i].querySelector('.pct').textContent = (count/total*100).toFixed(0) + '%';
-          chips[i].className = 'combo-chip' + (this.currentPred && [this.currentPred.combo1,this.currentPred.combo2,this.currentPred.combo3].includes(c) ? ' active' : '');
+          chips[i].className = 'combo-chip' + (this.currentPred && [this.currentPred.combo1,this.currentPred.combo2].includes(c) ? ' active' : '');
         }
       }
     }
@@ -1529,7 +1542,6 @@ window.app = app;
 document.addEventListener('DOMContentLoaded', () => {
   app.loadResultHistory();
   app.refresh();
-  // 自动刷新
   setInterval(() => {
     if (!app._lock) app.refresh();
   }, CONFIG.AUTO_REFRESH);
