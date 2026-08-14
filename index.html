@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>千金U · 双组特码 · 玻璃液态版 v19</title>
+<title>千金U · 双组特码 · 玻璃液态版 v20</title>
 <style>
-/* ========== 玻璃液态主题 v19.0 ========== */
+/* ========== 玻璃液态主题 v20.0 ========== */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
   --text:#f4f6ff; --text-muted:rgba(244,246,255,0.58); --text-dim:rgba(244,246,255,0.32);
@@ -182,10 +182,8 @@ body{
 .result-last{padding:10px 12px;border-radius:var(--radius-sm);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);font-size:13px;line-height:1.8}
 .result-last .tag-hit{display:inline-block;padding:2px 8px;border-radius:6px;background:rgba(52,211,153,0.15);color:#6ee7b7;font-weight:800;font-size:11px;margin-right:6px}
 .result-last .tag-miss{display:inline-block;padding:2px 8px;border-radius:6px;background:rgba(248,113,113,0.15);color:#fca5a5;font-weight:800;font-size:11px;margin-right:6px}
-
-/* 【优化】新增：数据更新闪烁提示 */
-@keyframes dataPulse{0%{opacity:1}50%{opacity:0.5}100%{opacity:1}}
 .data-updating .pred-line .te-num{animation:dataPulse 0.6s ease 2}
+@keyframes dataPulse{0%{opacity:1}50%{opacity:0.5}100%{opacity:1}}
 </style>
 </head>
 <body>
@@ -197,7 +195,7 @@ body{
   <div class="navbar">
     <div style="display:flex;align-items:center;gap:10px">
       <div class="nav-logo">💰</div>
-      <div><div class="nav-title liquid-text">千金U · 双组特码</div><div class="nav-sub">v19.0 实时优化版 · 增量预测+平滑算法</div></div>
+      <div><div class="nav-title liquid-text">千金U · 双组特码</div><div class="nav-sub">v20.0 实时倒计时 · 增量预测+平滑算法</div></div>
     </div>
     <div class="status-badge" id="status-badge" onclick="app.refresh()">
       <span class="status-dot loading" id="status-dot"></span>
@@ -292,18 +290,14 @@ body{
 
 <script>
 // ============================================================
-// 千金U · 双组特码 v19.0（玻璃液态版 · 实时优化版）
-// 【优化】核心升级：
-//   1. 增量数据更新 — 只拉取新期数，减少网络与计算开销
-//   2. 智能缓存 — 趋势分析、交叉验证结果按数据版本缓存
-//   3. 预测平滑 — 对特码号码引入指数移动平均（EMA），避免剧烈跳动
-//   4. 计算结果缓存 — 相同输入数据直接复用预测结果
-//   5. 性能优化 — 减少DOM重绘，使用DocumentFragment批量更新
-//   6. 实时响应 — 数据变化时自动触发增量预测
+// 千金U · 双组特码 v20.0（玻璃液态版 · 实时倒计时修复）
+// 核心升级：
+//   1. 修复倒计时不更新问题 — 基于下一期开奖时间戳实时计算
+//   2. 增量数据合并 + 智能缓存 + EMA平滑
+//   3. 性能优化，减少DOM操作
 // ============================================================
 const QianJinU = {
 
-  // ----- 基础工具 -----
   judgeCombo(sum) {
     const b = sum >= 14, o = sum % 2 === 1;
     if (b && o) return '大单';
@@ -332,13 +326,9 @@ const QianJinU = {
     return hit/total;
   },
 
-  // ----- 趋势分析（增强版 + 缓存支持）-----
-  // 【优化】增加版本号机制，避免重复计算
+  // ----- 趋势分析（缓存）-----
   _trendCache: new Map(),
-  _trendVersion: 0,
-
   analyzeTrend(history) {
-    // 【优化】基于数据快照生成缓存键
     if (!history || history.length < 3) return null;
     const key = history.length + ':' + history.slice(-1)[0]?.period + ':' + history.slice(-1)[0]?.sum;
     const cached = this._trendCache.get(key);
@@ -456,7 +446,6 @@ const QianJinU = {
 
     const comboProbs = this._estimateComboProbs(wCombo, wCombo5, transMatrix, transMatrix2, lastCombo, recent20, {bigRatio, oddRatio});
 
-    // v18 特征
     const spanStats = {}, tailStats = {}, repeatStats = {0:0,1:0,2:0};
     const recentSpan = [];
     for(const item of recent){
@@ -522,7 +511,6 @@ const QianJinU = {
              deltaTrend, comboProbs, sums15, sums30, topWeightedSums, coldSums,
              spanStats, tailStats, repeatStats, spanMean, spanTrend, tailGaps, lastTail, lastSpan, recentSpan,
              entropy, autocorr, zigzagRate };
-    // 【优化】存入缓存
     this._trendCache.set(key, result);
     if (this._trendCache.size > 200) {
       const keys = [...this._trendCache.keys()];
@@ -560,7 +548,6 @@ const QianJinU = {
     return probs;
   },
 
-  // ----- 12路模型集成投票 -----
   _modelVotes(t) {
     let sizeScore = 0, parityScore = 0;
     sizeScore += (t.bigRatio - 0.5) * 5.0;
@@ -805,7 +792,7 @@ const QianJinU = {
     return Object.entries(killScores).sort((a,b)=>b[1]-a[1])[0][0];
   },
 
-  // ========== 交叉验证权重池（24套） ==========
+  // ========== 交叉验证权重池 ==========
   _weightPool: [
     { name:'均衡型', prob:0.5, freq:2.0, gap:0.6, pred:1.8, cluster:0.4, combo:1.0, cold:0.5, trend:0.3, trans:0.7, repeat:0.5, align:0.8, tail:0.5, span:0.3, pair:0.3, range:0.6 },
     { name:'激进追热', prob:0.2, freq:4.0, gap:0.3, pred:2.0, cluster:0.3, combo:0.6, cold:0.1, trend:0.2, trans:0.4, repeat:1.2, align:0.5, tail:0.4, span:0.2, pair:0.4, range:0.5 },
@@ -833,7 +820,6 @@ const QianJinU = {
     { name:'锯齿猎人', prob:0.4, freq:2.0, gap:0.5, pred:2.2, cluster:0.4, combo:0.9, cold:0.4, trend:0.9, trans:0.6, repeat:0.6, align:0.8, tail:0.5, span:0.4, pair:0.4, range:0.8 },
   ],
 
-  // 【优化】交叉验证结果缓存
   _cvCache: new Map(),
   crossValidate(history) {
     if(history.length < 60) return this._weightPool[1];
@@ -880,9 +866,8 @@ const QianJinU = {
     return result;
   },
 
-  // 【优化】预测结果缓存 + EMA平滑
   _predCache: new Map(),
-  _smoothCache: new Map(), // 存储平滑后的特码数组
+  _smoothCache: new Map(),
 
   _predictWithWeights(history, weights) {
     if(!history || history.length<5) return { error:'数据不足' };
@@ -951,30 +936,25 @@ const QianJinU = {
     }
     teNumbers.sort((a,b)=>a-b);
 
-    // 【优化】EMA平滑：对特码数组进行指数平滑，避免剧烈跳动
+    // EMA平滑
     const cacheKey = history.length + ':' + history.slice(-1)[0]?.period;
     const prevSmooth = this._smoothCache.get(cacheKey);
-    const alpha = 0.65; // 平滑系数，值越大越倾向于新数据
+    const alpha = 0.65;
     if (prevSmooth && prevSmooth.length === teNumbers.length) {
-      // 对每个位置进行EMA平滑（按数值相近性匹配）
       const smoothed = [];
       for (let i = 0; i < teNumbers.length; i++) {
-        // 找prevSmooth中与teNumbers[i]最接近的数
         let closest = prevSmooth[i];
         let minDist = Infinity;
         for (const pv of prevSmooth) {
           const d = Math.abs(pv - teNumbers[i]);
           if (d < minDist) { minDist = d; closest = pv; }
         }
-        // EMA: 新值 = alpha * 新数据 + (1-alpha) * 旧值
         const emaVal = Math.round(alpha * teNumbers[i] + (1 - alpha) * closest);
         smoothed.push(this._clamp(emaVal, 0, 27));
       }
-      // 去重保证6个不同数字
       const unique = [...new Set(smoothed)];
       if (unique.length === 6) teNumbers = unique;
       else {
-        // 补全
         const fill = [];
         for (const n of teNumbers) if (!unique.includes(n)) fill.push(n);
         const merged = [...unique];
@@ -985,7 +965,6 @@ const QianJinU = {
         teNumbers = merged.slice(0, 6).sort((a,b)=>a-b);
       }
     }
-    // 更新平滑缓存（用当前期号作为键）
     const smoothKey = history.slice(-1)[0]?.period || Date.now();
     this._smoothCache.set(smoothKey, teNumbers);
     if (this._smoothCache.size > 100) {
@@ -998,10 +977,8 @@ const QianJinU = {
              confidence, predictedSum:Math.round(predictedSum*10)/10, _trend:t, weightName: weights.name || '激进追热' };
   },
 
-  // ----- 主预测（带缓存） -----
   predict(history) {
     if(!history || history.length<5) return { error:'数据不足' };
-    // 【优化】基于数据版本缓存预测结果
     const cacheKey = history.length + ':' + history.slice(-1)[0]?.period + ':' + history.slice(-2)[0]?.period;
     if (this._predCache.has(cacheKey)) {
       return this._predCache.get(cacheKey);
@@ -1010,7 +987,6 @@ const QianJinU = {
     const result = this._predictWithWeights(history, bestWeights);
     if(result.error) return result;
     result.weightUsed = bestWeights.name || '激进追热';
-    // 缓存结果
     this._predCache.set(cacheKey, result);
     if (this._predCache.size > 50) {
       const keys = [...this._predCache.keys()];
@@ -1066,8 +1042,7 @@ const QianJinU = {
 };
 
 // ============================================================
-// 应用主逻辑（数据获取、UI渲染）
-// 【优化】增量数据更新 + 防抖 + 批量渲染
+// 应用主逻辑（倒计时修复 + 增量数据）
 // ============================================================
 const CONFIG = {
   API_BASE: 'https://pc28.help/api/kj.json?nbr=80',
@@ -1079,11 +1054,11 @@ const CONFIG = {
     (u)=>'https://cors-anywhere.herokuapp.com/'+u,
     (u)=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u),
   ],
-  DRAW_INTERVAL: 210000,
+  DRAW_INTERVAL: 210000, // 3.5分钟
   AUTO_REFRESH: 12000,
   FETCH_TIMEOUT: 6000,
 };
-const EMBEDDED_DATA = {"countdown": "00:00", "data": [
+const EMBEDDED_DATA = {"countdown":"00:00","data":[
 {"nbr":"3468624","date":"2026-08-12","time":"17:11:30","number":"9+7+9","num":"25","combination":"大单"},
 {"nbr":"3468625","date":"2026-08-12","time":"17:15:00","number":"4+3+5","num":"12","combination":"小双"},
 {"nbr":"3468626","date":"2026-08-12","time":"17:18:30","number":"2+6+6","num":"14","combination":"大双"},
@@ -1192,24 +1167,20 @@ const app = {
   countdownTimer: null,
   _source: '未知',
   _lock: false,
-  _lastDataVersion: '', // 【优化】数据版本追踪
-  _refreshTimer: null,
-  _renderPending: false,
-
-  // v18 开奖比对
-  _resultHistory: null,
-  _storageKey: 'qianjinu_v18_results',
+  _lastDataVersion: '',
+  _nextDrawTime: null, // 下一期开奖时间戳
 
   loadResultHistory() {
     try {
-      const raw = localStorage.getItem(this._storageKey);
+      const raw = localStorage.getItem('qianjinu_v18_results');
       this._resultHistory = raw ? JSON.parse(raw) : [];
     } catch(e) { this._resultHistory = []; }
   },
-
   saveResultHistory() {
-    try { localStorage.setItem(this._storageKey, JSON.stringify(this._resultHistory || [])); } catch(e) {}
+    try { localStorage.setItem('qianjinu_v18_results', JSON.stringify(this._resultHistory || [])); } catch(e) {}
   },
+
+  _resultHistory: null,
 
   checkAndRecordResult() {
     if (!this.history || this.history.length < 1) return;
@@ -1283,26 +1254,15 @@ const app = {
     })).filter(r => !isNaN(r.sum)).reverse();
   },
 
-  // 【优化】增量数据合并
   mergeHistory(newHist) {
     if (!newHist || newHist.length === 0) return;
     if (this.history.length === 0) { this.history = newHist; return; }
-    // 按period去重合并（保留最新）
     const existing = new Map();
     for (const h of this.history) existing.set(h.period, h);
     for (const h of newHist) existing.set(h.period, h);
     const merged = Array.from(existing.values());
-    merged.sort((a,b) => {
-      // 按period数字排序
-      const na = parseInt(a.period) || 0, nb = parseInt(b.period) || 0;
-      return na - nb;
-    });
-    if (merged.length > this.history.length) {
-      this.history = merged;
-    } else {
-      // 没有新增数据，但可能数据有变化（如组合修正），仍更新
-      this.history = merged;
-    }
+    merged.sort((a,b) => (parseInt(a.period)||0) - (parseInt(b.period)||0));
+    this.history = merged;
   },
 
   fetchViaXHR(url) {
@@ -1362,8 +1322,6 @@ const app = {
     this._toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
   },
 
-  // 【优化】防抖刷新
-  _refreshDebounce: null,
   async refresh() {
     if (this._lock) return;
     this._lock = true;
@@ -1379,12 +1337,10 @@ const app = {
       }
       const newHist = this.normalize(raw);
       if (!newHist || newHist.length < 3) throw new Error('数据为空');
-      // 【优化】增量合并
       const oldLen = this.history.length;
       this.mergeHistory(newHist);
       const changed = this.history.length > oldLen;
       if (!changed && this._lastDataVersion === this.history.slice(-1)[0]?.period) {
-        // 数据无变化，仅刷新UI
         if (this.currentPred) {
           this.renderAll(this.currentPred);
           this.renderResultCard();
@@ -1403,7 +1359,7 @@ const app = {
       this.renderAll(pred);
       this.renderResultCard();
       this.setStatus(this._source === '实时API' ? '实时' : '离线');
-      this.scheduleCountdown();
+      this.scheduleCountdown(); // 重置倒计时
       if (this._source !== '实时API') this.showToast('已使用离线数据（API暂不可用）');
       else if (changed) this.showToast('数据已更新 · 预测刷新');
     } catch(e) {
@@ -1417,43 +1373,60 @@ const app = {
     }
   },
 
+  // ===== 倒计时修复：基于下一期开奖时间戳实时计算 =====
   scheduleCountdown() {
-    const first = this.history[this.history.length - 1];
-    if (!first || !first.time) return;
-    const parts = first.time.split(':');
-    const lastSec = parseInt(parts[0],10)*3600 + parseInt(parts[1],10)*60 + parseInt(parts[2],10);
+    const last = this.history[this.history.length - 1];
+    if (!last || !last.time) return;
+    // 计算最后一期开奖时间的时间戳（当天）
+    const parts = last.time.split(':');
+    const hour = parseInt(parts[0],10), min = parseInt(parts[1],10), sec = parseInt(parts[2],10);
     const now = new Date();
-    const nowSec = now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds();
-    let diff = (lastSec + CONFIG.DRAW_INTERVAL/1000) - nowSec;
-    if (diff < 0) diff += 86400;
-    if (diff > CONFIG.DRAW_INTERVAL/1000) diff -= 86400;
-    clearInterval(this.countdownTimer);
-    this.countdownTimer = setInterval(() => this.tick(diff), 250);
-    this.tick(diff);
+    const base = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, min, sec);
+    // 如果最后一期时间已经过去，加上间隔
+    while (base.getTime() <= now.getTime()) {
+      base.setTime(base.getTime() + CONFIG.DRAW_INTERVAL);
+    }
+    this._nextDrawTime = base.getTime();
+    // 清除旧定时器
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = null;
+    }
+    // 每秒更新一次
+    this.countdownTimer = setInterval(() => this.tick(), 1000);
+    this.tick(); // 立即更新
   },
 
-  tick(total) {
-    if (total === undefined) return;
+  tick() {
+    if (!this._nextDrawTime) return;
+    const now = Date.now();
+    let diff = Math.max(0, (this._nextDrawTime - now) / 1000);
+    const s = Math.floor(diff);
+    const mm = String(Math.floor(s/60)).padStart(2,'0');
+    const ss = String(s%60).padStart(2,'0');
     const c = document.getElementById('cd-text');
     const ring = document.getElementById('ring-fg');
     const ringT = document.getElementById('ring-text');
-    if (!c) return;
-    const s = Math.floor(total);
-    const mm = String(Math.floor(s/60)).padStart(2,'0');
-    const ss = String(s%60).padStart(2,'0');
-    c.textContent = mm + '分' + ss + '秒';
-    const totalT = CONFIG.DRAW_INTERVAL/1000;
-    const pct = totalT>0 ? s/totalT : 0;
-    const circ = 213.63;
-    if (ring) ring.style.strokeDashoffset = circ * (1 - pct);
+    if (c) {
+      c.textContent = mm + '分' + ss + '秒';
+      c.className = 'countdown-text' + (s<=15 ? ' urgent' : (s<=60 ? ' imminent' : ''));
+    }
+    if (ring) {
+      const totalT = CONFIG.DRAW_INTERVAL/1000;
+      const pct = totalT>0 ? s/totalT : 0;
+      const circ = 213.63;
+      ring.style.strokeDashoffset = circ * (1 - pct);
+    }
     if (ringT) ringT.textContent = mm + ':' + ss;
-    c.className = 'countdown-text' + (s<=15 ? ' urgent' : (s<=60 ? ' imminent' : ''));
-    if (s <= 0) { clearInterval(this.countdownTimer); setTimeout(()=>this.refresh(), 1500); }
+    if (s <= 0) {
+      // 倒计时结束，刷新数据
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = null;
+      this.refresh();
+    }
   },
 
-  // 【优化】批量渲染，减少DOM操作
   renderAll(pred) {
-    this._renderPending = false;
     this.renderPrediction(pred);
     this.renderTrend(pred._trend);
     this.renderRecent();
@@ -1556,11 +1529,9 @@ window.app = app;
 document.addEventListener('DOMContentLoaded', () => {
   app.loadResultHistory();
   app.refresh();
-  // 【优化】定时刷新使用防抖
+  // 自动刷新
   setInterval(() => {
-    if (!app._lock) {
-      app.refresh();
-    }
+    if (!app._lock) app.refresh();
   }, CONFIG.AUTO_REFRESH);
 });
 </script>
