@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>千金星轨 · 福彩3D 真实数据</title>
+<title>千金星轨 · PC28 真实数据</title>
 <style>
   :root{
     --bg:#0a0e27;--card:rgba(255,255,255,.06);--line:rgba(255,255,255,.1);
     --txt:#e8eaf6;--sub:#9aa0c3;--gold:#ffd700;--green:#3ddc84;--red:#ff5c5c;
-    --blue:#5b8def;--purple:#b388ff;
+    --blue:#5b8def;--purple:#b388ff;--cyan:#00e5ff;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
     background:radial-gradient(ellipse at top,#15193a 0%,var(--bg) 60%);
     color:var(--txt);min-height:100vh;padding:16px;line-height:1.5}
-  .wrap{max-width:960px;margin:0 auto}
+  .wrap{max-width:1000px;margin:0 auto}
   header{text-align:center;padding:20px 0 12px}
-  h1{font-size:26px;background:linear-gradient(90deg,var(--gold),#ff9d00);
+  h1{font-size:26px;background:linear-gradient(90deg,var(--cyan),var(--gold));
     -webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800;letter-spacing:1px}
   .sub{color:var(--sub);font-size:13px;margin-top:4px}
   .src-badge{display:inline-block;margin-top:8px;padding:4px 12px;border-radius:20px;
@@ -27,29 +27,30 @@
   .card{background:var(--card);backdrop-filter:blur(10px);border:1px solid var(--line);
     border-radius:16px;padding:18px}
   .card h3{font-size:14px;color:var(--sub);font-weight:600;margin-bottom:12px;
-    display:flex;align-items:center;gap:6px}
+    display:flex;align-items:center;gap:6px;flex-wrap:wrap}
   .timer-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-  .ring{position:relative;width:120px;height:120px;flex-shrink:0}
+  .ring{position:relative;width:130px;height:130px;flex-shrink:0}
   .ring svg{transform:rotate(-90deg)}
   .ring .track{fill:none;stroke:rgba(255,255,255,.08);stroke-width:8}
   .ring .prog{fill:none;stroke:url(#grad);stroke-width:8;stroke-linecap:round;
     transition:stroke-dashoffset .9s linear}
   .ring .time{position:absolute;inset:0;display:flex;flex-direction:column;
     align-items:center;justify-content:center}
-  .ring .time b{font-size:22px;font-variant-numeric:tabular-nums;letter-spacing:1px}
+  .ring .time b{font-size:24px;font-variant-numeric:tabular-nums;letter-spacing:1px}
   .ring .time small{font-size:11px;color:var(--sub);margin-top:2px}
   .latest-info{flex:1;min-width:180px}
   .latest-info .issue{font-size:13px;color:var(--sub)}
-  .latest-info .nums{font-size:30px;font-weight:800;margin:6px 0;
+  .latest-info .nums{font-size:32px;font-weight:800;margin:6px 0;
     font-variant-numeric:tabular-nums;letter-spacing:2px;
-    background:linear-gradient(90deg,var(--gold),#ff9d00);
+    background:linear-gradient(90deg,var(--cyan),var(--gold));
     -webkit-background-clip:text;-webkit-text-fill-color:transparent}
   .latest-info .meta{font-size:13px;color:var(--sub)}
-  .tag{display:inline-block;padding:2px 10px;border-radius:8px;font-size:12px;font-weight:600;margin-left:6px}
+  .tag{display:inline-block;padding:2px 10px;border-radius:8px;font-size:12px;font-weight:600;margin-left:4px}
   .tag.da{background:rgba(91,141,239,.2);color:var(--blue)}
   .tag.xiao{background:rgba(179,136,255,.2);color:var(--purple)}
   .tag.dan{background:rgba(61,220,132,.2);color:var(--green)}
   .tag.shuang{background:rgba(255,92,92,.2);color:var(--red)}
+  .tag.cyan{background:rgba(0,229,255,.2);color:var(--cyan)}
   .pred-row{display:flex;align-items:center;justify-content:space-between;
     padding:10px 0;border-bottom:1px dashed var(--line)}
   .pred-row:last-child{border-bottom:none}
@@ -60,10 +61,10 @@
   .pred-src{font-size:11px;color:var(--sub);margin-top:2px;text-align:right}
   .confidence{margin-top:12px;text-align:center}
   .conf-bar{height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;margin-top:6px}
-  .conf-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--gold));
+  .conf-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--cyan),var(--gold));
     border-radius:4px;transition:width .8s ease}
   .conf-txt{font-size:13px;color:var(--sub);margin-top:4px}
-  .history{max-height:320px;overflow-y:auto;margin-top:8px}
+  .history{max-height:340px;overflow-y:auto;margin-top:8px}
   table{width:100%;border-collapse:collapse;font-size:13px}
   th,td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line)}
   th{color:var(--sub);font-weight:600;position:sticky;top:0;background:var(--bg);z-index:1}
@@ -73,8 +74,8 @@
   .stat b{display:block;font-size:20px;color:var(--gold)}
   .stat span{font-size:11px;color:var(--sub)}
   .refresh{position:fixed;right:18px;bottom:18px;width:52px;height:52px;border-radius:50%;
-    background:linear-gradient(135deg,var(--gold),#ff9d00);border:none;color:#1a1a2e;
-    font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(255,215,0,.35);
+    background:linear-gradient(135deg,var(--cyan),var(--gold));border:none;color:#1a1a2e;
+    font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(0,229,255,.35);
     display:flex;align-items:center;justify-content:center;transition:transform .3s;z-index:99}
   .refresh:hover{transform:scale(1.08)}
   .refresh.spin{animation:spin 1s linear infinite}
@@ -83,23 +84,28 @@
     padding:16px;margin-top:16px;font-size:13px;color:#ffb3b3;display:none}
   .err.show{display:block}
   .loading{text-align:center;padding:40px;color:var(--sub)}
-  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gold);
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--cyan);
     margin:0 2px;animation:blink 1.4s infinite both}
   .dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
   @keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+  .maint-banner{background:rgba(255,92,92,.12);border:1px solid rgba(255,92,92,.3);
+    border-radius:10px;padding:10px 14px;margin-top:12px;font-size:13px;color:#ffb3b3;display:none}
+  .maint-banner.show{display:block}
   footer{text-align:center;color:var(--sub);font-size:12px;padding:20px 0;margin-top:10px}
+  .pill{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;
+    background:rgba(0,229,255,.15);color:var(--cyan);margin-left:6px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>🌟 千金星轨 · 福彩3D</h1>
-    <div class="sub">真实数据 · 每日 21:15 开奖 · GitHub Pages 部署</div>
+    <h1>⚡ 千金星轨 · PC28</h1>
+    <div class="sub">真实数据 · 每 3.5 分钟一期 · 全天滚动约 400 期</div>
     <div id="srcBadge" class="src-badge">● 正在连接真实数据源…</div>
   </header>
 
   <div id="loading" class="loading">
-    正在获取真实开奖数据 <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    正在获取 PC28 真实开奖数据 <span class="dot"></span><span class="dot"></span><span class="dot"></span>
   </div>
 
   <div id="errBox" class="err"></div>
@@ -107,20 +113,20 @@
   <div id="main" class="grid" style="display:none">
     <!-- 倒计时 + 最新期 -->
     <div class="card" style="grid-column:1/-1">
-      <h3>⏱ 下一期倒计时</h3>
+      <h3>⏱ 下一期倒计时 <span id="periodLabel" class="pill">--</span></h3>
       <div class="timer-wrap">
         <div class="ring">
-          <svg width="120" height="120">
+          <svg width="130" height="130">
             <defs>
               <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#3ddc84"/>
+                <stop offset="0%" stop-color="#00e5ff"/>
                 <stop offset="100%" stop-color="#ffd700"/>
               </linearGradient>
             </defs>
-            <circle class="track" cx="60" cy="60" r="52"/>
-            <circle id="progRing" class="prog" cx="60" cy="60" r="52"/>
+            <circle class="track" cx="65" cy="65" r="56"/>
+            <circle id="progRing" class="prog" cx="65" cy="65" r="56"/>
           </svg>
-          <div class="time"><b id="cdTime">--:--</b><small>距下期开奖</small></div>
+          <div class="time"><b id="cdTime">--:--</b><small id="cdLabel">距下期开奖</small></div>
         </div>
         <div class="latest-info">
           <div class="issue">最新期号：<span id="latestIssue">---</span></div>
@@ -132,11 +138,14 @@
           </div>
         </div>
       </div>
+      <div id="maintBanner" class="maint-banner">
+        ⚠️ 当前处于维护窗口（约 19:00–19:30 北京时间），开奖暂停，倒计时归零。
+      </div>
     </div>
 
     <!-- AI 预测 -->
     <div class="card">
-      <h3>🤖 预测（下一期）<span id="predMode" class="tag" style="float:right;margin:0">--</span></h3>
+      <h3>🤖 预测（下一期）<span id="predMode" class="tag cyan" style="float:right;margin:0">--</span></h3>
       <div class="pred-row">
         <span class="pred-label">杀组（排除）</span>
         <span class="pred-val"><span id="predKill" class="kill">--</span></span>
@@ -173,7 +182,7 @@
         <div class="stat"><b id="stCnt">-</b><span>样本期数</span></div>
       </div>
       <div style="margin-top:12px;font-size:13px;color:var(--sub)">
-        形态分布（近30期）：
+        形态分布（近100期）：
         <span class="tag da">大单 <b id="cntDD">0</b></span>
         <span class="tag da">大双 <b id="cntDX">0</b></span>
         <span class="tag xiao">小单 <b id="cntXD">0</b></span>
@@ -183,10 +192,10 @@
 
     <!-- 历史开奖 -->
     <div class="card" style="grid-column:1/-1">
-      <h3>📜 近期开奖记录（最新 30 期）</h3>
+      <h3>📜 近期开奖记录（最新 50 期）</h3>
       <div class="history">
         <table>
-          <thead><tr><th>期号</th><th>日期</th><th>号码</th><th>和值</th><th>形态</th></tr></thead>
+          <thead><tr><th>期号</th><th>时间</th><th>号码</th><th>和值</th><th>形态</th></tr></thead>
           <tbody id="histBody"></tbody>
         </table>
       </div>
@@ -194,27 +203,27 @@
   </div>
 
   <button class="refresh" id="btnRefresh" title="刷新数据">⟳</button>
-  <footer>数据来源：yu28.top / cwl.gov.cn · 仅供算法研究参考 · 彩票开奖为随机事件，理性对待</footer>
+  <footer>数据来源：yu28.top 开放平台 · PC28 每 3.5 分钟一期 · 仅供算法研究参考，理性对待</footer>
 </div>
 
 <script>
 /* =========================================================
-   千金星轨 · GitHub Pages 单文件版
-   数据链路（按优先级自动降级）：
-     1) yu28.top 直连（浏览器端，需 CORS 放行）
-     2) corsproxy.io → yu28.top（公共代理）
-     3) 同目录 data.json（Actions 用 cwl.gov.cn 生成）
-   预测策略：
-     - 拿到 yu28 4 路 AI 预测 → 直接用
-     - 仅拿到开奖数据 → 用本地融合算法补预测
+   千金星轨 · PC28 真实数据版
+   - 数据链路：yu28 直连 → corsproxy.io → data.json 兜底
+   - 倒计时：直接用 yu28 返回的 countdown 字段（真实 3.5 分钟节奏）
+   - 维护窗口：19:00-19:30 北京时间，接口 countdown=00:00
+   - 和值：0-13 小 / 14-27 大；奇数单 / 偶数双
    ========================================================= */
 const CONFIG = {
   API_KEY: "yu28_f9f41d673b447fac",
   BASE: "https://yu28.top",
   PROXY: "https://corsproxy.io/?url=",
-  HISTORY_N: 100, PRED_N: 50,
-  DRAW_HOUR: 21, DRAW_MIN: 15,
+  HISTORY_N: 350,    // PC28 每3.5min一期，350期≈20小时
+  PRED_N: 50,
   DATA_JSON: "data.json",
+  // 维护窗口（北京时间）
+  MAINT_START_H: 19, MAINT_START_M: 0,
+  MAINT_END_H: 19,   MAINT_END_M: 30,
 };
 
 const $ = id => document.getElementById(id);
@@ -229,6 +238,18 @@ function classify(a,b,c){
 function comboClass(c){return c.startsWith("大")?"da":"xiao";}
 function avg(arr){return arr.reduce((s,x)=>s+x,0)/arr.length;}
 
+// 解析 "4+8+2=14" 或 "0,1,2 => 3"
+function parseNumber(str){
+  if(!str) return null;
+  const m1 = str.match(/(\d+)\+(\d+)\+(\d+)=(\d+)/);
+  if(m1) return {a:+m1[1],b:+m1[2],c:+m1[3],sum:+m1[4]};
+  const m2 = str.match(/(\d+),(\d+),(\d+)\s*=>\s*(\d+)/);
+  if(m2) return {a:+m2[1],b:+m2[2],c:+m2[3],sum:+m2[4]};
+  const m3 = str.match(/(\d+)\s+(\d+)\s+(\d+)/);
+  if(m3){const a=+m3[1],b=+m3[2],c=+m3[3];return{a,b,c,sum:a+b+c};}
+  return null;
+}
+
 // ==================== 网络 ====================
 async function jfetch(url, headers={}){
   const r = await fetch(url, {headers, mode:"cors", cache:"no-cache"});
@@ -236,26 +257,26 @@ async function jfetch(url, headers={}){
   return r.json();
 }
 
-// 三源降级：直连 yu28 → corsproxy → data.json
+// 三源降级
 async function loadAllData(){
-  // ---- 第 1 步：尝试 yu28 直连 ----
+  // 1) yu28 直连
   try{
     const [kj, sha, sz, ds, dx] = await Promise.all([
-      jfetch(`${CONFIG.BASE}/api/kj.json?nbr=${CONFIG.HISTORY_N}`, { "X-Api-Key": CONFIG.API_KEY }),
-      jfetch(`${CONFIG.BASE}/api/sha.json?nbr=${CONFIG.PRED_N}`, { "X-Api-Key": CONFIG.API_KEY }),
-      jfetch(`${CONFIG.BASE}/api/sz.json?nbr=${CONFIG.PRED_N}`,  { "X-Api-Key": CONFIG.API_KEY }),
-      jfetch(`${CONFIG.BASE}/api/ds.json?nbr=${CONFIG.PRED_N}`,  { "X-Api-Key": CONFIG.API_KEY }),
-      jfetch(`${CONFIG.BASE}/api/dx.json?nbr=${CONFIG.PRED_N}`,  { "X-Api-Key": CONFIG.API_KEY }),
+      jfetch(`${CONFIG.BASE}/api/kj.json?nbr=${CONFIG.HISTORY_N}`, {"X-Api-Key":CONFIG.API_KEY}),
+      jfetch(`${CONFIG.BASE}/api/sha.json?nbr=${CONFIG.PRED_N}`,{"X-Api-Key":CONFIG.API_KEY}),
+      jfetch(`${CONFIG.BASE}/api/sz.json?nbr=${CONFIG.PRED_N}`, {"X-Api-Key":CONFIG.API_KEY}),
+      jfetch(`${CONFIG.BASE}/api/ds.json?nbr=${CONFIG.PRED_N}`, {"X-Api-Key":CONFIG.API_KEY}),
+      jfetch(`${CONFIG.BASE}/api/dx.json?nbr=${CONFIG.PRED_N}`, {"X-Api-Key":CONFIG.API_KEY}),
     ]);
     if(kj && kj.data && kj.data.length){
-      return { mode:"yu28-live", kj:kj.data, sha:sha.data||[], sz:sz.data||[],
-               ds:ds.data||[], dx:dx.data||[] };
+      return {mode:"yu28-live", kj:kj.data, sha:sha.data||[], sz:sz.data||[],
+              ds:ds.data||[], dx:dx.data||[], rawKj:kj};
     }
-  }catch(e){ console.warn("yu28 直连失败:", e.message); }
+  }catch(e){console.warn("yu28 直连失败:",e.message);}
 
-  // ---- 第 2 步：corsproxy.io ----
+  // 2) corsproxy.io
   try{
-    const px = CONFIG.PROXY;
+    const px=CONFIG.PROXY;
     const [kj, sha, sz, ds, dx] = await Promise.all([
       jfetch(px+encodeURIComponent(`${CONFIG.BASE}/api/kj.json?nbr=${CONFIG.HISTORY_N}`)),
       jfetch(px+encodeURIComponent(`${CONFIG.BASE}/api/sha.json?nbr=${CONFIG.PRED_N}`)),
@@ -264,63 +285,69 @@ async function loadAllData(){
       jfetch(px+encodeURIComponent(`${CONFIG.BASE}/api/dx.json?nbr=${CONFIG.PRED_N}`)),
     ]);
     if(kj && kj.data && kj.data.length){
-      return { mode:"yu28-proxy", kj:kj.data, sha:sha.data||[], sz:sz.data||[],
-               ds:ds.data||[], dx:dx.data||[] };
+      return {mode:"yu28-proxy", kj:kj.data, sha:sha.data||[], sz:sz.data||[],
+              ds:ds.data||[], dx:dx.data||[], rawKj:kj};
     }
-  }catch(e){ console.warn("corsproxy 失败:", e.message); }
+  }catch(e){console.warn("corsproxy 失败:",e.message);}
 
-  // ---- 第 3 步：静态 data.json（Actions 生成）----
+  // 3) data.json 兜底
   try{
     const r = await jfetch(CONFIG.DATA_JSON);
     if(r && r.kj && r.kj.data && r.kj.data.length){
-      return { mode:"static-cwl", kj:r.kj.data, sha:r.sha?.data||[],
-               sz:r.sz?.data||[], ds:r.ds?.data||[], dx:r.dx?.data||[] };
+      return {mode:"static", kj:r.kj.data, sha:(r.sha&&r.sha.data)||[],
+              sz:(r.sz&&r.sz.data)||[], ds:(r.ds&&r.ds.data)||[],
+              dx:(r.dx&&r.dx.data)||[], rawKj:r.kj};
     }
-  }catch(e){ console.warn("data.json 不可用:", e.message); }
+  }catch(e){console.warn("data.json 不可用:",e.message);}
 
-  throw new Error("所有数据源均不可用（yu28 直连+代理 + data.json 兜底全部失败）");
+  throw new Error("所有数据源均不可用（yu28 直连+代理+data.json 全部失败）");
 }
 
 // ==================== 归一化 ====================
 function normalizeKJ(arr){
   return arr.map(it=>{
-    const m = (it.number||"").match(/(\d+)\+(\d+)\+(\d+)=(\d+)/);
+    const p = parseNumber(it.number || it.nbr || "");
     let a=0,b=0,c=0,sum=0;
-    if(m){ a=+m[1]; b=+m[2]; c=+m[3]; sum=+m[4]; }
-    else { sum = +((it.number||"").split("=")[1]||0); }
+    if(p){a=p.a;b=p.b;c=p.c;sum=p.sum;}
     const cl = classify(a,b,c);
-    return { nbr:it.nbr, time:it.time||"", a, b, c, sum,
-             combo:cl.combo, size:cl.size, parity:cl.parity };
+    return {
+      nbr: it.nbr || it.code || "",
+      time: it.time || it.date || "",
+      a,b,c,sum,
+      combo:cl.combo, size:cl.size, parity:cl.parity,
+      countdown: it.countdown || "",
+    };
   }).filter(x=>x.nbr)
-    .sort((x,y)=>+x.nbr - +y.nbr);   // 升序：末位=最新
+    .sort((x,y)=>{
+      // 期号可能是字符串含日期，按字典序即可（同日期内递增）
+      return String(x.nbr).localeCompare(String(y.nbr));
+    });
 }
 
-// ==================== 本地融合预测（兜底用）====================
-// 当拿不到 yu28 AI 预测时，用历史趋势 + 形态连续/反转概率给出预测
+// ==================== 本地融合预测（兜底）====================
 function localPredict(data){
-  const n = data.length, recent = data.slice(-30);
-  // 形态计数
+  const recent = data.slice(-100);
   const cnt={大单:0,大双:0,小单:0,小双:0};
   recent.forEach(d=>{ if(cnt[d.combo]!=null) cnt[d.combo]++; });
   const entries=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
   const top=entries[0][0], bot=entries[3][0];
-  // 连龙检测：最近 4 期同形态 → 倾向反转
-  const tail=data.slice(-4).map(d=>d.combo);
+  // 连龙检测：最近 5 期同形态 → 反转
+  const tail=data.slice(-5).map(d=>d.combo);
   const same=tail.every(x=>x===tail[0]);
   let kill=bot, push=top;
-  if(same) { kill=top; push=entries[1][0]; }  // 连龙→反转
+  if(same){kill=top; push=entries[1][0];}
   // 和值重心
   const sums=recent.map(d=>d.sum);
   const a=Math.round(avg(sums));
-  // 单双/大小倾向
+  // 单双/大小倾向（近100期）
   const bigCnt=recent.filter(d=>d.big).length;
   const danCnt=recent.filter(d=>d.dan).length;
   return {
     kill, push,
     sum:[Math.max(0,a-1),a,Math.min(27,a+1)],
-    ds: danCnt>=15?"单":"双",
-    dx: bigCnt>=15?"大":"小",
-    conf: Math.round(entries[0][1]/30*100),
+    ds: danCnt>=50?"单":"双",
+    dx: bigCnt>=50?"大":"小",
+    conf: Math.round(entries[0][1]/100*100),
   };
 }
 
@@ -328,7 +355,7 @@ function localPredict(data){
 function render(state){
   const data = normalizeKJ(state.kj);
   if(!data.length) throw new Error("数据为空");
-  $("main").style.display = "grid";
+  $("main").style.display="grid";
 
   const latest = data[data.length-1];
   $("latestIssue").textContent = latest.nbr;
@@ -338,29 +365,31 @@ function render(state){
   tag.className="tag "+comboClass(latest.combo);
   $("latestDate").textContent = latest.time||"";
 
-  // 历史表
+  // 期号标签
+  $("periodLabel").textContent = "期号 "+latest.nbr;
+
+  // 历史表（最新50期倒序）
   const tbody=$("histBody"); tbody.innerHTML="";
-  [...data].slice(-30).reverse().forEach(d=>{
+  [...data].slice(-50).reverse().forEach(d=>{
     const tr=document.createElement("tr");
-    tr.innerHTML=`<td>${d.nbr}</td><td>${d.time?d.time.slice(0,10):""}</td>
+    tr.innerHTML=`<td>${d.nbr}</td><td>${d.time?d.time.slice(0,16):""}</td>
       <td class="num">${d.a}+${d.b}+${d.c}</td><td>${d.sum}</td>
       <td><span class="tag ${comboClass(d.combo)}">${d.combo}</span></td>`;
     tbody.appendChild(tr);
   });
 
-  // 形态分布
-  const r30=data.slice(-30); let dd=0,dx=0,xd=0,xx=0;
-  r30.forEach(d=>{if(d.combo==="大单")dd++;else if(d.combo==="大双")dx++;
+  // 形态分布（近100期）
+  const r100=data.slice(-100); let dd=0,dx=0,xd=0,xx=0;
+  r100.forEach(d=>{if(d.combo==="大单")dd++;else if(d.combo==="大双")dx++;
     else if(d.combo==="小单")xd++;else if(d.combo==="小双")xx++;});
   $("cntDD").textContent=dd;$("cntDX").textContent=dx;
   $("cntXD").textContent=xd;$("cntXX").textContent=xx;
 
   // ---- 预测 ----
   const lastPred = arr=>(arr||[]).filter(x=>x.prediction).pop();
-  let predMode = "", conf = 0;
+  let predMode="", conf=0;
 
   if(state.mode.startsWith("yu28") && (lastPred(state.sha)||lastPred(state.sz))){
-    // 有 yu28 AI 数据 → 直接用
     predMode = state.mode==="yu28-live" ? "yu28 AI · 直连" : "yu28 AI · 代理";
     const pK=lastPred(state.sha), pP=lastPred(state.sz),
           pDS=lastPred(state.ds), pDX=lastPred(state.dx);
@@ -368,13 +397,10 @@ function render(state){
     $("predPush").textContent = pP?pP.prediction:"暂无";
     $("predDS").textContent   = pDS?pDS.prediction:"暂无";
     $("predDX").textContent   = pDX?pDX.prediction:"暂无";
-    // 和值
-    const a=Math.round(avg(r30.map(d=>d.sum)));
+    const a=Math.round(avg(r100.map(d=>d.sum)));
     $("predSum").textContent=[Math.max(0,a-1),a,Math.min(27,a+1)].join(" / ");
-    // 置信度：AI 多路一致度（简化用形态集中度）
-    conf = Math.round(Math.max(dd,dx,xd,xx)/30*100);
+    conf = Math.round(Math.max(dd,dx,xd,xx)/100*100);
   } else {
-    // 兜底：本地算法
     predMode = "本地算法 · 兜底";
     const lp = localPredict(data);
     $("predKill").textContent = lp.kill;
@@ -385,13 +411,13 @@ function render(state){
     conf = lp.conf;
   }
   const pmTag=$("predMode"); pmTag.textContent=predMode;
-  pmTag.className="tag "+(predMode.includes("yu28")?"da":(predMode.includes("本地")?"xiao":"dan"));
+  pmTag.className="tag "+(predMode.includes("yu28")?"cyan":(predMode.includes("本地")?"xiao":"dan"));
 
   $("confPct").textContent=conf+"%";
-  $("confBar").style.width=conf+"%";
+  $("confBar").style.width=Math.min(100,conf)+"%";
 
-  // 回测
-  const bt=calcBacktest(data);
+  // 回测（近200期）
+  const bt=calcBacktest(data.slice(-200));
   $("stHit").textContent=bt.groupHit+"%";
   $("stKill").textContent=bt.killCorrect+"%";
   $("stSum").textContent=bt.sumHit+"%";
@@ -401,10 +427,13 @@ function render(state){
   const map={
     "yu28-live":"● 真实数据 · yu28 直连",
     "yu28-proxy":"● 真实数据 · corsproxy.io",
-    "static-cwl":"● 静态快照 · data.json（cwl.gov.cn）",
+    "static":"● 静态快照 · data.json（自动更新）",
   };
-  const warn = state.mode==="static-cwl";
+  const warn = state.mode==="static";
   markSrc(true, map[state.mode]||"● 已连接", warn);
+
+  // 启动倒计时（用 yu28 的 countdown 字段）
+  startCountdown(latest.countdown, state);
 }
 
 function calcBacktest(data){
@@ -419,21 +448,63 @@ function calcBacktest(data){
           sumHit:Math.round(sh/t*100)};
 }
 
-// ==================== 倒计时（真实 21:15）====================
-let timer=null;
-function startCountdown(){
-  if(timer)clearInterval(timer);
-  tick(); timer=setInterval(tick,1000);
+// ==================== 倒计时（PC28 节奏）====================
+let timer=null, _serverNowOffset=0;
+
+function parseCountdown(cdStr){
+  // "MM:SS" 或 "HH:MM:SS"
+  if(!cdStr) return null;
+  const parts = cdStr.split(":").map(Number);
+  if(parts.some(isNaN)) return null;
+  if(parts.length===2) return parts[0]*60 + parts[1];
+  if(parts.length===3) return parts[0]*3600 + parts[1]*60 + parts[2];
+  return null;
 }
+
+function isMaintenanceNow(){
+  const now = new Date(Date.now() + _serverNowOffset);
+  const h=now.getHours(), m=now.getMinutes();
+  const cur=h*60+m;
+  const s=CONFIG.MAINT_START_H*60+CONFIG.MAINT_START_M;
+  const e=CONFIG.MAINT_END_H*60+CONFIG.MAINT_END_M;
+  return cur>=s && cur<e;
+}
+
+function startCountdown(cdFromServer, state){
+  if(timer) clearInterval(timer);
+
+  // 优先用服务端返回的 countdown 推算"服务器现在时间"
+  const cdSec = parseCountdown(cdFromServer);
+  if(cdSec!=null && cdSec>0){
+    // 已知：下期还有 cdSec 秒 → 本期望剩余周期 = cdSec + 一个周期(210s)
+    _periodLen = 210; // 3.5 分钟
+    _remainSec = cdSec;
+  } else {
+    // 维护窗口或解析失败 → 用本地时间估算
+    _periodLen = 210;
+    _remainSec = 210 - (Math.floor(Date.now()/1000) % 210);
+  }
+
+  tick();
+  timer=setInterval(tick,1000);
+}
+
+let _remainSec=0, _periodLen=210;
 function tick(){
-  const now=new Date(), next=new Date(now);
-  next.setHours(CONFIG.DRAW_HOUR,CONFIG.DRAW_MIN,0,0);
-  const t215=new Date(now); t215.setHours(CONFIG.DRAW_HOUR,CONFIG.DRAW_MIN,0,0);
-  if(now>=t215) next.setDate(next.getDate()+1);
-  const diff=next-now, total=24*3600*1000;
-  const h=Math.floor(diff/3600000),m=Math.floor(diff%3600000/60000),s=Math.floor(diff%60000/1000);
-  $("cdTime").textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  const circ=2*Math.PI*52, ratio=Math.min(1,diff/total);
+  _remainSec = Math.max(0, _remainSec - 1);
+  if(_remainSec<=0){ _remainSec = _periodLen; }
+
+  const inMaint = isMaintenanceNow();
+  const banner=$("maintBanner");
+  if(inMaint){ banner.classList.add("show"); }
+  else { banner.classList.remove("show"); }
+
+  const m=Math.floor(_remainSec/60), s=_remainSec%60;
+  $("cdTime").textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  $("cdLabel").textContent = inMaint ? "维护中" : "距下期开奖";
+
+  // 圆环：剩余/周期
+  const circ=2*Math.PI*56, ratio=Math.min(1, _remainSec/_periodLen);
   const ring=$("progRing"); ring.style.strokeDasharray=circ; ring.style.strokeDashoffset=circ*(1-ratio);
 }
 
@@ -453,13 +524,12 @@ async function main(){
   try{
     const state = await loadAllData();
     render(state);
-    startCountdown();
   }catch(err){
     markSrc(false,"● 全部数据源不可用");
     showErr("⚠️ "+err.message+
-      "<br><br>如果你是站长：请确认 GitHub Actions 已成功运行一次（生成 data.json）。"+
-      "<br>检查路径：仓库 → Actions 标签页 → 查看工作流是否绿勾。"+
-      "<br>如果 Actions 也被 yu28 网关拒绝，本页会自动改用 cwl.gov.cn 数据（需更新 fetch_data.py）。");
+      "<br><br>请确认：<br>1) 仓库 Settings → Pages 已开启（main 分支）<br>"+
+      "2) GitHub Actions 已成功运行至少一次（生成 data.json）<br>"+
+      "3) 检查 Actions 日志：仓库 → Actions 标签页");
   }finally{
     $("loading").style.display="none";
     $("btnRefresh").classList.remove("spin");
