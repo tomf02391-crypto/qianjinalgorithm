@@ -18,6 +18,7 @@ import datetime
 import sys
 import os
 import re
+import traceback
 
 BASE = "https://pc28.help"
 HEADERS = {
@@ -27,9 +28,9 @@ HEADERS = {
 }
 
 
-def fetch_url(url, headers=None):
+def fetch_url(url, headers=None, timeout=20):
     req = urllib.request.Request(url, headers=headers or HEADERS)
-    with urllib.request.urlopen(req, timeout=30) as r:
+    with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.loads(r.read().decode())
 
 
@@ -61,15 +62,15 @@ def fetch_all():
 
 def build_from_seed():
     """从内置真实数据 + 本地算法构建完整数据包"""
-    sys.path.insert(0, os.path.dirname(__file__))
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import seed_data
     return seed_data.build()
 
 
+# ===== 数据归一化 =====
+
 def norm_kj_item(it):
-    """统一 kj 数据字段格式"""
     nbr = str(it.get("nbr") or it.get("drawNbr") or "")
-    # number 字段可能是 "a+b+c=sum" 或纯数字
     num_str = it.get("number") or it.get("numStr") or ""
     s = it.get("num") or it.get("sum")
     if s is None and num_str:
@@ -77,7 +78,6 @@ def norm_kj_item(it):
         if m:
             s = int(m.group(1))
     if s is None:
-        # 尝试从 a/b/c 计算
         a = it.get("a") or it.get("ball1")
         b = it.get("b") or it.get("ball2")
         c = it.get("c") or it.get("ball3")
@@ -89,7 +89,6 @@ def norm_kj_item(it):
     dan = s % 2 == 1
     combo = ("大" if big else "小") + ("单" if dan else "双")
 
-    # date/time 分离
     date_raw = it.get("date") or ""
     time_raw = it.get("time") or ""
     if not date_raw and " " in str(time_raw):
@@ -112,32 +111,34 @@ def norm_kj_item(it):
     }
 
 
-def norm_pred_item(it, pred_type):
-    """统一预测接口数据格式"""
-    nbr = str(it.get("nbr") or "")
+def norm_pred_item(it):
     return {
-        "nbr": nbr,
+        "nbr": str(it.get("nbr") or ""),
         "date": it.get("date") or "",
         "time": it.get("time") or "",
-        "number": it.get("number") or "",
+        "number": it.get("number") or it.get("numStr") or "",
         "num": it.get("num") or it.get("sum") or 0,
         "prediction": it.get("prediction") or it.get("predict") or "",
     }
 
 
+def empty_pred_list():
+    return []
+
+
 def main():
     src = ""
     kj_data = None
+    sha_data = sz_data = ds_data = dx_data = []
 
     # ===== 尝试 1：pc28.help 主源 =====
     print("→ 尝试 pc28.help 主源 ...")
     try:
         d = fetch_all()
-        if d["kj"].get("data"):
-            kj_raw = d["kj"]["data"]
+        kj_raw = d.get("kj", {}).get("data", [])
+        if kj_raw:
             kj_data = [norm_kj_item(x) for x in kj_raw]
             kj_data = [x for x in kj_data if x["nbr"] and x["sum"] > 0]
-            # 去重 + 按期号升序
             seen = set()
             deduped = []
             for x in kj_data:
@@ -150,49 +151,60 @@ def main():
             src = f"pc28.help (实时 {len(kj_data)}期)"
             print(f"  ✅ 主源成功：{len(kj_data)} 期真实数据")
 
-            # 处理预测数据
-            sha_data = [norm_pred_item(x, "sha") for x in d["sha"].get("data", [])]
-            sz_data  = [norm_pred_item(x, "sz")  for x in d["sz"].get("data", [])]
-            ds_data  = [norm_pred_item(x, "ds")  for x in d["ds"].get("data", [])]
-            dx_data  = [norm_pred_item(x, "dx")  for x in d["dx"].get("data", [])]
+            sha_data = [norm_pred_item(x) for x in d.get("sha", {}).get("data", [])]
+            sz_data  = [norm_pred_item(x) for x in d.get("sz",  {}).get("data", [])]
+            ds_data  = [norm_pred_item(x) for x in d.get("ds",  {}).get("data", [])]
+            dx_data  = [norm_pred_item(x) for x in d.get("dx",  {}).get("data", [])]
+            print(f"  ✅ 预测数据: sha={len(sha_data)} sz={len(sz_data)} ds={len(ds_data)} dx={len(dx_data)}")
         else:
-            print(f"  ⚠ 主源返回空数据")
+            print("  ⚠ 主源 kj 为空")
     except Exception as e:
-        print(f"  ❌ 主源失败：{e}")
+        print(f"  ❌ 主源异常：{e}")
+        traceback.print_exc()
 
     # ===== 尝试 2：内置真实数据 + 本地算法 =====
     if not kj_data or len(kj_data) < 20:
         print("→ 回退到内置真实数据 + 本地形态分析算法 ...")
-        seed = build_from_seed()
-        kj_wrapped = seed["kj"]
-        kj_data = kj_wrapped.get("data", [])
-        sha_data = seed["sha"].get("data", [])
-        sz_data  = seed["sz"].get("data", [])
-        ds_data  = seed["ds"].get("data", [])
-        dx_data  = seed["dx"].get("data", [])
-        src = seed.get("source", "本地算法")
-        print(f"  ✅ 本地数据：{len(kj_data)} 期")
+        try:
+            seed = build_from_seed()
+            kj_wrapped = seed.get("kj", {})
+            kj_data = kj_wrapped.get("data", [])
+            sha_data = seed.get("sha", {}).get("data", [])
+            sz_data  = seed.get("sz",  {}).get("data", [])
+            ds_data  = seed.get("ds",  {}).get("data", [])
+            dx_data  = seed.get("dx",  {}).get("data", [])
+            src = seed.get("source", "本地算法")
+            print(f"  ✅ 本地数据：{len(kj_data)} 期")
+            print(f"  ✅ 预测: sha={len(sha_data)} sz={len(sz_data)} ds={len(ds_data)} dx={len(dx_data)}")
+        except Exception as e:
+            print(f"  ❌ 本地回退也失败：{e}")
+            traceback.print_exc()
+            kj_data = []
+            sha_data = sz_data = ds_data = dx_data = []
 
     # ===== 组装输出 =====
     out = {
         "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
         "source": src,
         "game": "pc28",
-        "kj":  {"data": kj_data},
-        "sha": {"data": sha_data},
-        "sz":  {"data": sz_data},
-        "ds":  {"data": ds_data},
-        "dx":  {"data": dx_data},
+        "kj":  {"data": kj_data or []},
+        "sha": {"data": sha_data or []},
+        "sz":  {"data": sz_data or []},
+        "ds":  {"data": ds_data or []},
+        "dx":  {"data": dx_data or []},
     }
 
     # 附加下一期预测
     if kj_data:
-        sys.path.insert(0, os.path.dirname(__file__))
-        import seed_data as sd
-        np = sd.predict_next(kj_data, window=100)
-        if np:
-            out["next_prediction"] = np
-            print(f"  📊 下期预测已附加：杀{np['kill']}/押{np['push']}")
+        try:
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            import seed_data as sd
+            np = sd.predict_next(kj_data, window=100)
+            if np:
+                out["next_prediction"] = np
+                print(f"  📊 下期预测已附加：杀{np['kill']}/押{np['push']}")
+        except Exception as e:
+            print(f"  ⚠ 预测生成失败：{e}")
 
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2)
@@ -201,11 +213,10 @@ def main():
     if kj_data:
         print(f"   开奖数据：{len(kj_data)} 期（全部为真实数据）")
         print(f"   最早：{kj_data[0]['nbr']} {kj_data[0]['date']}")
-        print(f"   最新：{kj_data[-1]['nbr']} {kj_data[-1]['date']} {kj_data[-1]['time']}")
+        print(f"   最新：{kj_data[-1]['nbr']} {kj_data[-1]['date']}")
     if out.get("next_prediction"):
         np = out["next_prediction"]
-        print(f"   下期预测：杀{np['kill']} / 押{np['push']} / "
-              f"和值{np['sum']} / 置信度{np['confidence']}%")
+        print(f"   下期预测：杀{np['kill']} / 押{np['push']} / 和值{np['sum']} / 置信度{np['confidence']}%")
 
 
 if __name__ == "__main__":
