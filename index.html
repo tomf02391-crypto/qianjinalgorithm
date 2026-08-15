@@ -296,7 +296,8 @@ async function loadAllData(){
     if(r && r.kj && r.kj.data && r.kj.data.length){
       return {mode:"static", kj:r.kj.data, sha:(r.sha&&r.sha.data)||[],
               sz:(r.sz&&r.sz.data)||[], ds:(r.ds&&r.ds.data)||[],
-              dx:(r.dx&&r.dx.data)||[], rawKj:r.kj};
+              dx:(r.dx&&r.dx.data)||[], rawKj:r.kj,
+              nextPred:r.next_prediction||null};
     }
   }catch(e){console.warn("data.json 不可用:",e.message);}
 
@@ -400,6 +401,16 @@ function render(state){
     const a=Math.round(avg(r100.map(d=>d.sum)));
     $("predSum").textContent=[Math.max(0,a-1),a,Math.min(27,a+1)].join(" / ");
     conf = Math.round(Math.max(dd,dx,xd,xx)/100*100);
+  } else if(state.nextPred) {
+    // 静态模式但有预计算的下期预测
+    predMode = "本地算法 · 静态预测";
+    const np = state.nextPred;
+    $("predKill").textContent = np.kill || "--";
+    $("predPush").textContent = np.push || "--";
+    $("predDS").textContent   = np.ds || "--";
+    $("predDX").textContent   = np.dx || "--";
+    $("predSum").textContent  = (np.sum||[]).join(" / ");
+    conf = np.confidence || 0;
   } else {
     predMode = "本地算法 · 兜底";
     const lp = localPredict(data);
