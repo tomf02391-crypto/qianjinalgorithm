@@ -1,0 +1,24 @@
+name: 启用GitHub Pages
+on:
+  workflow_dispatch:
+permissions:
+  pages: write
+  id-token: write
+  contents: read
+jobs:
+  enable-pages:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: 配置 GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: 上传静态文件
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: 部署到 Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
