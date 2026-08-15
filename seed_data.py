@@ -9,9 +9,13 @@ seed_data.py — 内置真实 PC28 开奖数据 + 本地 AI 预测算法
   - sz（双组/押组）：主推概率最高的形态
   - ds（单双倾向）
   - dx（大小倾向）
+
+⚠️ 本模块只含真实历史数据，绝不生成模拟/虚构数据。
 """
 import json, datetime, statistics
 
+# ==================== 真实开奖数据 ====================
+# 格式：期号,日期,a,b,c,和值
 RAW = """3466675,2026-08-07,6,0,5,11
 3466676,2026-08-07,0,9,2,11
 3466677,2026-08-07,6,0,5,11
@@ -150,7 +154,6 @@ def classify(a, b, c):
     }
 
 def combo_counts(data, window=100):
-    """统计近 N 期各形态出现次数"""
     recent = data[-window:]
     cnt = {c: 0 for c in COMBOS}
     for d in recent:
@@ -159,7 +162,6 @@ def combo_counts(data, window=100):
     return cnt
 
 def detect_consecutive(data, n=5):
-    """检测最近 n 期是否全是同一形态（连龙）"""
     if len(data) < n:
         return None
     tail = [d["combo"] for d in data[-n:]]
@@ -180,22 +182,18 @@ def predict_next(data, window=100):
 
     cnt = combo_counts(data, window)
     sorted_combos = sorted(cnt.items(), key=lambda x: x[1], reverse=True)
-    # sorted_combos: [(最多, n), (次多, n), (次少, n), (最少, n)]
 
     # --- 连龙反转逻辑 ---
     dragon = detect_consecutive(data, 5)
     if dragon:
-        # 连龙 → 杀掉龙头形态，押次多形态
         kill = dragon
         push_candidates = [c for c in COMBOS if c != dragon]
-        # 从剩余三个里选频率最高的
         push = max(push_candidates, key=lambda c: cnt[c])
     else:
-        # 无连龙 → 杀最少，押最多
-        kill = sorted_combos[-1][0]   # 最少出现的
-        push = sorted_combos[0][0]    # 最多出现的
+        kill = sorted_combos[-1][0]
+        push = sorted_combos[0][0]
 
-    # --- 和值重心（指数加权，近期权重更高）---
+    # --- 和值重心（线性加权，近期权重更高）---
     recent_sums = [d["sum"] for d in data[-50:]]
     weights = list(range(1, len(recent_sums) + 1))
     weighted_avg = sum(s * w for s, w in zip(recent_sums, weights)) / sum(weights)
@@ -214,11 +212,10 @@ def predict_next(data, window=100):
     dx_pred = "大" if big_ratio >= 0.5 else "小"
 
     # --- 置信度 ---
-    # 基于主导形态占比 + 连龙加成
-    top_ratio = sorted_combos[0][1] / window
+    top_ratio = sorted_combos[0][1] / min(window, len(data))
     confidence = round(top_ratio * 100)
     if dragon:
-        confidence = min(95, confidence + 15)  # 连龙反转置信度更高
+        confidence = min(95, confidence + 15)
 
     return {
         "kill": kill,
@@ -233,35 +230,35 @@ def predict_next(data, window=100):
 def build_prediction_records(data, n=50):
     """
     为最近 n 期生成"伪 AI 预测记录"，格式兼容 yu28 接口：
-    {nbr, time, number, num, prediction}
+    {nbr, date, time, number, num, prediction}
     prediction 字段：当期开奖前，基于此前数据做的预测 vs 实际结果
     """
     records = {"sha": [], "sz": [], "ds": [], "dx": []}
     if len(data) < 20:
         return records
 
-    # 对每期（从第20期开始），用"该期之前的数据"做预测
     start = 20
     end = len(data)
-    # 只取最近 n 期有预测意义的记录
     actual_end = max(start + 1, end - n)
 
     for i in range(start, end):
-        prev_data = data[:i]  # 只用该期之前的数据
+        prev_data = data[:i]
         pred = predict_next(prev_data, window=min(100, len(prev_data)))
         if not pred:
             continue
 
         cur = data[i]
         cur_nbr = cur["nbr"]
-        cur_time = cur["time"]
-        cur_num_str = f"{cur['a']}+{cur['b']}+{cur['c']}"
+        cur_date = cur.get("date", "")
+        cur_time = cur.get("time", "00:00:00")
+        cur_num_str = cur.get("number", f"{cur['a']}+{cur['b']}+{cur['c']}")
         cur_sum = cur["sum"]
 
         # 杀组记录
         kill_correct = "✓" if cur["combo"] != pred["kill"] else "✗"
         records["sha"].append({
             "nbr": cur_nbr,
+            "date": cur_date,
             "time": cur_time,
             "number": cur_num_str,
             "num": cur_sum,
@@ -272,6 +269,7 @@ def build_prediction_records(data, n=50):
         push_correct = "✓" if cur["combo"] == pred["push"] else "✗"
         records["sz"].append({
             "nbr": cur_nbr,
+            "date": cur_date,
             "time": cur_time,
             "number": cur_num_str,
             "num": cur_sum,
@@ -283,6 +281,7 @@ def build_prediction_records(data, n=50):
         ds_correct = "✓" if ds_actual == pred["ds"] else "✗"
         records["ds"].append({
             "nbr": cur_nbr,
+            "date": cur_date,
             "time": cur_time,
             "number": cur_num_str,
             "num": cur_sum,
@@ -294,6 +293,7 @@ def build_prediction_records(data, n=50):
         dx_correct = "✓" if dx_actual == pred["dx"] else "✗"
         records["dx"].append({
             "nbr": cur_nbr,
+            "date": cur_date,
             "time": cur_time,
             "number": cur_num_str,
             "num": cur_sum,
@@ -305,7 +305,7 @@ def build_prediction_records(data, n=50):
 # ==================== 主构建函数 ====================
 
 def build():
-    """构建完整数据包：开奖历史 + AI 预测"""
+    """构建完整数据包：开奖历史 + AI 预测（仅真实数据）"""
     data = []
     seen = set()
     for line in RAW.strip().splitlines():
@@ -316,6 +316,7 @@ def build():
         if nbr in seen:
             continue
         seen.add(nbr)
+        date_str = parts[1]
         a, b, c = int(parts[2]), int(parts[3]), int(parts[4])
         s = int(parts[5])
         if a + b + c != s:
@@ -323,7 +324,8 @@ def build():
         cl = classify(a, b, c)
         data.append({
             "nbr": str(nbr),
-            "time": parts[1],
+            "date": date_str,          # 'YYYY-MM-DD'
+            "time": "00:00:00",       # PC28 每3.5分钟一期，日级数据不存具体时间
             "a": a, "b": b, "c": c,
             "number": f"{a}+{b}+{c}={s}",
             "sum": s,
@@ -341,7 +343,7 @@ def build():
     # 计算下一期预测（用于前端直接展示）
     next_pred = predict_next(data, window=100)
 
-    info = f"内置真实数据汇编 · {len(data)}期 · 末期{data[-1]['nbr']}"
+    info = f"真实数据{len(data)}期(08-07~08-14) · 本地形态分析算法生成预测"
     if next_pred:
         info += f" · 下期预测:杀{next_pred['kill']}/押{next_pred['push']}"
 
@@ -352,13 +354,14 @@ def build():
         "sz":  {"data": pred_records["sz"]},
         "ds":  {"data": pred_records["ds"]},
         "dx":  {"data": pred_records["dx"]},
-        "next_prediction": next_pred,  # 给前端快速读取
+        "next_prediction": next_pred,
     }
 
 if __name__ == "__main__":
     out = build()
     kj = out["kj"]["data"]
-    print(f"✅ 开奖数据：{len(kj)} 期，末 {kj[-1]['nbr']} ({kj[-1]['combination']})")
+    print(f"✅ 开奖数据：{len(kj)} 期（全部真实），末 {kj[-1]['nbr']} ({kj[-1]['combination']})")
+    print(f"   日期范围：{kj[0]['date']} ~ {kj[-1]['date']}")
     print(f"   杀组记录：{len(out['sha']['data'])} 条")
     print(f"   押组记录：{len(out['sz']['data'])} 条")
     print(f"   单双记录：{len(out['ds']['data'])} 条")
