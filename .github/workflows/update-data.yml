@@ -8,21 +8,21 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 2
     steps:
       - uses: actions/checkout@v4
       - name: 设置 Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: 抓取最新数据
+      - name: 构建数据快照（纯本地，零网络依赖）
         run: python3 fetch_data.py
       - name: 提交 data.json
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data.json
-          git diff --cached --quiet || git commit -m "chore: 自动更新PC28数据 $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git diff --cached --quiet || git commit -m "chore: 更新PC28数据快照 $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
