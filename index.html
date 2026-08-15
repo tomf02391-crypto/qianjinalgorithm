@@ -70,7 +70,6 @@
   .pred-val{font-size:18px;font-weight:700}
   .pred-val .kill{color:var(--red)}
   .pred-val .push{color:var(--green)}
-  .pred-src{font-size:11px;color:var(--sub);margin-top:2px;text-align:right}
   .confidence{margin-top:12px;text-align:center}
   .conf-bar{height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;margin-top:6px}
   .conf-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--cyan),var(--gold));
@@ -329,7 +328,7 @@
       <h3><span class="dot-icon"></span> 近期开奖记录（最新 50 期）</h3>
       <div class="history">
         <table>
-          <thead><tr><th>期号</th><th>日期</th><th>原始20码</th><th>三球</th><th>和值</th><th>形态</th><th>组合</th></tr></thead>
+          <thead><tr><th>期号</th><th>日期</th><th>三球</th><th>和值</th><th>形态</th><th>组合</th></tr></thead>
           <tbody id="histBody"></tbody>
         </table>
       </div>
@@ -344,33 +343,20 @@
 
 <script>
 /* ============================================================
-   千金星轨 · PC28 星轨引擎（纯前端版）
-   - 内置 pc28_api.py 核心算法（calcBalls + analyze）
-   - 内置真实开奖数据（121期，08-07~08-14）
-   - 零外部依赖，纯静态部署
-   - QianJinU 预测引擎（形态频率 + 连龙检测 + 加权移动平均）
+   千金星轨 · PC28 星轨引擎（纯前端版 - 已修复 b is not defined）
    ============================================================ */
 
 // ==================== BCLK Keno 核心算法（移植自 pc28_api.py）====================
-
-// 规则表
 const SMALL_ODD  = new Set([1,3,5,7,9,11,13]);
 const SMALL_EVEN = new Set([0,2,4,6,8,10,12]);
 const BIG_ODD    = new Set([15,17,19,21,23,25,27]);
 const BIG_EVEN   = new Set([14,16,18,20,22,24,26]);
 
-// 顺子规则（用户定义：123/321, 234/432, ... 789/987）
 const STRAIGHT_SET = new Set([
   "1,2,3","3,2,1","2,3,4","4,3,2","3,4,5","5,4,3",
   "4,5,6","6,5,4","6,7,8","8,7,6","7,8,9","9,8,7"
 ]);
 
-// 从20个原始号码计算三球与特码
-// rawNums: 长度20的数字数组（未排序）
-// 规则：由小到大排序后，第2/5/8/11/14/17位之和末位=第一球
-//       第3/6/9/12/15/18位之和末位=第二球
-//       第4/7/10/13/16/19位之和末位=第三球
-//       三球之和=特码(0-27)
 function calcBalls(rawNums) {
   if (rawNums.length < 19) throw new Error("原始号码不足20个");
   const nums = [...rawNums].sort((a,b) => a - b);
@@ -383,7 +369,6 @@ function calcBalls(rawNums) {
   return { b1, b2, b3, total: b1 + b2 + b3, sorted: nums };
 }
 
-// 术语分析
 function analyze(b1, b2, b3, total) {
   const oddEven = total % 2 === 1 ? "单" : "双";
   const bigSmall = total >= 14 ? "大" : "小";
@@ -397,7 +382,6 @@ function analyze(b1, b2, b3, total) {
 
   const extreme = total <= 5 ? "极小" : (total >= 22 ? "极大" : "-");
 
-  // 形态：豹子/对子/顺子/杂六
   let shape;
   if (b1 === b2 && b2 === b3) shape = "豹子";
   else if (b1 === b2 || b2 === b3 || b1 === b3) shape = "对子";
@@ -408,7 +392,6 @@ function analyze(b1, b2, b3, total) {
 }
 
 // ==================== 内置真实开奖数据 ====================
-// 格式：期号,日期,a,b,c,和值
 const RAW_DATA = `
 3466675,2026-08-07,6,0,5,11
 3466676,2026-08-07,0,9,2,11
@@ -544,16 +527,18 @@ function buildData() {
     if (seen.has(nbr)) continue;
     seen.add(nbr);
     const date = parts[1];
-    const a = parseInt(parts[2]), b = parseInt(parts[3]), c = parseInt(parts[4]);
+    const a = parseInt(parts[2]);
+    const b = parseInt(parts[3]);
+    const c = parseInt(parts[4]);
     const sum = a + b + c;
     const an = analyze(a, b, c, sum);
     data.push({
       nbr: String(nbr),
-      date,
+      date: date,
       time: "00:00:00",
-      a, b, c,
-      number: `${a}+${b}+${c}=${sum}`,
-      sum,
+      a: a, b: b, c: c,
+      number: a + "+" + b + "+" + c + "=" + sum,
+      sum: sum,
       combo: an.combination,
       size: an.bigSmall,
       parity: an.oddEven,
@@ -566,41 +551,49 @@ function buildData() {
 }
 
 // ==================== QianJinU 预测引擎 ====================
-
 const COMBOS = ["大单", "大双", "小单", "小双"];
 
-function comboCounts(data, window = 100) {
+function comboCounts(data, window) {
+  window = window || 100;
   const recent = data.slice(-window);
   const cnt = { "大单": 0, "大双": 0, "小单": 0, "小双": 0 };
   for (const d of recent) { if (cnt[d.combo] != null) cnt[d.combo]++; }
   return cnt;
 }
 
-// 连龙检测：最近 n 期同形态
-function detectDragon(data, n = 5) {
+function detectDragon(data, n) {
+  n = n || 5;
   if (data.length < n) return null;
-  const tail = data.slice(-n).map(d => d.combo);
-  return tail.every(x => x === tail[0]) ? tail[0] : null;
+  const tail = data.slice(-n).map(function(d) { return d.combo; });
+  let allSame = true;
+  for (let i = 1; i < tail.length; i++) { if (tail[i] !== tail[0]) { allSame = false; break; } }
+  return allSame ? tail[0] : null;
 }
 
-// 加权移动平均（近期权重更高）
 function weightedAverage(arr) {
   if (!arr.length) return 13.5;
-  const weights = Array.from({ length: arr.length }, (_, i) => i + 1);
-  const totalW = weights.reduce((a, b) => a + b, 0);
-  return arr.reduce((s, v, i) => s + v * weights[i], 0) / totalW;
+  const weights = [];
+  for (let i = 0; i < arr.length; i++) weights.push(i + 1);
+  let totalW = 0;
+  for (const w of weights) totalW += w;
+  let sum = 0;
+  for (let i = 0; i < arr.length; i++) sum += arr[i] * weights[i];
+  return sum / totalW;
 }
 
-// 特码精选：概率 + 频率 + 冷热度 + 尾数去重
-function pickTeNumbers(data, n = 3) {
+function pickTeNumbers(data, n) {
+  n = n || 3;
   const recent = data.slice(-50);
   const freq = {};
   for (let i = 0; i <= 27; i++) freq[i] = 0;
   for (const d of recent) freq[d.sum] = (freq[d.sum] || 0) + 1;
 
-  // 概率权重（基于形态分布）
   const cnt = comboCounts(data, 100);
-  const total = Object.values(cnt).reduce((a, b) => a + b, 0) || 1;
+  let total = 0;
+  const keys = Object.keys(cnt);
+  for (const k of keys) total += cnt[k];
+  if (total === 0) total = 1;
+
   const weights = {};
   for (let s = 0; s <= 27; s++) {
     let w = 0;
@@ -609,75 +602,86 @@ function pickTeNumbers(data, n = 3) {
     else if (BIG_ODD.has(s)) w = cnt["大单"];
     else if (BIG_EVEN.has(s)) w = cnt["大双"];
     else w = total * 0.25;
-    // 冷热修正：出现频率越高权重略降（避免过度押注热号）
     const freqPenalty = Math.sqrt(freq[s] + 1);
     weights[s] = (w / total) * 100 / freqPenalty;
   }
 
-  // 选 top n，确保尾数不重复
-  const sorted = Object.entries(weights).sort((a, b) => b[1] - a[1]);
+  const sorted = [];
+  for (const k of Object.keys(weights)) sorted.push([k, weights[k]]);
+  sorted.sort(function(a, b) { return b[1] - a[1]; });
+
   const selected = [];
   const tails = new Set();
-  for (const [numStr, w] of sorted) {
-    const num = parseInt(numStr);
+  for (const item of sorted) {
+    const num = parseInt(item[0]);
     const tail = num % 10;
     if (tails.has(tail) && selected.length >= n) continue;
     tails.add(tail);
     selected.push(num);
     if (selected.length >= n) break;
   }
-  return selected.sort((a, b) => a - b);
+  selected.sort(function(a, b) { return a - b; });
+  return selected;
 }
 
-// 核心预测
-function predictNext(data, window = 100) {
+function predictNext(data, window) {
+  window = window || 100;
   if (data.length < 10) return null;
   const cnt = comboCounts(data, window);
-  const sorted = Object.entries(cnt).sort((a, b) => b[1] - a[1]);
+  const entries = [];
+  for (const k of Object.keys(cnt)) entries.push([k, cnt[k]]);
+  entries.sort(function(a, b) { return b[1] - a[1]; });
 
-  // 连龙反转
   const dragon = detectDragon(data, 5);
   let kill, push;
   if (dragon) {
     kill = dragon;
-    const others = COMBOS.filter(c => c !== dragon);
-    push = others.sort((a, b) => cnt[b] - cnt[a])[0];
+    const others = [];
+    for (const c of COMBOS) if (c !== dragon) others.push(c);
+    others.sort(function(a, b) { return cnt[b] - cnt[a]; });
+    push = others[0];
   } else {
-    kill = sorted[3][0]; // 概率最低
-    push = sorted[0][0]; // 概率最高
+    kill = entries[3][0];
+    push = entries[0][0];
   }
 
-  // 和值重心
-  const recentSums = data.slice(-50).map(d => d.sum);
+  const recentSums = [];
+  const sumSlice = data.slice(-50);
+  for (const d of sumSlice) recentSums.push(d.sum);
   const center = Math.round(weightedAverage(recentSums));
   const clamped = Math.max(0, Math.min(27, center));
   const sumPred = [Math.max(0, clamped - 1), clamped, Math.min(27, clamped + 1)];
 
-  // 单双/大小
-  const danRatio = data.slice(-window).filter(d => d.parity === "单").length / Math.min(window, data.length);
-  const bigRatio = data.slice(-window).filter(d => d.size === "大").length / Math.min(window, data.length);
+  let danCount = 0;
+  let bigCount = 0;
+  const checkSlice = data.slice(-window);
+  for (const d of checkSlice) {
+    if (d.parity === "单") danCount++;
+    if (d.size === "大") bigCount++;
+  }
+  const danRatio = danCount / Math.min(window, data.length);
+  const bigRatio = bigCount / Math.min(window, data.length);
 
-  // 置信度
-  let confidence = Math.round((sorted[0][1] / Math.min(window, data.length)) * 100);
+  let confidence = Math.round((entries[0][1] / Math.min(window, data.length)) * 100);
   if (dragon) confidence = Math.min(95, confidence + 15);
 
-  // 特码精选
   const teNums = pickTeNumbers(data, 3);
 
   return {
-    kill, push,
+    kill: kill, push: push,
     sum: sumPred,
     ds: danRatio >= 0.5 ? "单" : "双",
     dx: bigRatio >= 0.5 ? "大" : "小",
     te: teNums,
-    confidence,
+    confidence: confidence,
     counts: cnt,
     dragon: dragon != null,
   };
 }
 
 // V3 融合回测
-function backtestV3(data, window = 100) {
+function backtestV3(data, window) {
+  window = window || 100;
   if (data.length < 20) return null;
   let groupHit = 0, singleHit = 0, teHit = 0, killCorrect = 0;
   let total = 0, maxStreak = 0, curStreak = 0;
@@ -692,17 +696,15 @@ function backtestV3(data, window = 100) {
     if (actual.combo === pred.push) { groupHit++; curStreak++; }
     else { curStreak = 0; }
     if (actual.combo !== pred.kill) killCorrect++;
-    if (pred.te.includes(actual.sum)) teHit++;
+    if (pred.te.indexOf(actual.sum) !== -1) teHit++;
 
-    // 单组命中（push 对应的单双或大小）
-    const pushDan = pred.push.includes("单");
-    const pushBig = pred.push.includes("大");
+    const pushDan = pred.push.indexOf("单") !== -1;
+    const pushBig = pred.push.indexOf("大") !== -1;
     if ((pushDan && actual.parity === "单") || (!pushDan && actual.parity === "双")) singleHit++;
-    // 也检查大小
     if ((pushBig && actual.size === "大") || (!pushBig && actual.size === "小")) singleHit++;
-    singleHit = Math.round(singleHit / 2 * 2) / 2; // 取平均
+    singleHit = Math.round(singleHit / 2 * 2) / 2;
 
-    maxStreak = Math.max(maxStreak, curStreak);
+    if (curStreak > maxStreak) maxStreak = curStreak;
   }
 
   return {
@@ -710,13 +712,14 @@ function backtestV3(data, window = 100) {
     singleHit: total > 0 ? Math.round(singleHit / total * 100) : 0,
     teHit: total > 0 ? Math.round(teHit / total * 100) : 0,
     killCorrect: total > 0 ? Math.round(killCorrect / total * 100) : 0,
-    total,
-    maxStreak,
+    total: total,
+    maxStreak: maxStreak,
   };
 }
 
 // 标准回测
-function backtest(data, window = 200) {
+function backtest(data, window) {
+  window = window || 200;
   const slice = data.slice(-window);
   let gh = 0, kc = 0, sh = 0;
   for (let i = 1; i < slice.length; i++) {
@@ -733,16 +736,15 @@ function backtest(data, window = 200) {
   };
 }
 
-// ==================== 倒计时（PC28 节奏）====================
+// ==================== 倒计时 ====================
 let timer = null;
 let _remainSec = 0;
-const PERIOD_LEN = 210; // 3.5 分钟
+const PERIOD_LEN = 210;
 
 function isMaintenanceNow() {
   const now = new Date();
   const cur = now.getHours() * 60 + now.getMinutes();
-  // 夏令时 19:00-19:30 / 冬令时 20:00-20:30
-  const isDST = now.getTimezoneOffset() < 480; // 粗略判断
+  const isDST = now.getTimezoneOffset() < 480;
   const start = (isDST ? 19 : 20) * 60;
   const end = start + 30;
   return cur >= start && cur < end;
@@ -760,17 +762,19 @@ function tick() {
   if (_remainSec <= 0) _remainSec = PERIOD_LEN;
 
   const inMaint = isMaintenanceNow();
-  const banner = $("maintBanner");
+  const banner = document.getElementById("maintBanner");
   if (inMaint) banner.classList.add("show");
   else banner.classList.remove("show");
 
-  const m = Math.floor(_remainSec / 60), s = _remainSec % 60;
-  $("cdTime").textContent = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  $("cdLabel").textContent = inMaint ? "维护中" : "距下期开奖";
+  const m = Math.floor(_remainSec / 60);
+  const s = _remainSec % 60;
+  document.getElementById("cdTime").textContent =
+    String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+  document.getElementById("cdLabel").textContent = inMaint ? "维护中" : "距下期开奖";
 
   const circ = 2 * Math.PI * 60;
   const ratio = Math.min(1, _remainSec / PERIOD_LEN);
-  const ring = $("progRing");
+  const ring = document.getElementById("progRing");
   ring.style.strokeDasharray = circ;
   ring.style.strokeDashoffset = circ * (1 - ratio);
 }
@@ -778,125 +782,134 @@ function tick() {
 // ==================== 渲染 ====================
 function render(data) {
   if (!data.length) throw new Error("数据为空");
-  $("main").style.display = "grid";
+  document.getElementById("main").style.display = "grid";
 
   const latest = data[data.length - 1];
 
-  // 最新期信息
-  $("latestIssue").textContent = latest.nbr;
-  $("latestNums").textContent = `${latest.a} + ${latest.b} + ${latest.c} = ${latest.sum}`;
-  $("latestSum").textContent = latest.sum;
+  document.getElementById("latestIssue").textContent = latest.nbr;
+  document.getElementById("latestNums").textContent =
+    latest.a + " + " + latest.b + " + " + latest.c + " = " + latest.sum;
+  document.getElementById("latestSum").textContent = latest.sum;
 
-  const tag = $("latestTag");
+  const tag = document.getElementById("latestTag");
   tag.textContent = latest.combo;
-  tag.className = "tag " + (latest.combo.startsWith("大") ? "da" : "xiao");
+  tag.className = "tag " + (latest.combo.indexOf("大") === 0 ? "da" : "xiao");
 
-  const shapeTag = $("latestShape");
+  const shapeTag = document.getElementById("latestShape");
   shapeTag.textContent = latest.shape;
-  shapeTag.className = "tag " + (latest.shape === "豹子" ? "gold" : latest.shape === "顺子" ? "cyan" : latest.shape === "对子" ? "pink" : "shuang");
+  let shapeCls = "shuang";
+  if (latest.shape === "豹子") shapeCls = "gold";
+  else if (latest.shape === "顺子") shapeCls = "cyan";
+  else if (latest.shape === "对子") shapeCls = "pink";
+  shapeTag.className = "tag " + shapeCls;
 
-  $("latestDate").textContent = latest.date || "";
-  $("periodLabel").textContent = "期号 " + latest.nbr;
+  document.getElementById("latestDate").textContent = latest.date || "";
+  document.getElementById("periodLabel").textContent = "期号 " + latest.nbr;
 
-  // 形态详情
-  const sd = $("shapeDetail");
-  sd.innerHTML = `
-    <span class="shape-tag">单双：${latest.parity}</span>
-    <span class="shape-tag">大小：${latest.size}</span>
-    <span class="shape-tag">极值：${latest.extreme}</span>
-    <span class="shape-tag">组合：${latest.combo}</span>
-  `;
+  document.getElementById("shapeDetail").innerHTML =
+    '<span class="shape-tag">单双：' + latest.parity + '</span>' +
+    '<span class="shape-tag">大小：' + latest.size + '</span>' +
+    '<span class="shape-tag">极值：' + latest.extreme + '</span>' +
+    '<span class="shape-tag">组合：' + latest.combo + '</span>';
 
-  // 历史表（最新50期倒序）
-  const tbody = $("histBody");
+  // 历史表
+  const tbody = document.getElementById("histBody");
   tbody.innerHTML = "";
-  [...data].slice(-50).reverse().forEach(d => {
+  const histData = data.slice(-50).slice().reverse();
+  for (const d of histData) {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${d.nbr}</td>
-      <td>${d.date ? d.date.slice(5) : ""}</td>
-      <td style="font-size:10px;color:var(--sub);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.number}">${d.a}+${d.b}+${d.c}</td>
-      <td class="num">${d.a}+${d.b}+${d.c}</td>
-      <td>${d.sum}</td>
-      <td><span class="tag ${d.shape === "豹子" ? "gold" : d.shape === "顺子" ? "cyan" : d.shape === "对子" ? "pink" : "shuang"}">${d.shape}</span></td>
-      <td><span class="tag ${d.combo.startsWith("大") ? "da" : "xiao"}">${d.combo}</span></td>`;
+    tr.innerHTML =
+      '<td>' + d.nbr + '</td>' +
+      '<td>' + (d.date ? d.date.slice(5) : "") + '</td>' +
+      '<td class="num">' + d.a + '+' + d.b + '+' + d.c + '</td>' +
+      '<td>' + d.sum + '</td>' +
+      '<td><span class="tag ' + (d.shape === "豹子" ? "gold" : d.shape === "顺子" ? "cyan" : d.shape === "对子" ? "pink" : "shuang") + '">' + d.shape + '</span></td>' +
+      '<td><span class="tag ' + (d.combo.indexOf("大") === 0 ? "da" : "xiao") + '">' + d.combo + '</span></td>';
     tbody.appendChild(tr);
-  });
+  }
 
-  // 形态分布（近100期）
+  // 形态分布
   const r100 = data.slice(-100);
   let dd = 0, dx = 0, xd = 0, xx = 0;
-  r100.forEach(d => {
+  for (const d of r100) {
     if (d.combo === "大单") dd++;
     else if (d.combo === "大双") dx++;
     else if (d.combo === "小单") xd++;
     else if (d.combo === "小双") xx++;
-  });
-  $("cntDD").textContent = dd;
-  $("cntDX").textContent = dx;
-  $("cntXD").textContent = xd;
-  $("cntXX").textContent = xx;
+  }
+  document.getElementById("cntDD").textContent = dd;
+  document.getElementById("cntDX").textContent = dx;
+  document.getElementById("cntXD").textContent = xd;
+  document.getElementById("cntXX").textContent = xx;
 
-  // 趋势比例（近15期）
+  // 趋势
   const r15 = data.slice(-15);
-  const bigN = r15.filter(d => d.size === "大").length;
-  const danN = r15.filter(d => d.parity === "单").length;
-  $("trendBig").textContent = `大 ${Math.round(bigN / 15 * 100)}% / 小 ${Math.round((15 - bigN) / 15 * 100)}%`;
-  $("trendOdd").textContent = `单 ${Math.round(danN / 15 * 100)}% / 双 ${Math.round((15 - danN) / 15 * 100)}%`;
-  $("barBig").style.width = Math.round(bigN / 15 * 100) + "%";
-  $("barOdd").style.width = Math.round(danN / 15 * 100) + "%";
+  let bigN = 0, danN = 0;
+  for (const d of r15) { if (d.size === "大") bigN++; if (d.parity === "单") danN++; }
+  document.getElementById("trendBig").textContent =
+    "大 " + Math.round(bigN / 15 * 100) + "% / 小 " + Math.round((15 - bigN) / 15 * 100) + "%";
+  document.getElementById("trendOdd").textContent =
+    "单 " + Math.round(danN / 15 * 100) + "% / 双 " + Math.round((15 - danN) / 15 * 100) + "%";
+  document.getElementById("barBig").style.width = Math.round(bigN / 15 * 100) + "%";
+  document.getElementById("barOdd").style.width = Math.round(danN / 15 * 100) + "%";
 
-  // 形态 chips 高亮
-  const chips = $("comboDist").children;
+  // 形态 chips
+  const chips = document.getElementById("comboDist").children;
   const order = ["大单", "大双", "小单", "小双"];
   const pred = predictNext(data, 100);
   const active = pred ? [pred.push] : [];
   for (let i = 0; i < 4 && i < chips.length; i++) {
     const c = order[i];
-    chips[i].querySelector(".count").textContent = cntVal(c, dd, dx, xd, xx);
-    chips[i].querySelector(".pct").textContent = pctStr(c, dd, dx, xd, xx, r100.length);
-    chips[i].className = "combo-chip" + (active.includes(c) ? " active" : "");
+    let val = 0;
+    if (c === "大单") val = dd;
+    else if (c === "大双") val = dx;
+    else if (c === "小单") val = xd;
+    else val = xx;
+    chips[i].querySelector(".count").textContent = val;
+    chips[i].querySelector(".pct").textContent =
+      r100.length > 0 ? Math.round(val / r100.length * 100) + "%" : "0%";
+    chips[i].className = "combo-chip" + (active.indexOf(c) !== -1 ? " active" : "");
   }
 
-  // ---- 预测渲染 ----
+  // 预测渲染
   if (pred) {
-    $("predKill").textContent = pred.kill;
-    $("predPush").textContent = pred.push;
-    $("predDS").textContent = pred.ds;
-    $("predDX").textContent = pred.dx;
-    $("predSum").textContent = (pred.sum || []).join(" / ");
-    $("predTe").textContent = (pred.te || []).join(" / ");
-    $("confPct").textContent = pred.confidence + "%";
-    $("confBar").style.width = Math.min(100, pred.confidence) + "%";
+    document.getElementById("predKill").textContent = pred.kill;
+    document.getElementById("predPush").textContent = pred.push;
+    document.getElementById("predDS").textContent = pred.ds;
+    document.getElementById("predDX").textContent = pred.dx;
+    document.getElementById("predSum").textContent = (pred.sum || []).join(" / ");
+    document.getElementById("predTe").textContent = (pred.te || []).join(" / ");
+    document.getElementById("confPct").textContent = pred.confidence + "%";
+    document.getElementById("confBar").style.width = Math.min(100, pred.confidence) + "%";
 
-    const pmTag = $("predMode");
+    const pmTag = document.getElementById("predMode");
     pmTag.textContent = pred.dragon ? "连龙反转模式" : "星轨引擎 · 本地计算";
     pmTag.className = "tag " + (pred.dragon ? "gold" : "cyan");
 
-    // 连龙警告
-    const dw = $("dragonWarn");
+    const dw = document.getElementById("dragonWarn");
     if (pred.dragon) dw.classList.add("show");
     else dw.classList.remove("show");
   }
 
   // 回测统计
   const bt = backtest(data, 200);
-  $("stHit").textContent = bt.groupHit + "%";
-  $("stKill").textContent = bt.killCorrect + "%";
-  $("stSum").textContent = bt.sumHit + "%";
-  $("stCnt").textContent = bt.total;
+  document.getElementById("stHit").textContent = bt.groupHit + "%";
+  document.getElementById("stKill").textContent = bt.killCorrect + "%";
+  document.getElementById("stSum").textContent = bt.sumHit + "%";
+  document.getElementById("stCnt").textContent = bt.total;
 
-  // V3 融合战绩
+  // V3 战绩
   const v3 = backtestV3(data, 100);
   if (v3) {
-    $("v3Group").textContent = v3.groupHit + "%";
-    $("v3Single").textContent = v3.singleHit + "%";
-    $("v3Te").textContent = v3.teHit + "%";
-    $("v3Kill").textContent = v3.killCorrect + "%";
-    $("v3Streak").textContent = v3.maxStreak;
+    document.getElementById("v3Group").textContent = v3.groupHit + "%";
+    document.getElementById("v3Single").textContent = v3.singleHit + "%";
+    document.getElementById("v3Te").textContent = v3.teHit + "%";
+    document.getElementById("v3Kill").textContent = v3.killCorrect + "%";
+    document.getElementById("v3Streak").textContent = v3.maxStreak;
   }
 
-  // 开奖结果比对（最近20期）
-  const rc = $("resultCompare");
+  // 开奖结果比对
+  const rc = document.getElementById("resultCompare");
   rc.innerHTML = "";
   const recent20 = data.slice(-21);
   if (pred && recent20.length > 1) {
@@ -908,45 +921,40 @@ function render(data) {
       const hit = actual.combo === p.push;
       const row = document.createElement("div");
       row.className = "ph-row";
-      row.innerHTML = `<span>${actual.nbr} 期 | 和值${actual.sum} (${actual.combo})</span>
-        <span class="${hit ? "ph-hit" : "ph-miss"}">${hit ? "✓ 押中" : "✗ 押" + p.push + " 杀" + p.kill}</span>`;
+      row.innerHTML =
+        '<span>' + actual.nbr + ' 期 | 和值' + actual.sum + ' (' + actual.combo + ')</span>' +
+        '<span class="' + (hit ? 'ph-hit' : 'ph-miss') + '">' +
+        (hit ? '✓ 押中' : '✗ 押' + p.push + ' 杀' + p.kill) + '</span>';
       rc.appendChild(row);
     }
   }
 
   // 数据源徽章
-  markSrc(true, "● 本地引擎 · 121期真实数据", false);
-}
-
-function cntVal(c, dd, dx, xd, xx) {
-  if (c === "大单") return dd;
-  if (c === "大双") return dx;
-  if (c === "小单") return xd;
-  return xx;
-}
-function pctStr(c, dd, dx, xd, xx, total) {
-  const v = cntVal(c, dd, dx, xd, xx);
-  return total > 0 ? Math.round(v / total * 100) + "%" : "0%";
+  markSrc(true, "● 本地引擎 · " + data.length + "期真实数据", false);
 }
 
 // ==================== UI 辅助 ====================
 function $(id) { return document.getElementById(id); }
 
 function markSrc(ok, text, warn) {
-  const b = $("srcBadge");
+  const b = document.getElementById("srcBadge");
   b.textContent = text;
-  b.className = "src-badge" + (ok ? (warn ? " warn" : "ok") : "off");
+  let cls = "src-badge";
+  if (!ok) cls += " off";
+  else if (warn) cls += " warn";
+  else cls += " ok";
+  b.className = cls;
 }
 
 function showToast(msg) {
-  const t = $("toast");
+  const t = document.getElementById("toast");
   t.textContent = msg;
   t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 2000);
+  setTimeout(function() { t.classList.remove("show"); }, 2000);
 }
 
 function showErr(html) {
-  const b = $("errBox");
+  const b = document.getElementById("errBox");
   b.innerHTML = html;
   b.classList.add("show");
 }
@@ -959,19 +967,23 @@ async function main() {
   $("errBox").classList.remove("show");
 
   try {
-    // 纯本地构建数据
     const data = buildData();
     if (!data.length) throw new Error("内置数据为空");
 
-    // 验证数据完整性
-    const validData = data.filter(d => d.sum >= 0 && d.sum <= 27 && d.a + b + c === d.sum);
+    // ✅ 修复：使用 d.a + d.b + d.c 而不是 d.a + b + c
+    const validData = [];
+    for (const d of data) {
+      if (d.sum >= 0 && d.sum <= 27 && d.a + d.b + d.c === d.sum) {
+        validData.push(d);
+      }
+    }
     if (validData.length < data.length) {
-      console.warn(`数据校验：剔除 ${data.length - validData.length} 条异常记录`);
+      console.warn("数据校验：剔除 " + (data.length - validData.length) + " 条异常记录");
     }
 
     render(validData);
     startCountdown();
-    showToast(`✅ 已加载 ${validData.length} 期真实数据`);
+    showToast("✅ 已加载 " + validData.length + " 期真实数据");
   } catch (err) {
     markSrc(false, "● 引擎异常");
     showErr("⚠️ " + err.message);
@@ -983,16 +995,11 @@ async function main() {
 }
 
 $("btnRefresh").addEventListener("click", main);
-
-// 每60秒自动刷新（重新计算预测）
-setInterval(() => { if (!document.hidden) main(); }, 60000);
-
-// 页面可见时刷新
-document.addEventListener("visibilitychange", () => {
+setInterval(function() { if (!document.hidden) main(); }, 60000);
+document.addEventListener("visibilitychange", function() {
   if (!document.hidden) main();
 });
 
-// 启动
 main();
 </script>
 </body>
