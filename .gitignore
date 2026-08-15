@@ -1,4 +1,7 @@
-*.pyc
+# 不提交 token 或本地临时文件
+*.token
+.env
 __pycache__/
-.tool_output/
-*.zip
+*.pyc
+.DS_Store
+.gitignore
