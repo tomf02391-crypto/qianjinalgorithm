@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>千金星轨 · PC28 真实数据</title>
 <style>
   :root{
@@ -80,8 +80,8 @@
   .refresh:hover{transform:scale(1.08)}
   .refresh.spin{animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .err{background:rgba(255,92,92,.1);border:1px solid rgba(255,92,92,.3);border-radius:12px;
-    padding:16px;margin-top:16px;font-size:13px;color:#ffb3b3;display:none}
+  .err{background:rgba(255,92,92,.1);border:1px solid rgba(255,92,92,.3);
+    border-radius:12px;padding:16px;margin-top:16px;font-size:13px;color:#ffb3b3;display:none}
   .err.show{display:block}
   .loading{text-align:center;padding:40px;color:var(--sub)}
   .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--cyan);
@@ -94,6 +94,22 @@
   footer{text-align:center;color:var(--sub);font-size:12px;padding:20px 0;margin-top:10px}
   .pill{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;
     background:rgba(0,229,255,.15);color:var(--cyan);margin-left:6px}
+  .combo-dist{display:flex;gap:8px;margin-top:4px}
+  .combo-chip{flex:1;text-align:center;padding:11px 4px;border-radius:var(--radius-sm,10px);
+    background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);transition:all .3s}
+  .combo-chip.active{border-color:rgba(0,229,255,.5);
+    background:linear-gradient(145deg,rgba(0,229,255,.16),rgba(192,132,252,.10));
+    transform:scale(1.05);box-shadow:0 4px 20px rgba(0,229,255,.2)}
+  .combo-chip .name{font-size:11px;font-weight:800}
+  .combo-chip .count{font-size:21px;font-weight:900;font-variant-numeric:tabular-nums}
+  .combo-chip .pct{font-size:9px;color:var(--sub)}
+  .trend-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .trend-item{padding:12px 14px;border-radius:10px;background:rgba(255,255,255,.035);
+    border:1px solid rgba(255,255,255,.06)}
+  .trend-label{font-size:10px;color:var(--sub);font-weight:700}
+  .trend-value{font-size:17px;font-weight:900}
+  .trend-bar{height:5px;border-radius:3px;background:rgba(255,255,255,.07);margin-top:6px;overflow:hidden}
+  .trend-bar-fill{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1)}
 </style>
 </head>
 <body>
@@ -174,7 +190,7 @@
 
     <!-- 回测统计 -->
     <div class="card">
-      <h3>📊 回测统计</h3>
+      <h3>📊 回测统计（近200期）</h3>
       <div class="stats">
         <div class="stat"><b id="stHit">-%</b><span>押组命中率</span></div>
         <div class="stat"><b id="stKill">-%</b><span>杀组正确率</span></div>
@@ -187,6 +203,24 @@
         <span class="tag da">大双 <b id="cntDX">0</b></span>
         <span class="tag xiao">小单 <b id="cntXD">0</b></span>
         <span class="tag xiao">小双 <b id="cntXX">0</b></span>
+      </div>
+      <div style="margin-top:10px" class="trend-grid">
+        <div class="trend-item">
+          <div class="trend-label">大小比例（近15期）</div>
+          <div class="trend-value" id="trendBig">--</div>
+          <div class="trend-bar"><div class="trend-bar-fill" id="barBig" style="width:50%;background:linear-gradient(90deg,#00e5ff,#5b8def)"></div></div>
+        </div>
+        <div class="trend-item">
+          <div class="trend-label">单双比例（近15期）</div>
+          <div class="trend-value" id="trendOdd">--</div>
+          <div class="trend-bar"><div class="trend-bar-fill" id="barOdd" style="width:50%;background:linear-gradient(90deg,#ffd700,#f472b6)"></div></div>
+        </div>
+      </div>
+      <div style="margin-top:10px" class="combo-dist" id="comboDist">
+        <div class="combo-chip"><div class="name">大单</div><div class="count">0</div><div class="pct">0%</div></div>
+        <div class="combo-chip"><div class="name">大双</div><div class="count">0</div><div class="pct">0%</div></div>
+        <div class="combo-chip"><div class="name">小单</div><div class="count">0</div><div class="pct">0%</div></div>
+        <div class="combo-chip"><div class="name">小双</div><div class="count">0</div><div class="pct">0%</div></div>
       </div>
     </div>
 
@@ -203,24 +237,24 @@
   </div>
 
   <button class="refresh" id="btnRefresh" title="刷新数据">⟳</button>
-  <footer>数据来源：yu28.top 开放平台 · PC28 每 3.5 分钟一期 · 仅供算法研究参考，理性对待</footer>
+  <footer>数据来源：pc28.help 开放接口 · 仅供算法研究参考，理性对待</footer>
 </div>
 
 <script>
-/* =========================================================
+/* ============================================================
    千金星轨 · PC28 真实数据版
-   - 数据链路：yu28 直连 → corsproxy.io → data.json 兜底
-   - 倒计时：直接用 yu28 返回的 countdown 字段（真实 3.5 分钟节奏）
-   - 维护窗口：19:00-19:30 北京时间，接口 countdown=00:00
+   - 主源：pc28.help（浏览器直连，无需认证，无 CORS 限制）
+   - 降级：data.json 静态快照（Actions 自动更新）
+   - 倒计时：直接用接口返回的 countdown 字段
+   - 维护窗口：19:00-19:30 北京时间
    - 和值：0-13 小 / 14-27 大；奇数单 / 偶数双
-   ========================================================= */
+   ============================================================ */
 const CONFIG = {
-  API_KEY: "yu28_f9f41d673b447fac",
-  BASE: "https://yu28.top",
-  PROXY: "https://corsproxy.io/?url=",
-  HISTORY_N: 350,    // PC28 每3.5min一期，350期≈20小时
-  PRED_N: 50,
+  BASE: "https://pc28.help",
   DATA_JSON: "data.json",
+  HISTORY_N: 350,    // ~20小时
+  PRED_N: 50,
+  AUTO_REFRESH: 30000,  // 30秒自动刷新
   // 维护窗口（北京时间）
   MAINT_START_H: 19, MAINT_START_M: 0,
   MAINT_END_H: 19,   MAINT_END_M: 30,
@@ -238,90 +272,92 @@ function classify(a,b,c){
 function comboClass(c){return c.startsWith("大")?"da":"xiao";}
 function avg(arr){return arr.reduce((s,x)=>s+x,0)/arr.length;}
 
-// 解析 "4+8+2=14" 或 "0,1,2 => 3"
+// 解析 number 字段："a+b+c=sum" 或纯数字
 function parseNumber(str){
   if(!str) return null;
-  const m1 = str.match(/(\d+)\+(\d+)\+(\d+)=(\d+)/);
+  const m1 = String(str).match(/(\d+)\+(\d+)\+(\d+)=(\d+)/);
   if(m1) return {a:+m1[1],b:+m1[2],c:+m1[3],sum:+m1[4]};
-  const m2 = str.match(/(\d+),(\d+),(\d+)\s*=>\s*(\d+)/);
+  const m2 = String(str).match(/(\d+),(\d+),(\d+)\s*=>\s*(\d+)/);
   if(m2) return {a:+m2[1],b:+m2[2],c:+m2[3],sum:+m2[4]};
-  const m3 = str.match(/(\d+)\s+(\d+)\s+(\d+)/);
-  if(m3){const a=+m3[1],b=+m3[2],c=+m3[3];return{a,b,c,sum:a+b+c};}
+  // 纯数字
+  const n = parseInt(str);
+  if(!isNaN(n)) return {a:0,b:0,c:0,sum:n};
   return null;
 }
 
 // ==================== 网络 ====================
-async function jfetch(url, headers={}){
-  const r = await fetch(url, {headers, mode:"cors", cache:"no-cache"});
-  if(!r.ok) throw new Error("HTTP "+r.status);
+async function jfetch(url, opts={}){
+  const r = await fetch(url, {headers:opts.headers||{}, mode:"cors", cache:"no-cache"});
+  if(!r.ok) throw new Error("HTTP "+r.status+" "+url);
   return r.json();
 }
 
-// 三源降级
+// 三源降级：pc28.help 直连 → data.json 兜底
 async function loadAllData(){
-  // 1) yu28 直连
+  // 1) pc28.help 主源（浏览器直连，无 CORS 限制）
   try{
     const [kj, sha, sz, ds, dx] = await Promise.all([
-      jfetch(`${CONFIG.BASE}/api/kj.json?nbr=${CONFIG.HISTORY_N}`, {"X-Api-Key":CONFIG.API_KEY}),
-      jfetch(`${CONFIG.BASE}/api/sha.json?nbr=${CONFIG.PRED_N}`,{"X-Api-Key":CONFIG.API_KEY}),
-      jfetch(`${CONFIG.BASE}/api/sz.json?nbr=${CONFIG.PRED_N}`, {"X-Api-Key":CONFIG.API_KEY}),
-      jfetch(`${CONFIG.BASE}/api/ds.json?nbr=${CONFIG.PRED_N}`, {"X-Api-Key":CONFIG.API_KEY}),
-      jfetch(`${CONFIG.BASE}/api/dx.json?nbr=${CONFIG.PRED_N}`, {"X-Api-Key":CONFIG.API_KEY}),
+      jfetch(`${CONFIG.BASE}/api/kj.json?nbr=${CONFIG.HISTORY_N}`),
+      jfetch(`${CONFIG.BASE}/api/sha.json?nbr=${CONFIG.PRED_N}`),
+      jfetch(`${CONFIG.BASE}/api/sz.json?nbr=${CONFIG.PRED_N}`),
+      jfetch(`${CONFIG.BASE}/api/ds.json?nbr=${CONFIG.PRED_N}`),
+      jfetch(`${CONFIG.BASE}/api/dx.json?nbr=${CONFIG.PRED_N}`),
     ]);
-    if(kj && kj.data && kj.data.length){
-      return {mode:"yu28-live", kj:kj.data, sha:sha.data||[], sz:sz.data||[],
-              ds:ds.data||[], dx:dx.data||[], rawKj:kj};
+    if(kj && kj.message==="success" && kj.data && kj.data.length){
+      return {mode:"pc28.help-live", kj:kj.data, sha:sha.data||[], sz:sz.data||[],
+              ds:ds.data||[], dx:dx.data||[], countdown:kj.countdown||""};
     }
-  }catch(e){console.warn("yu28 直连失败:",e.message);}
+  }catch(e){console.warn("pc28.help 直连失败:",e.message);}
 
-  // 2) corsproxy.io
-  try{
-    const px=CONFIG.PROXY;
-    const [kj, sha, sz, ds, dx] = await Promise.all([
-      jfetch(px+encodeURIComponent(`${CONFIG.BASE}/api/kj.json?nbr=${CONFIG.HISTORY_N}`)),
-      jfetch(px+encodeURIComponent(`${CONFIG.BASE}/api/sha.json?nbr=${CONFIG.PRED_N}`)),
-      jfetch(px+encodeURIComponent(`${CONFIG.BASE}/api/sz.json?nbr=${CONFIG.PRED_N}`)),
-      jfetch(px+encodeURIComponent(`${CONFIG.BASE}/api/ds.json?nbr=${CONFIG.PRED_N}`)),
-      jfetch(px+encodeURIComponent(`${CONFIG.BASE}/api/dx.json?nbr=${CONFIG.PRED_N}`)),
-    ]);
-    if(kj && kj.data && kj.data.length){
-      return {mode:"yu28-proxy", kj:kj.data, sha:sha.data||[], sz:sz.data||[],
-              ds:ds.data||[], dx:dx.data||[], rawKj:kj};
-    }
-  }catch(e){console.warn("corsproxy 失败:",e.message);}
-
-  // 3) data.json 兜底
+  // 2) data.json 兜底
   try{
     const r = await jfetch(CONFIG.DATA_JSON);
     if(r && r.kj && r.kj.data && r.kj.data.length){
       return {mode:"static", kj:r.kj.data, sha:(r.sha&&r.sha.data)||[],
               sz:(r.sz&&r.sz.data)||[], ds:(r.ds&&r.ds.data)||[],
-              dx:(r.dx&&r.dx.data)||[], rawKj:r.kj,
-              nextPred:r.next_prediction||null};
+              dx:(r.dx&&r.dx.data)||[], nextPred:r.next_prediction||null};
     }
   }catch(e){console.warn("data.json 不可用:",e.message);}
 
-  throw new Error("所有数据源均不可用（yu28 直连+代理+data.json 全部失败）");
+  throw new Error("所有数据源均不可用（pc28.help 直连 + data.json 全部失败）");
 }
 
 // ==================== 归一化 ====================
 function normalizeKJ(arr){
   return arr.map(it=>{
-    const p = parseNumber(it.number || it.nbr || "");
-    let a=0,b=0,c=0,sum=0;
-    if(p){a=p.a;b=p.b;c=p.c;sum=p.sum;}
+    // 解析 number
+    let a=0,b=0,c=0,sum=0,numStr="";
+    const p = parseNumber(it.number || it.numStr || it.nbr || "");
+    if(p){ a=p.a; b=p.b; c=p.c; sum=p.sum; numStr=it.number||`${a}+${b}+${c}=${sum}`; }
+    else {
+      // 尝试从 a/b/c 字段
+      a = +it.a || 0; b = +it.b || 0; c = +it.c || 0;
+      sum = +it.num || +it.sum || (a+b+c);
+      numStr = it.number || `${a}+${b}+${c}=${sum}`;
+    }
+    // 确保 sum 有效
+    if(!sum && a+b+c>0) sum = a+b+c;
     const cl = classify(a,b,c);
+    // date/time 分离
+    let dateStr = it.date || "";
+    let timeStr = it.time || "";
+    if(!dateStr && timeStr && timeStr.includes(" ")){
+      const parts = timeStr.split(" ");
+      dateStr = parts[0]; timeStr = parts[1]||"";
+    }
     return {
-      nbr: it.nbr || it.code || "",
-      time: it.time || it.date || "",
+      nbr: String(it.nbr || it.drawNbr || ""),
+      date: dateStr,
+      time: timeStr,
       a,b,c,sum,
-      combo:cl.combo, size:cl.size, parity:cl.parity,
+      number: numStr,
+      combo: cl.combo, size:cl.size, parity:cl.parity,
       countdown: it.countdown || "",
     };
-  }).filter(x=>x.nbr)
+  }).filter(x=>x.nbr && x.sum>0 && x.sum<=27)
     .sort((x,y)=>{
-      // 期号可能是字符串含日期，按字典序即可（同日期内递增）
-      return String(x.nbr).localeCompare(String(y.nbr));
+      const xn=parseInt(x.nbr)||0, yn=parseInt(y.nbr)||0;
+      return xn-yn;
     });
 }
 
@@ -337,18 +373,20 @@ function localPredict(data){
   const same=tail.every(x=>x===tail[0]);
   let kill=bot, push=top;
   if(same){kill=top; push=entries[1][0];}
-  // 和值重心
+  // 和值重心（线性加权）
   const sums=recent.map(d=>d.sum);
-  const a=Math.round(avg(sums));
-  // 单双/大小倾向（近100期）
-  const bigCnt=recent.filter(d=>d.big).length;
-  const danCnt=recent.filter(d=>d.dan).length;
+  const weights=Array.from({length:sums.length},(_,i)=>i+1);
+  const wavg = sums.reduce((s,v,i)=>s+v*weights[i],0)/weights.reduce((a,b)=>a+b,0);
+  const a=Math.round(wavg);
+  // 单双/大小倾向
+  const danCnt=recent.filter(d=>d.parity==="单").length;
+  const bigCnt=recent.filter(d=>d.size==="大").length;
   return {
     kill, push,
     sum:[Math.max(0,a-1),a,Math.min(27,a+1)],
     ds: danCnt>=50?"单":"双",
     dx: bigCnt>=50?"大":"小",
-    conf: Math.round(entries[0][1]/100*100),
+    conf: Math.round(entries[0][1]/Math.min(100,recent.length)*100),
   };
 }
 
@@ -364,45 +402,65 @@ function render(state){
   $("latestSum").textContent = latest.sum;
   const tag=$("latestTag"); tag.textContent=latest.combo;
   tag.className="tag "+comboClass(latest.combo);
-  $("latestDate").textContent = latest.time||"";
-
-  // 期号标签
+  $("latestDate").textContent = (latest.date||"")+" "+(latest.time||"");
   $("periodLabel").textContent = "期号 "+latest.nbr;
 
   // 历史表（最新50期倒序）
   const tbody=$("histBody"); tbody.innerHTML="";
   [...data].slice(-50).reverse().forEach(d=>{
     const tr=document.createElement("tr");
-    tr.innerHTML=`<td>${d.nbr}</td><td>${d.time?d.time.slice(0,16):""}</td>
+    tr.innerHTML=`<td>${d.nbr}</td><td>${d.date?d.date.slice(5):""} ${d.time?d.time.slice(0,5):""}</td>
       <td class="num">${d.a}+${d.b}+${d.c}</td><td>${d.sum}</td>
       <td><span class="tag ${comboClass(d.combo)}">${d.combo}</span></td>`;
     tbody.appendChild(tr);
   });
 
   // 形态分布（近100期）
-  const r100=data.slice(-100); let dd=0,dx=0,xd=0,xx=0;
+  const r100=data.slice(-100);
+  let dd=0,dx=0,xd=0,xx=0;
   r100.forEach(d=>{if(d.combo==="大单")dd++;else if(d.combo==="大双")dx++;
     else if(d.combo==="小单")xd++;else if(d.combo==="小双")xx++;});
   $("cntDD").textContent=dd;$("cntDX").textContent=dx;
   $("cntXD").textContent=xd;$("cntXX").textContent=xx;
 
+  // 趋势比例（近15期）
+  const r15=data.slice(-15);
+  const bigN=r15.filter(d=>d.size==="大").length;
+  const danN=r15.filter(d=>d.parity==="单").length;
+  $("trendBig").textContent=`大 ${Math.round(bigN/15*100)}% / 小 ${Math.round((15-bigN)/15*100)}%`;
+  $("trendOdd").textContent=`单 ${Math.round(danN/15*100)}% / 双 ${Math.round((15-danN)/15*100)}%`;
+  $("barBig").style.width = Math.round(bigN/15*100)+"%";
+  $("barOdd").style.width = Math.round(danN/15*100)+"%";
+
+  // 形态 chips 高亮
+  const chips=$("comboDist").children;
+  const order=["大单","大双","小单","小双"];
+  const active = state.nextPred ? [state.nextPred.push] : [];
+  for(let i=0;i<4&&i<chips.length;i++){
+    const c=order[i];
+    chips[i].querySelector(".count").textContent = cntVal(c,dd,dx,xd,xx);
+    chips[i].querySelector(".pct").textContent = pctStr(c,dd,dx,xd,xx,r100.length);
+    chips[i].className="combo-chip"+(active.includes(c)?" active":"");
+  }
+
   // ---- 预测 ----
-  const lastPred = arr=>(arr||[]).filter(x=>x.prediction).pop();
   let predMode="", conf=0;
 
-  if(state.mode.startsWith("yu28") && (lastPred(state.sha)||lastPred(state.sz))){
-    predMode = state.mode==="yu28-live" ? "yu28 AI · 直连" : "yu28 AI · 代理";
-    const pK=lastPred(state.sha), pP=lastPred(state.sz),
-          pDS=lastPred(state.ds), pDX=lastPred(state.dx);
+  // 优先用 AI 预测接口数据
+  const lastFromArr = arr=>(arr||[]).filter(x=>x&&x.prediction).pop();
+  const pK=lastFromArr(state.sha), pP=lastFromArr(state.sz),
+        pDS=lastFromArr(state.ds), pDX=lastFromArr(state.dx);
+
+  if(state.mode==="pc28.help-live" && (pK||pP)){
+    predMode = "pc28.help AI · 直连";
     $("predKill").textContent = pK?pK.prediction:"暂无";
     $("predPush").textContent = pP?pP.prediction:"暂无";
     $("predDS").textContent   = pDS?pDS.prediction:"暂无";
     $("predDX").textContent   = pDX?pDX.prediction:"暂无";
     const a=Math.round(avg(r100.map(d=>d.sum)));
     $("predSum").textContent=[Math.max(0,a-1),a,Math.min(27,a+1)].join(" / ");
-    conf = Math.round(Math.max(dd,dx,xd,xx)/100*100);
+    conf = Math.round(Math.max(dd,dx,xd,xx)/r100.length*100);
   } else if(state.nextPred) {
-    // 静态模式但有预计算的下期预测
     predMode = "本地算法 · 静态预测";
     const np = state.nextPred;
     $("predKill").textContent = np.kill || "--";
@@ -422,7 +480,7 @@ function render(state){
     conf = lp.conf;
   }
   const pmTag=$("predMode"); pmTag.textContent=predMode;
-  pmTag.className="tag "+(predMode.includes("yu28")?"cyan":(predMode.includes("本地")?"xiao":"dan"));
+  pmTag.className="tag "+(predMode.includes("pc28.help")?"cyan":(predMode.includes("本地")?"xiao":"dan"));
 
   $("confPct").textContent=conf+"%";
   $("confBar").style.width=Math.min(100,conf)+"%";
@@ -436,15 +494,23 @@ function render(state){
 
   // 数据源徽章
   const map={
-    "yu28-live":"● 真实数据 · yu28 直连",
-    "yu28-proxy":"● 真实数据 · corsproxy.io",
+    "pc28.help-live":"● 实时数据 · pc28.help 直连",
     "static":"● 静态快照 · data.json（自动更新）",
   };
   const warn = state.mode==="static";
   markSrc(true, map[state.mode]||"● 已连接", warn);
 
-  // 启动倒计时（用 yu28 的 countdown 字段）
-  startCountdown(latest.countdown, state);
+  // 启动倒计时
+  startCountdown(state.countdown||"", state);
+}
+
+function cntVal(c,dd,dx,xd,xx){
+  if(c==="大单")return dd;if(c==="大双")return dx;
+  if(c==="小单")return xd;return xx;
+}
+function pctStr(c,dd,dx,xd,xx,total){
+  const v=cntVal(c,dd,dx,xd,xx);
+  return total>0?Math.round(v/total*100)+"%":"0%";
 }
 
 function calcBacktest(data){
@@ -455,17 +521,17 @@ function calcBacktest(data){
     if(Math.abs(data[i-1].sum-data[i].sum)<=2) sh++;
   }
   const t=data.length-1;
-  return {t, groupHit:Math.round(gh/t*100), killCorrect:Math.round(kc/t*100),
-          sumHit:Math.round(sh/t*100)};
+  return {t, groupHit:t>0?Math.round(gh/t*100):0,
+    killCorrect:t>0?Math.round(kc/t*100):0,
+    sumHit:t>0?Math.round(sh/t*100):0};
 }
 
 // ==================== 倒计时（PC28 节奏）====================
-let timer=null, _serverNowOffset=0;
+let timer=null, _serverNowOffset=0, _periodLen=210;
 
 function parseCountdown(cdStr){
-  // "MM:SS" 或 "HH:MM:SS"
   if(!cdStr) return null;
-  const parts = cdStr.split(":").map(Number);
+  const parts = String(cdStr).split(":").map(Number);
   if(parts.some(isNaN)) return null;
   if(parts.length===2) return parts[0]*60 + parts[1];
   if(parts.length===3) return parts[0]*3600 + parts[1]*60 + parts[2];
@@ -474,8 +540,7 @@ function parseCountdown(cdStr){
 
 function isMaintenanceNow(){
   const now = new Date(Date.now() + _serverNowOffset);
-  const h=now.getHours(), m=now.getMinutes();
-  const cur=h*60+m;
+  const cur=now.getHours()*60+now.getMinutes();
   const s=CONFIG.MAINT_START_H*60+CONFIG.MAINT_START_M;
   const e=CONFIG.MAINT_END_H*60+CONFIG.MAINT_END_M;
   return cur>=s && cur<e;
@@ -483,24 +548,19 @@ function isMaintenanceNow(){
 
 function startCountdown(cdFromServer, state){
   if(timer) clearInterval(timer);
-
-  // 优先用服务端返回的 countdown 推算"服务器现在时间"
   const cdSec = parseCountdown(cdFromServer);
   if(cdSec!=null && cdSec>0){
-    // 已知：下期还有 cdSec 秒 → 本期望剩余周期 = cdSec + 一个周期(210s)
-    _periodLen = 210; // 3.5 分钟
+    _periodLen = 210;
     _remainSec = cdSec;
   } else {
-    // 维护窗口或解析失败 → 用本地时间估算
     _periodLen = 210;
     _remainSec = 210 - (Math.floor(Date.now()/1000) % 210);
   }
-
   tick();
   timer=setInterval(tick,1000);
 }
 
-let _remainSec=0, _periodLen=210;
+let _remainSec=0;
 function tick(){
   _remainSec = Math.max(0, _remainSec - 1);
   if(_remainSec<=0){ _remainSec = _periodLen; }
@@ -514,7 +574,6 @@ function tick(){
   $("cdTime").textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
   $("cdLabel").textContent = inMaint ? "维护中" : "距下期开奖";
 
-  // 圆环：剩余/周期
   const circ=2*Math.PI*56, ratio=Math.min(1, _remainSec/_periodLen);
   const ring=$("progRing"); ring.style.strokeDasharray=circ; ring.style.strokeDashoffset=circ*(1-ratio);
 }
@@ -548,6 +607,15 @@ async function main(){
 }
 
 $("btnRefresh").addEventListener("click", main);
+
+// 自动刷新（30秒）
+setInterval(()=>{ if(!document.hidden) main(); }, CONFIG.AUTO_REFRESH);
+
+// 页面可见时立即刷新
+document.addEventListener("visibilitychange",()=>{
+  if(!document.hidden) main();
+});
+
 main();
 </script>
 </body>
