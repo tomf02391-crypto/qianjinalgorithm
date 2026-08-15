@@ -1,78 +1,74 @@
-# 千金星轨 · 福彩3D 预测（GitHub Pages 版）
+# 千金星轨 · PC28
 
-纯静态站点，部署到 GitHub Pages 即可使用，无需服务器。
+> 真实数据驱动的 PC28（加拿大28）开奖分析 + AI 预测面板，纯静态单页，零后端，可直接部署到 GitHub Pages。
+
+## 🎯 这是什么
+
+- **PC28 每 3.5 分钟开一期**，全天约 400 期
+- 和值 0–27，**≥14 为大，<14 为小**；**奇数为单，偶数为双**
+- 数据源：`yu28.top` 开放平台（4 路预测：杀组 / 双组 / 单双 / 大小）
+- 完全免费、无需服务器、无需数据库
+
+## 📊 数据架构（三档自动降级）
+
+| 优先级 | 来源 | 触发条件 |
+|--------|------|----------|
+| ① | `yu28.top` 直连 | 浏览器能直连（部分网络放行） |
+| ② | `corsproxy.io` → `yu28.top` | 直连被 CORS 拦截时自动切换 |
+| ③ | 同目录 `data.json` | 上面全挂时兜底（内置 121 期真实开奖数据） |
+
+> 页面右上角徽章实时显示当前用哪一档：`● 真实数据 · yu28 直连` / `● 真实数据 · corsproxy.io` / `● 静态快照 · data.json`
+
+## 🚀 部署到 GitHub Pages
+
+1. **建仓库**：在 GitHub 上新建公开仓库（如 `qianjinu-ghpages`）
+2. **推送代码**：
+   ```bash
+   git init && git add . && git commit -m "init"
+   git remote add origin https://github.com/<你>/<仓库>.git
+   git push -u origin main
+   ```
+3. **开启 Pages**：Settings → Pages → Source 选 `main` 分支 → Save
+4. 等待 1–2 分钟，访问 `https://<你>.github.io/<仓库>/`
+
+## 🔄 自动更新（GitHub Actions）
+
+`.github/workflows/update-data.yml` 每 5 分钟运行一次：
+- 尝试通过 `corsproxy.io` 抓取 `yu28.top` 最新 350 期开奖 + 4 路预测
+- 抓取成功 → 写入 `data.json` 并 commit
+- 抓取失败 → 回退到内置真实数据汇编（jnd25.com / kuai28.com 等公开记录）
+- **维护窗口（北京时间 19:00–19:30）自动跳过**
+
+> ⚠️ 由于 PC28 数据站统一使用 WAF 屏蔽云服务器 IP，Actions 服务端抓取可能不稳定。这是行业普遍现象——**真实数据永远来自浏览器端**。Actions 的角色是"定期刷新兜底快照"，确保即使断网/被屏蔽，页面仍有真实历史可看。
 
 ## 📁 文件结构
 
 ```
-qianjinu-ghpages/
-├── index.html                     ← 主页面（单文件，CSS/JS 全内联）
-├── data.json                      ← 100 期真实开奖数据（Actions 自动更新）
-├── fetch_data.py                  ← Actions 调用的抓取脚本
-├── setup_repo.sh                  ← 一键建仓+推送脚本
-├── README.md                      ← 本文件
-└── .github/
-    └── workflows/
-        └── update-data.yml        ← 每天 21:30 自动抓数据并 commit
+.
+├── index.html               # 主页面（CSS+JS 全内联，单文件）
+├── data.json               # 开奖数据快照（Actions 自动更新）
+├── fetch_data.py           # Actions 抓取脚本
+├── seed_data.py            # 内置真实数据汇编（兜底用）
+├── README.md
+└── .github/workflows/
+    └── update-data.yml    # 每5分钟自动更新
 ```
 
-## 🔗 数据链路（自动降级）
-
-| 优先级 | 数据源 | 说明 |
-|--------|--------|------|
-| ① | `yu28.top` 直连 | 开奖历史 + 杀组/双组/单双/大小 4 路 AI 预测 |
-| ② | `corsproxy.io` → yu28 | 直连被 CORS 拦截时自动切换 |
-| ③ | 同目录 `data.json` | Actions 用福彩官网 `cwl.gov.cn` 生成兜底 |
-
-右上角徽章实时显示当前用哪一档数据源。
-
-## 🚀 部署方式一：让 AI 帮你一键推（推荐）
-
-在对话里提供两个信息：
-1. 你的 **GitHub 用户名**
-2. 一个 **Personal Access Token (PAT)**，权限勾选 `repo`（全选）
-
-AI 会调用 `setup_repo.sh` 自动完成建仓、推送、输出 Pages 地址。
-
-## 🚀 部署方式二：自己手动推
+## 🛠 本地调试
 
 ```bash
-# 1. 克隆/拷入本目录后初始化
-cd qianjinu-ghpages
-git init && git checkout -b main
-git add . && git commit -m "init"
+# 生成 data.json（测试兜底路径）
+python3 fetch_data.py
 
-# 2. 在 GitHub 网页上建一个公开仓库（如 qianjinu-ghpages）
-# 3. 推送
-git remote add origin https://<USER>:<TOKEN>@github.com/<USER>/qianjinu-ghpages.git
-git push -u origin main
+# 启动本地服务器（必须 http:// 才能 fetch）
+python3 -m http.server 8000
+# 浏览器打开 http://localhost:8000/
 ```
-
-## ⚙️ 开启 GitHub Pages
-
-1. 打开 `https://github.com/<你>/qianjinu-ghpages/settings/pages`
-2. **Source** 选 `Deploy from a branch`
-3. **Branch** 选 `main` → Save
-4. 等待 1-2 分钟，访问 `https://<你>.github.io/qianjinu-ghpages/`
-
-## ⚡ 首次手动触发 Actions
-
-仓库刚建好时 `data.json` 还不存在，需要手动跑一次工作流生成它：
-
-1. 打开 `https://github.com/<你>/qianjinu-ghpages/actions`
-2. 选 `更新数据快照` → `Run workflow` → 确认
-3. 等约 30 秒变绿勾，页面即可正常显示数据
-
-之后每天北京时间 **21:30**（开奖后 15 分钟）会自动跑一次。
-
-## 🔑 关于 yu28 API Key
-
-`index.html` 中已内置公开 Demo Key `yu28_f9f41d673b447fac`，文档允许前端使用。
-如要换成你自己的 Key：
-1. 去 https://yu28.top 注册获取
-2. 替换 `index.html` 里 `CONFIG.API_KEY` 的值
-3. 重新推送
 
 ## ⚠️ 声明
 
-仅供算法研究参考，彩票开奖为随机事件，任何预测均无法保证准确，请理性对待。
+**仅供算法研究与数据分析参考**。彩票开奖为独立随机事件，任何预测模型均无法保证准确，请理性对待。
+
+## 📜 License
+
+MIT
