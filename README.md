@@ -1,25 +1,48 @@
 # 千金星轨 · PC28 真实数据版
 
-> 数据来源：yu28.top 开放平台 + 本地形态分析算法兜底
-> 仅供算法研究参考，彩票开奖为随机事件，请理性对待
+> 基于 PC28（加拿大28）真实开奖数据的融合预测工具，仅供算法研究参考。
+
+## 数据来源
+
+| 优先级 | 源 | 说明 |
+|--------|-----|------|
+| ① 浏览器端 | `pc28.help` API | 直连、无需认证、无 CORS 限制，浏览器可直接访问 |
+| ② Actions 抓取 | `pc28.help` → `data.json` | GitHub Actions 每 5 分钟运行 `fetch_data.py` 抓取并 commit |
+| ③ 兜底 | 内置 121 期真实数据 + 本地形态分析 | 网络全断时仍可展示预测 |
+
+## 部署（GitHub Pages）
+
+1. Fork / 克隆此仓库
+2. **Settings → Pages → Source: `main` 分支 → Save**
+3. **Actions 标签页 → 找到"更新PC28数据快照" → 点 Run workflow**（手动跑一次生成 `data.json`）
+4. 等待约 1-2 分钟，访问 `https://<你的用户名>.github.io/qianjinalgorithm/`
+
+之后全自动：每 5 分钟 Actions 抓取最新数据 → commit → Pages 自动更新。
 
 ## 文件说明
 
 | 文件 | 作用 |
 |------|------|
-| `index.html` | 主页面（单文件，CSS/JS 全内联） |
-| `data.json` | 开奖数据 + AI 预测（Actions 自动更新） |
-| `fetch_data.py` | Actions 抓取脚本 |
-| `seed_data.py` | 内置真实数据 + 本地预测算法 |
+| `index.html` | 主页面（单文件，零外部依赖） |
+| `data.json` | 开奖数据快照（Actions 自动更新） |
+| `fetch_data.py` | 数据抓取脚本（pc28.help → 本地兜底） |
+| `seed_data.py` | 内置 121 期真实开奖数据 + 形态分析算法 |
+| `predict.py` | 本地预测算法（可独立测试） |
+| `.github/workflows/update-data.yml` | GitHub Actions 自动更新 |
 
-## 数据链路（三档降级）
+## PC28 规则
 
-1. **yu28 直连** → 浏览器直接调 `yu28.top`（含4路AI预测）
-2. **corsproxy.io 代理** → 直连被拦时自动切换
-3. **data.json 静态兜底** → 含本地算法生成的杀组/押组/单双/大小预测
+- 每 **3.5 分钟**开一期，全天滚动约 **400 期**
+- 维护窗口（北京时间）：**19:00–19:30**（夏令时）/ **20:00–20:30**（冬令时）
+- 和值 0-13 = 小，14-27 = 大；奇数 = 单，偶数 = 双
 
-## 部署
+## 算法说明
 
-已部署到 GitHub Pages：`https://tomf02391-crypto.github.io/qianjinalgorithm/`
+- **频率主导**：统计近 100 期形态分布，杀掉最少出现的形态
+- **连龙反转**：检测 5 期同形态连续 → 反转预测
+- **和值重心**：线性加权移动平均（近期权重更高）
+- **AI 辅助**：当 pc28.help 的 sha/sz/ds/dx 接口可用时，融合其预测
 
-Actions 每 5 分钟自动抓取最新数据并 commit。
+## ⚠️ 声明
+
+本工具仅供**数据分析与算法研究**参考。彩票开奖为随机事件，任何预测均无法保证准确，请理性对待。
