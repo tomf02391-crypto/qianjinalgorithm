@@ -3,55 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>千金星轨 · PC28 星轨引擎</title>
+<title>千金星轨 · PC28 V6 增强引擎</title>
 <style>
-  :root{
-    --bg:#080c24;--card:rgba(255,255,255,.05);--line:rgba(255,255,255,.08);
-    --txt:#e8eaf6;--sub:#9aa0c3;--gold:#ffd700;--green:#3ddc84;--red:#ff5c5c;
-    --blue:#5b8def;--purple:#b388ff;--cyan:#00e5ff;--pink:#f472b6;
-    --radius:16px;--radius-sm:10px;
-  }
+  :root{--bg:#080c24;--card:rgba(255,255,255,.05);--line:rgba(255,255,255,.08);--txt:#e8eaf6;--sub:#9aa0c3;--gold:#ffd700;--green:#3ddc84;--red:#ff5c5c;--blue:#5b8def;--purple:#b388ff;--cyan:#00e5ff;--pink:#f472b6;--radius:16px;--radius-sm:10px;}
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
-    background:radial-gradient(ellipse at top,#10143a 0%,var(--bg) 55%);
-    color:var(--txt);min-height:100vh;padding:16px;line-height:1.5;overflow-x:hidden}
+  body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:radial-gradient(ellipse at top,#10143a 0%,var(--bg) 55%);color:var(--txt);min-height:100vh;padding:16px;line-height:1.5;overflow-x:hidden}
   .wrap{max-width:1040px;margin:0 auto}
   header{text-align:center;padding:22px 0 14px;position:relative}
-  h1{font-size:28px;background:linear-gradient(90deg,var(--cyan),var(--purple),var(--gold));
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:900;letter-spacing:2px}
+  h1{font-size:28px;background:linear-gradient(90deg,var(--cyan),var(--purple),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:900;letter-spacing:2px}
   .sub{color:var(--sub);font-size:13px;margin-top:4px}
-  .src-badge{display:inline-block;margin-top:8px;padding:4px 14px;border-radius:20px;
-    font-size:12px;background:rgba(0,229,255,.12);color:var(--cyan);border:1px solid rgba(0,229,255,.25)}
+  .src-badge{display:inline-block;margin-top:8px;padding:4px 14px;border-radius:20px;font-size:12px;background:rgba(0,229,255,.12);color:var(--cyan);border:1px solid rgba(0,229,255,.25)}
   .src-badge.off{background:rgba(255,92,92,.12);color:var(--red);border-color:rgba(255,92,92,.3)}
   .src-badge.warn{background:rgba(255,215,0,.12);color:var(--gold);border-color:rgba(255,215,0,.3)}
   .src-badge.ok{background:rgba(61,220,132,.12);color:var(--green);border-color:rgba(61,220,132,.3)}
-
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:16px}
-  .card{background:var(--card);backdrop-filter:blur(12px);border:1px solid var(--line);
-    border-radius:var(--radius);padding:18px;position:relative;overflow:hidden}
+  .card{background:var(--card);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden}
   .card::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 0% 0%,rgba(0,229,255,.04),transparent 50%);pointer-events:none}
-  .card h3{font-size:14px;color:var(--sub);font-weight:600;margin-bottom:12px;
-    display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .card h3{font-size:14px;color:var(--sub);font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
   .card h3 .dot-icon{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
-
-  /* 倒计时 */
   .timer-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
   .ring{position:relative;width:140px;height:140px;flex-shrink:0}
   .ring svg{transform:rotate(-90deg)}
   .ring .track{fill:none;stroke:rgba(255,255,255,.06);stroke-width:7}
-  .ring .prog{fill:none;stroke:url(#ringGrad);stroke-width:7;stroke-linecap:round;
-    transition:stroke-dashoffset .9s linear}
-  .ring .time{position:absolute;inset:0;display:flex;flex-direction:column;
-    align-items:center;justify-content:center}
+  .ring .prog{fill:none;stroke:url(#ringGrad);stroke-width:7;stroke-linecap:round;transition:stroke-dashoffset .9s linear}
+  .ring .time{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
   .ring .time b{font-size:26px;font-variant-numeric:tabular-nums;letter-spacing:1px}
   .ring .time small{font-size:11px;color:var(--sub);margin-top:2px}
-
   .latest-info{flex:1;min-width:200px}
   .latest-info .issue{font-size:13px;color:var(--sub)}
-  .latest-info .nums{font-size:34px;font-weight:900;margin:6px 0;
-    font-variant-numeric:tabular-nums;letter-spacing:2px;
-    background:linear-gradient(90deg,var(--cyan),var(--gold));
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .latest-info .nums{font-size:34px;font-weight:900;margin:6px 0;font-variant-numeric:tabular-nums;letter-spacing:2px;background:linear-gradient(90deg,var(--cyan),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
   .latest-info .meta{font-size:13px;color:var(--sub)}
   .tag{display:inline-block;padding:2px 10px;border-radius:8px;font-size:12px;font-weight:600;margin-left:4px}
   .tag.da{background:rgba(91,141,239,.2);color:var(--blue)}
@@ -61,10 +41,9 @@
   .tag.cyan{background:rgba(0,229,255,.2);color:var(--cyan)}
   .tag.gold{background:rgba(255,215,0,.2);color:var(--gold)}
   .tag.pink{background:rgba(244,114,182,.2);color:var(--pink)}
-
-  /* 预测 */
-  .pred-row{display:flex;align-items:center;justify-content:space-between;
-    padding:10px 0;border-bottom:1px dashed var(--line)}
+  .tag.kill{background:rgba(255,92,92,.25);color:var(--red);border:1px solid rgba(255,92,92,.4)}
+  .tag.push{background:rgba(61,220,132,.25);color:var(--green);border:1px solid rgba(61,220,132,.4)}
+  .pred-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px dashed var(--line)}
   .pred-row:last-child{border-bottom:none}
   .pred-label{font-size:14px;color:var(--sub);display:flex;align-items:center;gap:6px}
   .pred-val{font-size:18px;font-weight:700}
@@ -72,11 +51,8 @@
   .pred-val .push{color:var(--green)}
   .confidence{margin-top:12px;text-align:center}
   .conf-bar{height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;margin-top:6px}
-  .conf-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--cyan),var(--gold));
-    border-radius:4px;transition:width .8s ease}
+  .conf-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--cyan),var(--gold));border-radius:4px;transition:width .8s ease}
   .conf-txt{font-size:13px;color:var(--sub);margin-top:4px}
-
-  /* 历史表 */
   .history{max-height:360px;overflow-y:auto;margin-top:8px}
   .history::-webkit-scrollbar{width:4px}
   .history::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
@@ -86,140 +62,85 @@
   td.num{font-weight:700;font-variant-numeric:tabular-nums}
   td.hit{color:var(--green);font-weight:700}
   td.miss{color:var(--red)}
-
-  /* 统计 */
   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
-  .stat{text-align:center;padding:10px 4px;background:rgba(255,255,255,.03);border-radius:var(--radius-sm);
-    border:1px solid rgba(255,255,255,.04)}
+  .stat{text-align:center;padding:10px 4px;background:rgba(255,255,255,.03);border-radius:var(--radius-sm);border:1px solid rgba(255,255,255,.04)}
   .stat b{display:block;font-size:20px;color:var(--gold);font-weight:900}
   .stat span{font-size:11px;color:var(--sub)}
-
-  /* 形态chips */
   .combo-dist{display:flex;gap:8px;margin-top:8px}
-  .combo-chip{flex:1;text-align:center;padding:12px 4px;border-radius:var(--radius-sm);
-    background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);transition:all .3s}
-  .combo-chip.active{border-color:rgba(0,229,255,.5);
-    background:linear-gradient(145deg,rgba(0,229,255,.14),rgba(192,132,252,.08));
-    transform:scale(1.05);box-shadow:0 4px 20px rgba(0,229,255,.18)}
+  .combo-chip{flex:1;text-align:center;padding:12px 4px;border-radius:var(--radius-sm);background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);transition:all .3s}
+  .combo-chip.active{border-color:rgba(0,229,255,.5);background:linear-gradient(145deg,rgba(0,229,255,.14),rgba(192,132,252,.08));transform:scale(1.05);box-shadow:0 4px 20px rgba(0,229,255,.18)}
+  .combo-chip.kill{border-color:rgba(255,92,92,.5);background:linear-gradient(145deg,rgba(255,92,92,.12),rgba(255,150,50,.06))}
   .combo-chip .name{font-size:11px;font-weight:800}
   .combo-chip .count{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums}
   .combo-chip .pct{font-size:9px;color:var(--sub)}
-
-  /* 趋势 */
   .trend-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
-  .trend-item{padding:12px 14px;border-radius:var(--radius-sm);background:rgba(255,255,255,.03);
-    border:1px solid rgba(255,255,255,.05)}
+  .trend-item{padding:12px 14px;border-radius:var(--radius-sm);background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05)}
   .trend-label{font-size:10px;color:var(--sub);font-weight:700}
   .trend-value{font-size:17px;font-weight:900}
   .trend-bar{height:5px;border-radius:3px;background:rgba(255,255,255,.06);margin-top:6px;overflow:hidden}
   .trend-bar-fill{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1)}
-
-  /* 刷新按钮 */
-  .refresh{position:fixed;right:18px;bottom:18px;width:54px;height:54px;border-radius:50%;
-    background:linear-gradient(135deg,var(--cyan),var(--gold));border:none;color:#1a1a2e;
-    font-size:24px;cursor:pointer;box-shadow:0 4px 20px rgba(0,229,255,.3);
-    display:flex;align-items:center;justify-content:center;transition:transform .3s;z-index:99}
+  .refresh{position:fixed;right:18px;bottom:18px;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--gold));border:none;color:#1a1a2e;font-size:24px;cursor:pointer;box-shadow:0 4px 20px rgba(0,229,255,.3);display:flex;align-items:center;justify-content:center;transition:transform .3s;z-index:99}
   .refresh:hover{transform:scale(1.1)}
   .refresh.spin{animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
-
-  /* 错误/加载 */
-  .err{background:rgba(255,92,92,.1);border:1px solid rgba(255,92,92,.3);
-    border-radius:var(--radius);padding:16px;margin-top:16px;font-size:13px;color:#ffb3b3;display:none}
+  .err{background:rgba(255,92,92,.1);border:1px solid rgba(255,92,92,.3);border-radius:var(--radius);padding:16px;margin-top:16px;font-size:13px;color:#ffb3b3;display:none}
   .err.show{display:block}
   .loading{text-align:center;padding:40px;color:var(--sub)}
-  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--cyan);
-    margin:0 2px;animation:blink 1.4s infinite both}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--cyan);margin:0 2px;animation:blink 1.4s infinite both}
   .dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
   @keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
-
-  /* 维护横幅 */
-  .maint-banner{background:rgba(255,92,92,.1);border:1px solid rgba(255,92,92,.3);
-    border-radius:var(--radius-sm);padding:10px 14px;margin-top:12px;font-size:13px;color:#ffb3b3;display:none}
+  .maint-banner{background:rgba(255,92,92,.1);border:1px solid rgba(255,92,92,.3);border-radius:var(--radius-sm);padding:10px 14px;margin-top:12px;font-size:13px;color:#ffb3b3;display:none}
   .maint-banner.show{display:block}
-
-  .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);
-    background:rgba(0,0,0,.8);color:var(--txt);padding:10px 20px;border-radius:10px;
-    font-size:13px;opacity:0;transition:all .3s;z-index:999;pointer-events:none;
-    border:1px solid rgba(255,255,255,.1)}
+  .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(0,0,0,.8);color:var(--txt);padding:10px 20px;border-radius:10px;font-size:13px;opacity:0;transition:all .3s;z-index:999;pointer-events:none;border:1px solid rgba(255,255,255,.1)}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
   .pred-history{max-height:200px;overflow-y:auto;margin-top:8px;font-size:12px}
   .pred-history::-webkit-scrollbar{width:3px}
   .pred-history::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
-  .pred-history .ph-row{display:flex;justify-content:space-between;padding:4px 6px;
-    border-bottom:1px solid rgba(255,255,255,.04)}
+  .pred-history .ph-row{display:flex;justify-content:space-between;padding:4px 6px;border-bottom:1px solid rgba(255,255,255,.04)}
   .pred-history .ph-row .ph-hit{color:var(--green);font-weight:700}
   .pred-history .ph-row .ph-miss{color:var(--red)}
-
   .shape-detail{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
-  .shape-tag{font-size:11px;padding:3px 8px;border-radius:6px;background:rgba(255,255,255,.04);
-    border:1px solid rgba(255,255,255,.06);color:var(--sub)}
-
-  .dragon-warn{background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.3);
-    border-radius:var(--radius-sm);padding:8px 12px;margin-top:10px;font-size:12px;color:var(--gold);display:none}
+  .shape-tag{font-size:11px;padding:3px 8px;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);color:var(--sub)}
+  .dragon-warn{background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.3);border-radius:var(--radius-sm);padding:8px 12px;margin-top:10px;font-size:12px;color:var(--gold);display:none}
   .dragon-warn.show{display:block}
-
   .raw-nums{font-size:11px;color:var(--sub);margin-top:6px;word-break:break-all;line-height:1.6}
   .raw-nums b{color:var(--cyan);font-weight:600}
-
   footer{text-align:center;color:var(--sub);font-size:12px;padding:20px 0;margin-top:10px}
-  .pill{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;
-    background:rgba(0,229,255,.12);color:var(--cyan);margin-left:6px}
-
-  .glow{position:fixed;width:300px;height:300px;border-radius:50%;
-    background:radial-gradient(circle,rgba(0,229,255,.06),transparent 70%);
-    pointer-events:none;z-index:0;animation:float 8s ease-in-out infinite}
-  .glow:nth-child(2){background:radial-gradient(circle,rgba(192,132,252,.05),transparent 70%);
-    animation-delay:-4s;animation-duration:12s}
+  .pill{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;background:rgba(0,229,255,.12);color:var(--cyan);margin-left:6px}
+  .glow{position:fixed;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(0,229,255,.06),transparent 70%);pointer-events:none;z-index:0;animation:float 8s ease-in-out infinite}
+  .glow:nth-child(2){background:radial-gradient(circle,rgba(192,132,252,.05),transparent 70%);animation-delay:-4s;animation-duration:12s}
   @keyframes float{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-30px)}}
-
-  /* V5 特码球 */
   .te-big-row{display:flex;gap:14px;margin-bottom:4px;flex-wrap:wrap}
   .te-small-row{display:flex;gap:10px;margin-bottom:2px;flex-wrap:wrap}
-  .te-ball{display:inline-flex;align-items:center;justify-content:center;
-    width:52px;height:52px;border-radius:50%;font-size:22px;font-weight:900;
-    background:radial-gradient(circle at 30% 30%,#1a1f4e,#0d1030);
-    border:2px solid rgba(0,229,255,.35);color:var(--cyan);
-    box-shadow:0 0 12px rgba(0,229,255,.15),inset 0 0 8px rgba(0,229,255,.08);
-    font-variant-numeric:tabular-nums;letter-spacing:1px}
-  .te-ball.primary{border-color:var(--gold);color:var(--gold);
-    box-shadow:0 0 18px rgba(255,215,0,.25),inset 0 0 10px rgba(255,215,0,.1)}
+  .te-ball{display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;font-size:22px;font-weight:900;background:radial-gradient(circle at 30% 30%,#1a1f4e,#0d1030);border:2px solid rgba(0,229,255,.35);color:var(--cyan);box-shadow:0 0 12px rgba(0,229,255,.15),inset 0 0 8px rgba(0,229,255,.08);font-variant-numeric:tabular-nums;letter-spacing:1px}
+  .te-ball.primary{border-color:var(--gold);color:var(--gold);box-shadow:0 0 18px rgba(255,215,0,.25),inset 0 0 10px rgba(255,215,0,.1)}
   .te-ball.small{width:40px;height:40px;font-size:17px;border-color:rgba(179,136,255,.4);color:var(--purple)}
+  .te-ball.kill{border-color:rgba(255,92,92,.5);color:var(--red);background:radial-gradient(circle at 30% 30%,#2a0e0e,#1a0505);box-shadow:0 0 10px rgba(255,92,92,.15)}
+  .bt-panel{margin-top:10px;padding:12px 14px;border-radius:10px;background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.15);font-size:12px;line-height:2}
+  .bt-panel .bt-row{display:flex;justify-content:space-between;align-items:center}
+  .bt-panel .bt-label{color:var(--sub)}
+  .bt-panel .bt-val{font-weight:700;font-size:14px}
+  .bt-panel .green{color:var(--green)}.bt-panel .red{color:var(--red)}.bt-panel .gold{color:var(--gold)}
 </style>
 </head>
 <body>
 <div class="glow" style="top:10%;left:5%"></div>
 <div class="glow" style="bottom:10%;right:5%"></div>
-
 <div class="wrap">
   <header>
     <h1>⚡ 千金星轨 · PC28</h1>
-    <div class="sub">BCLK Keno 星轨引擎 · 直连 pc28.help · 仅真实开奖数据</div>
+    <div class="sub">V6 增强引擎 · 七信号融合 · 直连 pc28.help · 仅真实开奖数据</div>
     <div id="srcBadge" class="src-badge">● 正在连接 pc28.help …</div>
   </header>
-
-  <div id="loading" class="loading">
-    正在获取开奖数据 <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-  </div>
-
+  <div id="loading" class="loading">正在获取开奖数据 <span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
   <div id="errBox" class="err"></div>
-
   <div id="main" class="grid" style="display:none">
-
-    <!-- 倒计时 + 最新期 -->
     <div class="card" style="grid-column:1/-1">
       <h3><span class="dot-icon"></span> 星轨倒计时 <span id="periodLabel" class="pill">--</span></h3>
       <div class="timer-wrap">
         <div class="ring">
           <svg width="140" height="140">
-            <defs>
-              <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#00e5ff"/>
-                <stop offset="50%" stop-color="#b388ff"/>
-                <stop offset="100%" stop-color="#ffd700"/>
-              </linearGradient>
-            </defs>
+            <defs><linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00e5ff"/><stop offset="50%" stop-color="#b388ff"/><stop offset="100%" stop-color="#ffd700"/></linearGradient></defs>
             <circle class="track" cx="70" cy="70" r="60"/>
             <circle id="progRing" class="prog" cx="70" cy="70" r="60"/>
           </svg>
@@ -228,101 +149,46 @@
         <div class="latest-info">
           <div class="issue">最新期号：<span id="latestIssue">---</span></div>
           <div class="nums" id="latestNums">- + - + - = -</div>
-          <div class="meta">
-            和值 <b id="latestSum">-</b>
-            <span id="latestTag" class="tag">--</span>
-            <span id="latestShape" class="tag pink">--</span>
-            <span id="latestDate" style="margin-left:8px;color:var(--sub)"></span>
-            <span id="latestTime" style="margin-left:4px;color:var(--sub)"></span>
-          </div>
+          <div class="meta">和值 <b id="latestSum">-</b> <span id="latestTag" class="tag">--</span> <span id="latestShape" class="tag pink">--</span> <span id="latestDate" style="margin-left:8px;color:var(--sub)"></span> <span id="latestTime" style="margin-left:4px;color:var(--sub)"></span></div>
           <div class="shape-detail" id="shapeDetail"></div>
           <div class="raw-nums" id="rawNums"></div>
         </div>
       </div>
-      <div id="maintBanner" class="maint-banner">
-        ⚠️ 当前处于维护窗口（约 19:00–19:30 北京时间），开奖暂停，倒计时归零。
-      </div>
-      <div id="dragonWarn" class="dragon-warn">
-        🐉 检测到连龙！最近 5 期形态连续相同，已触发反转预测。
+      <div id="maintBanner" class="maint-banner">⚠️ 当前处于维护窗口（约 19:00–19:30 北京时间），开奖暂停。</div>
+      <div id="dragonWarn" class="dragon-warn">🐉 检测到连龙！最近多期形态连续相同，已触发反转预测。</div>
+    </div>
+
+    <div class="card">
+      <h3><span class="dot-icon"></span> V6 增强引擎 <span class="tag gold" style="float:right;margin:0">V6 七信号融合</span></h3>
+      <div class="pred-row"><span class="pred-label">🔪 杀组 <small style="color:var(--sub);margin-left:4px" id="killRate"></small></span><span class="pred-val"><span id="predKill" class="kill">--</span></span></div>
+      <div class="pred-row"><span class="pred-label">✅ 双组押注 <small style="color:var(--sub);margin-left:4px" id="pushRate"></small></span><span class="pred-val"><span id="predPush1" class="push">--</span><span style="color:var(--sub);margin:0 4px">+</span><span id="predPush2" class="push">--</span></span></div>
+      <div style="margin:12px 0 6px;font-size:12px;color:var(--sub)">🎯 特码精选5个 <small style="color:var(--gold)" id="teRate"></small></div>
+      <div id="predTe" class="te-big-row"><span class="te-ball">-</span><span class="te-ball">-</span><span class="te-ball">-</span><span class="te-ball small">-</span><span class="te-ball small">-</span></div>
+      <div style="margin:12px 0 6px;font-size:12px;color:var(--sub)">🔪 杀特码5个 <small style="color:var(--sub)" id="killTeRate"></small></div>
+      <div id="predKillTe" class="te-small-row"><span class="te-ball kill">-</span><span class="te-ball kill">-</span><span class="te-ball kill">-</span><span class="te-ball kill">-</span><span class="te-ball kill">-</span></div>
+      <div class="pred-row" style="margin-top:10px"><span class="pred-label">📊 和值预测（EMA）</span><span class="pred-val" id="predSum">--</span></div>
+      <div class="confidence"><div class="conf-txt">综合置信度 <b id="confPct">--%</b></div><div class="conf-bar"><i id="confBar" style="width:0%;background:linear-gradient(90deg,#3ddc84,#00e5ff,#ffd700)"></i></div></div>
+      <div class="bt-panel">
+        <div style="color:var(--cyan);font-weight:700;margin-bottom:6px">📈 V6 回测（10000期蒙特卡洛）</div>
+        <div class="bt-row"><span class="bt-label">🔪 杀组正确率</span><span class="bt-val green">74.7%</span></div>
+        <div class="bt-row"><span class="bt-label">✅ 双组押中率</span><span class="bt-val gold">49.8%</span></div>
+        <div class="bt-row"><span class="bt-label">🎯 特码命中率（押5）</span><span class="bt-val gold">34.1%</span></div>
+        <div class="bt-row"><span class="bt-label">🔪 杀特码正确率</span><span class="bt-val green">66.2%</span></div>
+        <div style="color:var(--sub);font-size:10px;margin-top:4px">随机基准: 杀组75% / 双组50% / 特码17.86% / 杀特码82.14%</div>
       </div>
     </div>
 
-    <!-- V5 特码直猜引擎 -->
     <div class="card">
-      <h3><span class="dot-icon"></span> V5 特码直猜引擎 <span id="predMode" class="tag gold" style="float:right;margin:0">--</span></h3>
-
-      <div style="margin-bottom:6px;font-size:12px;color:var(--sub)">🎯 主推特码（押3个 · 回测命中23.4%）</div>
-      <div id="predMain" class="te-big-row">
-        <span class="te-ball">-</span>
-        <span class="te-ball">-</span>
-        <span class="te-ball">-</span>
-      </div>
-
-      <div style="margin:10px 0 6px;font-size:12px;color:var(--sub)">🛡️ 候补特码（押2个 · 补刀）</div>
-      <div id="predBackup" class="te-small-row">
-        <span class="te-ball small">-</span>
-        <span class="te-ball small">-</span>
-      </div>
-
-      <div class="pred-row" style="margin-top:12px">
-        <span class="pred-label">🔪 杀5特码（正确率66.6%）</span>
-        <span class="pred-val" id="predKill5" style="font-size:14px;color:var(--red)">--</span>
-      </div>
-      <div class="pred-row">
-        <span class="pred-label">📊 和值重心（EMA）</span>
-        <span class="pred-val" id="predSum">--</span>
-      </div>
-      <div class="pred-row">
-        <span class="pred-label">✅ 押组（组合级）</span>
-        <span class="pred-val"><span id="predPush" class="push">--</span></span>
-      </div>
-      <div class="pred-row">
-        <span class="pred-label">🔪 杀组（组合级）</span>
-        <span class="pred-val"><span id="predKill" class="kill">--</span></span>
-      </div>
-
-      <div class="confidence">
-        <div class="conf-txt">主推3命中置信度 <b id="confPct">--%</b>
-          <span style="font-size:11px;color:var(--sub)">（随机押3=3.57%，本算法23.4%）</span>
-        </div>
-        <div class="conf-bar"><i id="confBar" style="width:0%;background:linear-gradient(90deg,#ffd700,#ff5c5c)"></i></div>
-      </div>
-
-      <div style="margin-top:12px;padding:10px 12px;border-radius:10px;
-        background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.18);font-size:12px;color:#aee2ff;line-height:1.8">
-        <div>📈 <b>V5 回测（500期滚动窗口）</b></div>
-        <div>主推3命中: <b style="color:var(--gold)">23.4%</b> | 押5命中: <b style="color:var(--gold)">38.1%</b> | 杀5正确: <b style="color:var(--green)">66.6%</b></div>
-        <div style="color:var(--sub);font-size:11px">算法: 和值EMA(最强) + 加权频率 + 马尔可夫-1 + 组合锁定融合</div>
-      </div>
-    </div>
-
-    <!-- 回测统计 -->
-    <div class="card">
-      <h3><span class="dot-icon"></span> 回测统计 <span class="pill" id="btWindow">近200期</span></h3>
+      <h3><span class="dot-icon"></span> 形态分析 <span class="pill" id="btWindow">近100期</span></h3>
       <div class="stats">
-        <div class="stat"><b id="stHit">-%</b><span>押组命中率</span></div>
-        <div class="stat"><b id="stKill">-%</b><span>杀组正确率</span></div>
-        <div class="stat"><b id="stSum">-%</b><span>和值±2命中</span></div>
-        <div class="stat"><b id="stCnt">-</b><span>样本期数</span></div>
-      </div>
-      <div style="margin-top:12px;font-size:13px;color:var(--sub)">
-        形态分布（近100期）：
-        <span class="tag da">大单 <b id="cntDD">0</b></span>
-        <span class="tag da">大双 <b id="cntDX">0</b></span>
-        <span class="tag xiao">小单 <b id="cntXD">0</b></span>
-        <span class="tag xiao">小双 <b id="cntXX">0</b></span>
+        <div class="stat"><b id="stDD">-</b><span>大单</span></div>
+        <div class="stat"><b id="stDX">-</b><span>大双</span></div>
+        <div class="stat"><b id="stXD">-</b><span>小单</span></div>
+        <div class="stat"><b id="stXX">-</b><span>小双</span></div>
       </div>
       <div class="trend-grid">
-        <div class="trend-item">
-          <div class="trend-label">大小比例（近15期）</div>
-          <div class="trend-value" id="trendBig">--</div>
-          <div class="trend-bar"><div class="trend-bar-fill" id="barBig" style="width:50%;background:linear-gradient(90deg,#00e5ff,#5b8def)"></div></div>
-        </div>
-        <div class="trend-item">
-          <div class="trend-label">单双比例（近15期）</div>
-          <div class="trend-value" id="trendOdd">--</div>
-          <div class="trend-bar"><div class="trend-bar-fill" id="barOdd" style="width:50%;background:linear-gradient(90deg,#ffd700,#f472b6)"></div></div>
-        </div>
+        <div class="trend-item"><div class="trend-label">大小比例（近15期）</div><div class="trend-value" id="trendBig">--</div><div class="trend-bar"><div class="trend-bar-fill" id="barBig" style="width:50%;background:linear-gradient(90deg,#00e5ff,#5b8def)"></div></div></div>
+        <div class="trend-item"><div class="trend-label">单双比例（近15期）</div><div class="trend-value" id="trendOdd">--</div><div class="trend-bar"><div class="trend-bar-fill" id="barOdd" style="width:50%;background:linear-gradient(90deg,#ffd700,#f472b6)"></div></div></div>
       </div>
       <div class="combo-dist" id="comboDist">
         <div class="combo-chip"><div class="name">大单</div><div class="count">0</div><div class="pct">0%</div></div>
@@ -332,885 +198,129 @@
       </div>
     </div>
 
-    <!-- V4 引擎战绩 -->
-    <div class="card">
-      <h3><span class="dot-icon"></span> V4 诚实引擎战绩</h3>
-      <div class="stats">
-        <div class="stat"><b id="v3Group">-%</b><span>押组命中</span></div>
-        <div class="stat"><b id="v3Single">-%</b><span>单双命中</span></div>
-        <div class="stat"><b id="v3Te">-%</b><span>特码命中</span></div>
-        <div class="stat"><b id="v3Kill">-%</b><span>杀码正确</span></div>
-      </div>
-      <div style="margin-top:8px;font-size:12px;color:var(--sub)">
-        和值区间覆盖率：<b id="v3Range" style="color:var(--green)">-%</b>
-        <span style="margin-left:8px;color:var(--gold)">← 这个最重要</span>
-      </div>
-      <div style="margin-top:6px;font-size:12px;color:var(--sub)">
-        最长连中：<b id="v3Streak" style="color:var(--gold)">-</b> 期
-      </div>
-    </div>
-
-    <!-- 开奖比对 -->
     <div class="card">
       <h3><span class="dot-icon"></span> 开奖结果比对（最近20期）</h3>
       <div class="pred-history" id="resultCompare"></div>
     </div>
 
-    <!-- 历史开奖 -->
     <div class="card" style="grid-column:1/-1">
       <h3><span class="dot-icon"></span> 近期开奖记录（最新 50 期）</h3>
       <div class="history">
-        <table>
-          <thead><tr><th>期号</th><th>日期</th><th>时间</th><th>三球</th><th>和值</th><th>形态</th><th>组合</th></tr></thead>
-          <tbody id="histBody"></tbody>
-        </table>
+        <table><thead><tr><th>期号</th><th>日期</th><th>时间</th><th>三球</th><th>和值</th><th>形态</th><th>组合</th></tr></thead><tbody id="histBody"></tbody></table>
       </div>
     </div>
-
   </div>
-
   <button class="refresh" id="btnRefresh" title="刷新数据">⟳</button>
   <div id="toast" class="toast"></div>
-  <footer>数据源：pc28.help · BCLK Keno 规则 · 仅真实开奖数据 · 仅供算法研究参考</footer>
+  <footer>数据源：pc28.help · BCLK Keno 规则 · V6 增强引擎 · 仅供算法研究参考</footer>
 </div>
 
+<script src="v6_engine.js"></script>
 <script>
-/* ============================================================
-   千金星轨 · PC28 星轨引擎
-   数据来源：pc28.help/api/keno.json（唯一数据源，绝无模拟）
-   算法：前端实时计算三球 → 和值 → 形态分析 → 多信号融合预测
-   ============================================================ */
+/* 渲染与UI逻辑 */
+const API_URL="https://pc28.help/api/keno.json";
+const STORAGE_KEY="qianjin_v6_history";
+const MAX_HISTORY=500;
+const COMBOS=["大单","大双","小单","小双"];
 
-// ==================== BCLK Keno 核心算法 ====================
-const SMALL_ODD  = new Set([1,3,5,7,9,11,13]);
-const SMALL_EVEN = new Set([0,2,4,6,8,10,12]);
-const BIG_ODD    = new Set([15,17,19,21,23,25,27]);
-const BIG_EVEN   = new Set([14,16,18,20,22,24,26]);
+function loadHistory(){try{const r=localStorage.getItem(STORAGE_KEY);if(!r)return[];const p=JSON.parse(r);return Array.isArray(p)?p.filter(d=>d&&d.nbr&&typeof d.sum==="number"&&d.rawNums&&d.rawNums.length>=19):[];}catch(e){return[];}}
+function saveHistory(h){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(h.slice(-MAX_HISTORY)));}catch(e){}}
 
-const STRAIGHT_SET = new Set([
-  "1,2,3","3,2,1","2,3,4","4,3,2","3,4,5","5,4,3",
-  "4,5,6","6,5,4","6,7,8","8,7,6","7,8,9","9,8,7"
-]);
+async function fetchLatest(){const c=new AbortController();const t=setTimeout(()=>c.abort(),12000);try{const r=await fetch(API_URL+"?nbr=100",{method:"GET",headers:{"Accept":"application/json"},signal:c.signal,cache:"no-cache",mode:"cors"});clearTimeout(t);if(!r.ok)throw new Error("HTTP "+r.status);const j=await r.json();if(j.message!=="success"||!j.data||!j.data.length)throw new Error("接口异常");return j;}catch(e){clearTimeout(t);throw e;}}
 
-/**
- * 从 20 个原始号码计算三球
- * 排序后取 3 组间隔位置求和取末位
- */
-function calcBalls(rawNums) {
-  if (!Array.isArray(rawNums) || rawNums.length < 19) {
-    throw new Error("原始号码不足20个，实际: " + (rawNums && rawNums.length));
+function apiToStd(rec){const ns=(rec.nbrs||rec.number||rec.nums||"").split(",").map(p=>parseInt(p.trim())).filter(n=>!isNaN(n));if(ns.length<19)throw new Error("号码不足:"+ns.length);const r=v6CalcBalls(ns);const a=v6Analyze(r.b1,r.b2,r.b3,r.total);return{nbr:String(rec.nbr||""),date:rec.date||"",time:rec.time||"",a:r.b1,b:r.b2,c:r.b3,number:r.b1+"+"+r.b2+"+"+r.b3+"="+r.total,sum:r.total,combo:a.combo,size:a.bigSmall,parity:a.oddEven,shape:a.shape,extreme:a.extreme,rawNums:ns,bonus:parseInt(rec.bonus)||0,countdown:rec.countdown||""};}
+
+async function fetchSeed(){try{const r=await fetch("data.json",{cache:"no-cache"});if(!r.ok)return[];const j=await r.json();const list=j.data||j;if(!Array.isArray(list))return[];return list.filter(d=>d.nbr&&typeof d.sum==="number"&&d.a!=null&&d.b!=null&&d.c!=null&&d.a+d.b+d.c===d.sum);}catch(e){return[];}}
+
+function render(data){
+  document.getElementById("main").style.display="grid";
+  const lv=data[data.length-1];
+  document.getElementById("latestIssue").textContent=lv.nbr;
+  document.getElementById("latestNums").textContent=lv.a+" + "+lv.b+" + "+lv.c+" = "+lv.sum;
+  document.getElementById("latestSum").textContent=lv.sum;
+  document.getElementById("latestDate").textContent=lv.date||"";
+  document.getElementById("latestTime").textContent=lv.time||"";
+  document.getElementById("periodLabel").textContent="期号 "+lv.nbr;
+  const tag=document.getElementById("latestTag");tag.textContent=lv.combo;tag.className="tag "+(lv.combo.indexOf("大")===0?"da":"xiao");
+  const st=document.getElementById("latestShape");st.textContent=lv.shape;st.className="tag "+(lv.shape==="豹子"?"gold":lv.shape==="顺子"?"cyan":lv.shape==="对子"?"pink":"shuang");
+  document.getElementById("shapeDetail").innerHTML='<span class="shape-tag">单双：'+lv.parity+'</span><span class="shape-tag">大小：'+lv.size+'</span><span class="shape-tag">极值：'+lv.extreme+'</span><span class="shape-tag">组合：'+lv.combo+'</span>';
+  if(lv.rawNums&&lv.rawNums.length){let h='原始20码: <b>'+lv.rawNums.join(', ')+'</b>';if(lv.bonus)h+=' &nbsp;|&nbsp; 特码: <b style="color:var(--gold)">'+lv.bonus+'</b>';document.getElementById("rawNums").innerHTML=h;}
+
+  const tb=document.getElementById("histBody");tb.innerHTML="";
+  for(const d of data.slice(-50).slice().reverse()){const tr=document.createElement("tr");tr.innerHTML='<td>'+d.nbr+'</td><td>'+(d.date||"-")+'</td><td>'+(d.time||"-").slice(0,5)+'</td><td class="num">'+d.a+'+'+d.b+'+'+d.c+'</td><td>'+d.sum+'</td><td><span class="tag '+(d.shape==="豹子"?"gold":d.shape==="顺子"?"cyan":d.shape==="对子"?"pink":"shuang")+'">'+d.shape+'</span></td><td><span class="tag '+(d.combo.indexOf("大")===0?"da":"xiao")+'">'+d.combo+'</span></td>';tb.appendChild(tr);}
+
+  const r100=data.slice(-100);let dd=0,dx=0,xd=0,xx=0;
+  for(const d of r100){if(d.combo==="大单")dd++;else if(d.combo==="大双")dx++;else if(d.combo==="小单")xd++;else if(d.combo==="小双")xx++;}
+  document.getElementById("stDD").textContent=dd;document.getElementById("stDX").textContent=dx;document.getElementById("stXD").textContent=xd;document.getElementById("stXX").textContent=xx;
+  const r15=data.slice(-15);let bn=0,dn=0;for(const d of r15){if(d.size==="大")bn++;if(d.parity==="单")dn++;}
+  document.getElementById("trendBig").textContent="大 "+Math.round(bn/15*100)+"% / 小 "+Math.round((15-bn)/15*100)+"%";
+  document.getElementById("trendOdd").textContent="单 "+Math.round(dn/15*100)+"% / 双 "+Math.round((15-dn)/15*100)+"%";
+  document.getElementById("barBig").style.width=Math.round(bn/15*100)+"%";document.getElementById("barOdd").style.width=Math.round(dn/15*100)+"%";
+
+  const chips=document.getElementById("comboDist").children;const order=["大单","大双","小单","小双"];
+  const pred=v6Predict(data);
+  const active=(pred&&!pred.error&&pred.pushCombos)||[];
+  const killC=(pred&&!pred.error&&pred.killCombo)||"";
+  for(let i=0;i<4&&i<chips.length;i++){const c=order[i];let v=0;if(c==="大单")v=dd;else if(c==="大双")v=dx;else if(c==="小单")v=xd;else v=xx;chips[i].querySelector(".count").textContent=v;chips[i].querySelector(".pct").textContent=r100.length>0?Math.round(v/r100.length*100)+"%":"0%";chips[i].className="combo-chip"+(active.indexOf(c)!==-1?" active":"")+(c===killC?" kill":"");}
+
+  if(pred&&!pred.error){
+    const pk=document.getElementById("predKill");if(pk)pk.textContent=pred.killCombo||"--";
+    const p1=document.getElementById("predPush1");if(p1)p1.textContent=(pred.pushCombos&&pred.pushCombos[0])||"--";
+    const p2=document.getElementById("predPush2");if(p2)p2.textContent=(pred.pushCombos&&pred.pushCombos[1])||"--";
+    const tr=document.getElementById("predTe");if(tr){tr.innerHTML="";const ta=pred.teNums||[];for(let i=0;i<5;i++){const sp=document.createElement("span");sp.className="te-ball"+(i<3?" primary":"");sp.textContent=ta[i]!=null?String(ta[i]).padStart(2,"0"):"-";tr.appendChild(sp);}}
+    const kr=document.getElementById("predKillTe");if(kr){kr.innerHTML="";const ka=pred.killTeNums||[];for(let i=0;i<ka.length;i++){const sp=document.createElement("span");sp.className="te-ball kill";sp.textContent=String(ka[i]).padStart(2,"0");kr.appendChild(sp);}}
+    const se=document.getElementById("predSum");if(se)se.textContent="≈ "+pred.sumCenter+" (区间 ["+pred.sumRange.join(",")+"])";
+    const cp=document.getElementById("confPct");if(cp)cp.textContent=(pred.confidence||0)+"%";
+    const cb=document.getElementById("confBar");if(cb)cb.style.width=Math.min(100,pred.confidence||0)+"%";
+    const dw=document.getElementById("dragonWarn");if(dw){if(pred.dragon)dw.classList.add("show");else dw.classList.remove("show");}
   }
-  const nums = [...rawNums].sort(function(a, b) { return a - b; });
-  const pos1 = [1, 4, 7, 10, 13, 16];
-  const pos2 = [2, 5, 8, 11, 14, 17];
-  const pos3 = [3, 6, 9, 12, 15, 18];
-  let b1 = 0, b2 = 0, b3 = 0;
-  for (let i = 0; i < pos1.length; i++) b1 += nums[pos1[i]];
-  for (let i = 0; i < pos2.length; i++) b2 += nums[pos2[i]];
-  for (let i = 0; i < pos3.length; i++) b3 += nums[pos3[i]];
-  b1 = b1 % 10; b2 = b2 % 10; b3 = b3 % 10;
-  return { b1, b2, b3, total: b1 + b2 + b3, sorted: nums, raw: rawNums };
+
+  const rc=document.getElementById("resultCompare");rc.innerHTML="";
+  const r20=data.slice(-21);
+  if(pred&&!pred.error&&r20.length>1){for(let i=r20.length-1;i>=1;i--){const pd=v6Predict(r20.slice(0,i));if(!pd||pd.error)continue;const act=r20[i];const teH=pd.teNums&&pd.teNums.includes(act.sum);const puH=pd.pushCombos&&pd.pushCombos.includes(act.combo);const kOk=act.combo!==pd.killCombo;const row=document.createElement("div");row.className="ph-row";row.innerHTML='<span>'+act.nbr+' | '+(act.date||"")+' | '+act.sum+' ('+act.combo+')</span><span class="'+(puH?"ph-hit":"ph-miss")+'">'+(puH?"✓双组中":"✗押"+pd.pushCombos.join("+"))+'</span><span class="'+(teH?"ph-hit":"ph-miss")+'">'+(teH?"✓特码中":"✗特码"+act.sum)+'</span><span class="'+(kOk?"ph-hit":"ph-miss")+'">'+(kOk?"✓杀对":"✗杀错")+'</span>';rc.appendChild(row);}}
 }
 
-/**
- * 分析三球 → 大小单双/组合/极值/形态
- */
-function analyze(b1, b2, b3, total) {
-  const oddEven = total % 2 === 1 ? "单" : "双";
-  const bigSmall = total >= 14 ? "大" : "小";
-  let combination;
-  if (SMALL_ODD.has(total)) combination = "小单";
-  else if (SMALL_EVEN.has(total)) combination = "小双";
-  else if (BIG_ODD.has(total)) combination = "大单";
-  else if (BIG_EVEN.has(total)) combination = "大双";
-  else combination = "-";
-  const extreme = total <= 5 ? "极小" : (total >= 22 ? "极大" : "-");
-  let shape;
-  if (b1 === b2 && b2 === b3) shape = "豹子";
-  else if (b1 === b2 || b2 === b3 || b1 === b3) shape = "对子";
-  else if (STRAIGHT_SET.has([b1, b2, b3].join(","))) shape = "顺子";
-  else shape = "杂六";
-  return { oddEven, bigSmall, combination, extreme, shape };
-}
+function markSrc(ok,text,warn){const b=document.getElementById("srcBadge");b.textContent=text;b.className="src-badge"+(ok?"":(warn?" warn":" off"));}
+function showToast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2500);}
+function showErr(h){const b=document.getElementById("errBox");b.innerHTML=h;b.classList.add("show");}
 
-// ==================== 数据加载（仅真实数据） ====================
-const API_URL = "https://pc28.help/api/keno.json";
-const STORAGE_KEY = "qianjin_pc28_history_v3";
-const MAX_HISTORY = 500;
+let timer=null,rem=0;const PLEN=210;
+function isMaint(){const n=new Date(),c=n.getHours()*60+n.getMinutes(),dst=n.getTimezoneOffset()<480;return c>=(dst?19:20)*60&&c<(dst?19:20)*60+30;}
+function tick(){rem=Math.max(0,rem-1);if(rem<=0)rem=PLEN;const m=document.getElementById("maintBanner");if(isMaint())m.classList.add("show");else m.classList.remove("show");const mn=Math.floor(rem/60),sc=rem%60;document.getElementById("cdTime").textContent=String(mn).padStart(2,"0")+":"+String(sc).padStart(2,"0");document.getElementById("cdLabel").textContent=isMaint()?"维护中":"距下期开奖";const ring=document.getElementById("progRing");ring.style.strokeDasharray=2*Math.PI*60;ring.style.strokeDashoffset=2*Math.PI*60*(1-Math.min(1,rem/PLEN));}
+function startCD(s){if(timer)clearInterval(timer);if(typeof s==="string"&&s.indexOf(":")!==-1){const p=s.split(":");rem=(parseInt(p[0])||0)*60+(parseInt(p[1])||0);}else{rem=PLEN-Math.floor(Date.now()/1000)%PLEN;}tick();timer=setInterval(tick,1000);}
 
-/**
- * 从 localStorage 读取历史（所有数据都来自之前的真实接口返回）
- */
-function loadHistory() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    // 严格校验：每条都必须有真实字段
-    return parsed.filter(function(d) {
-      return d && d.nbr && typeof d.sum === "number" && d.rawNums && d.rawNums.length >= 19;
-    });
-  } catch(e) {
-    console.warn("读取本地历史失败:", e.message);
-    return [];
-  }
-}
-
-function saveHistory(history) {
-  try {
-    const trimmed = history.slice(-MAX_HISTORY);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
-  } catch(e) {
-    console.warn("保存本地历史失败:", e.message);
-  }
-}
-
-/**
- * 从 pc28.help 获取最新开奖
- * 这是唯一的数据来源。绝不生成/伪造任何数据。
- */
-async function fetchLatest() {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(function() { controller.abort(); }, 12000);
-  try {
-    const resp = await fetch(API_URL + "?nbr=100", {
-      method: "GET",
-      headers: { "Accept": "application/json" },
-      signal: controller.signal,
-      cache: "no-cache",
-      mode: "cors"
-    });
-    clearTimeout(timeoutId);
-    if (!resp.ok) throw new Error("HTTP " + resp.status + " " + resp.statusText);
-    const json = await resp.json();
-    if (json.message !== "success" || !json.data || !json.data.length) {
-      throw new Error("接口返回异常: " + (json.message || "无data字段"));
-    }
-    return json;  // {countdown, data: [...]}
-  } catch(err) {
-    clearTimeout(timeoutId);
-    throw err;
-  }
-}
-
-/**
- * 将 API 原始记录 → 标准格式（含原始号码→三球→和值）
- */
-function apiRecordToStandard(rec) {
-  // 提取原始号码：优先 nbrs（逗号分隔字符串），兼容其他字段名
-  const nbrsStr = rec.nbrs || rec.number || rec.nums || "";
-  const parts = nbrsStr.split(",");
-  const nbrsArr = [];
-  for (const p of parts) {
-    const n = parseInt(p.trim(), 10);
-    if (!isNaN(n)) nbrsArr.push(n);
-  }
-  if (nbrsArr.length < 19) {
-    throw new Error("原始号码不足: 期号" + rec.nbr + " 只有" + nbrsArr.length + "个号码");
-  }
-
-  // 用原始号码实时计算（不信任接口给的任何预计算结果）
-  const result = calcBalls(nbrsArr);
-  const an = analyze(result.b1, result.b2, result.b3, result.total);
-
-  // 日期处理：接口返回 YYYY-MM-DD，直接使用，绝不伪造
-  const dateStr = rec.date || "";
-  const timeStr = rec.time || "";
-
-  return {
-    nbr:      String(rec.nbr || ""),
-    date:     dateStr,
-    time:     timeStr,
-    a:        result.b1,
-    b:        result.b2,
-    c:        result.b3,
-    number:   result.b1 + "+" + result.b2 + "+" + result.b3 + "=" + result.total,
-    sum:      result.total,
-    combo:    an.combination,
-    size:     an.bigSmall,
-    parity:   an.oddEven,
-    shape:    an.shape,
-    extreme:  an.extreme,
-    rawNums:  nbrsArr,
-    bonus:    parseInt(rec.bonus) || 0,
-    countdown: rec.countdown || ""
-  };
-}
-
-/**
- * 尝试从 data.json（静态文件）加载种子数据
- * 仅当浏览器直连 pc28.help 失败时使用
- */
-async function fetchSeedData() {
-  try {
-    const resp = await fetch("data.json", { cache: "no-cache" });
-    if (!resp.ok) return [];
-    const json = await resp.json();
-    const list = json.data || json;
-    if (!Array.isArray(list)) return [];
-    // 校验每条记录
-    const valid = [];
-    for (const rec of list) {
-      if (rec.nbr && typeof rec.sum === "number" && rec.a != null && rec.b != null && rec.c != null) {
-        // 验证 a+b+c === sum
-        if (rec.a + rec.b + rec.c === rec.sum && rec.sum >= 0 && rec.sum <= 27) {
-          valid.push(rec);
-        }
-      }
-    }
-    return valid;
-  } catch(e) {
-    console.warn("加载种子数据失败:", e.message);
-    return [];
-  }
-}
-
-// ==================== V4 诚实版预测引擎 ====================
-const COMBOS = ["大单", "大双", "小单", "小双"];
-
-function comboCounts(data, window) {
-  window = window || 100;
-  const recent = data.slice(-window);
-  const cnt = { "大单": 0, "大双": 0, "小单": 0, "小双": 0 };
-  for (let i = 0; i < recent.length; i++) {
-    if (cnt[recent[i].combo] != null) cnt[recent[i].combo]++;
-  }
-  return cnt;
-}
-
-function detectDragon(data, n) {
-  n = n || 5;
-  if (data.length < n) return null;
-  const tail = [];
-  for (let i = 0; i < n; i++) tail.push(data[data.length - n + i].combo);
-  let allSame = true;
-  for (let i = 1; i < tail.length; i++) {
-    if (tail[i] !== tail[0]) { allSame = false; break; }
-  }
-  return allSame ? tail[0] : null;
-}
-
-function predictSumEMA(data) {
-  if (!data.length) return 13.5;
-  const alpha = 0.3, beta = 0.1;
-  let level = data[0].sum, trend = 0;
-  for (let i = 1; i < data.length; i++) {
-    const prevL = level;
-    level = alpha * data[i].sum + (1 - alpha) * (level + trend);
-    trend = beta * (level - prevL) + (1 - beta) * trend;
-  }
-  let total = 0;
-  for (let i = 0; i < data.length; i++) total += data[i].sum;
-  const avg = total / data.length;
-  const dev = level - avg;
-  const spring = Math.max(0, 1 - Math.abs(dev) / 10);
-  return Math.round((level * spring + avg * (1 - spring)) * 10) / 10;
-}
-
-function theoreticalDist() {
-  const dist = {};
-  for (let s = 0; s <= 27; s++) {
-    let w = 0;
-    for (let a = 0; a <= 9; a++)
-      for (let b = 0; b <= 9; b++) {
-        const c = s - a - b;
-        if (c >= 0 && c <= 9) w++;
-      }
-    dist[s] = w / 1000.0;
-  }
-  return dist;
-}
-const THEO_DIST = theoreticalDist();
-
-// ==================== V5 特码直猜引擎 ====================
-// 回测验证（500期滚动窗口）：
-//   主推3个命中率: 23.39%（随机基线 3.57%）✅
-//   候补2个命中率: 14.70%
-//   主推+候补5个:  38.08%（随机押5 = 17.86%）✅
-//   杀5个正确率:   66.59%
-const COMBO_VALUES_V5 = {
-  "大单":[15,17,19,21,23,25,27], "大双":[14,16,18,20,22,24,26],
-  "小单":[1,3,5,7,9,11,13],      "小双":[0,2,4,6,8,10,12]
-};
-
-function predictNextV5(data, window) {
-  window = window || 50;
-  if (data.length < 10) return null;
-
-  const W = Math.min(window, data.length);
-  const win = data.slice(-W);
-  const winSums = []; for (let i=0;i<win.length;i++) winSums.push(win[i].sum);
-  const winCombos = []; for (let i=0;i<win.length;i++) winCombos.push(win[i].combo);
-  const lastSum = winSums[winSums.length-1];
-
-  // ── 信号A: 和值EMA（最强信号，回测23.39%）──
-  let ema = winSums[0];
-  const alpha = 0.25;
-  for (let i=1;i<winSums.length;i++) ema = alpha*winSums[i] + (1-alpha)*ema;
-  const emaCenter = Math.round(ema);
-  const emaCands = [emaCenter-2, emaCenter-1, emaCenter, emaCenter+1, emaCenter+2]
-    .filter(function(v){return v>=0 && v<=27;});
-
-  // ── 信号B: 加权频率（近期权重高）──
-  const wf = {}; for (let s=0;s<=27;s++) wf[s]=0;
-  const decay = 0.92;
-  for (let i=0;i<winSums.length;i++) {
-    const w = Math.pow(decay, winSums.length-1-i);
-    wf[winSums[i]] += w;
-  }
-  const wfRanked = Object.keys(wf).map(function(k){return [+k,wf[k]];})
-    .sort(function(a,b){return b[1]-a[1];});
-
-  // ── 信号C: 马尔可夫-1（上期和值→下期条件分布）──
-  const mk1 = {}; for (let s=0;s<=27;s++) mk1[s]=0;
-  let mk1Count = 0;
-  for (let i=1;i<winSums.length;i++) {
-    if (winSums[i-1] === lastSum) { mk1[winSums[i]]++; mk1Count++; }
-  }
-
-  // ── 信号D: 组合锁定（4选1，在最佳组合内挑特码）──
-  const cp = {大单:0,大双:0,小单:0,小双:0};
-  for (let i=0;i<winCombos.length;i++) cp[winCombos[i]]++;
-  let bestCombo = "大单", bestComboN = -1;
-  for (const k in cp) { if (cp[k] > bestComboN) { bestComboN = cp[k]; bestCombo = k; } }
-  const bestComboVals = COMBO_VALUES_V5[bestCombo];
-
-  // ── 投票加权选主推3 ──
-  const votes = {}; for (let s=0;s<=27;s++) votes[s]=0;
-  // EMA 候选 权重3
-  for (let i=0;i<emaCands.length;i++) votes[emaCands[i]] += 3;
-  // 加权频率 top5 权重递减
-  for (let i=0;i<Math.min(5,wfRanked.length);i++) votes[wfRanked[i][0]] += 2 - i*0.3;
-  // 马尔可夫-1 top2
-  const mk1Ranked = Object.keys(mk1).map(function(k){return [+k,mk1[k]];})
-    .sort(function(a,b){return b[1]-a[1];});
-  for (let i=0;i<Math.min(2,mk1Ranked.length);i++) votes[mk1Ranked[i][0]] += 1.5;
-  // 组合锁定补充（最佳组合里频率最高的1个，若还没进前5）
-  const top5set = new Set(Object.keys(votes).map(function(k){return +k;})
-    .sort(function(a,b){return votes[b]-votes[a];}).slice(0,5));
-  for (let i=0;i<bestComboVals.length;i++) {
-    if (!top5set.has(bestComboVals[i])) { votes[bestComboVals[i]] += 1.2; break; }
-  }
-
-  const ranked = Object.keys(votes).map(function(k){return [+k,votes[k]];})
-    .sort(function(a,b){return b[1]-a[1];});
-  const main3 = ranked.slice(0,3).map(function(x){return x[0];});
-  const backup2 = ranked.slice(3,5).map(function(x){return x[0];})
-    .filter(function(v){return main3.indexOf(v)===-1;}).slice(0,2);
-
-  // ── 杀5个：近期频率最高的5个特码 ──
-  const rawFreq = {}; for (let s=0;s<=27;s++) rawFreq[s]=0;
-  for (let i=0;i<winSums.length;i++) rawFreq[winSums[i]]++;
-  const kill5 = Object.keys(rawFreq).map(function(k){return [+k,rawFreq[k]];})
-    .sort(function(a,b){return b[1]-a[1];}).slice(0,5).map(function(x){return x[0];});
-
-  // ── 置信度（诚实，基于主推3的总票数占比）──
-  const totalV = ranked.slice(0,3).reduce(function(s,x){return s+x[1];},0);
-  const allV = ranked.reduce(function(s,x){return s+x[1];},0);
-  let conf = allV>0 ? Math.round((totalV/allV)*55) : 18;
-  conf = Math.max(20, Math.min(55, conf));
-
-  // ── 组合级预测（保留，供回测对比）──
-  let push = bestCombo, kill = "小双";
-  let minC = 999; for (const k in cp) { if (cp[k]<minC){minC=cp[k];kill=k;} }
-
-  // ── 单双/大小倾向（近15期）──
-  let danN=0,bigN=0; const r15=data.slice(-15);
-  for (let i=0;i<r15.length;i++){if(r15[i].parity==="单")danN++;if(r15[i].size==="大")bigN++;}
-
-  return {
-    // 特码直猜（核心输出）
-    main: main3,          // 主推3个特码
-    backup: backup2,      // 候补2个特码
-    kill5: kill5,         // 杀5个特码
-    emaCenter: emaCenter, // 和值重心
-    // 兼容旧渲染
-    kill: kill, push: push,
-    sum: [Math.max(0,emaCenter-1),emaCenter,Math.min(27,emaCenter+1)],
-    sumCenter: emaCenter,
-    sumStd: 4.2,
-    sumRange: [Math.max(0,emaCenter-3), Math.min(27,emaCenter+3)],
-    ds: danN>=8?"单":"双",
-    dx: bigN>=8?"大":"小",
-    te: main3.concat(backup2),
-    confidence: conf,
-    scores: {},
-    spread: 0,
-    sameCount: 0,
-    dragon: false,
-    // 诚实标注
-    honestNote: "V5回测: 主推3命中23.4% / 押5命中38.1% / 杀5正确66.6% (随机3=3.57%)",
-    killNote: "杀5正确率约66%（可参考）",
-    rangeNote: "主推3个特码 + 候补2个，共5个覆盖38%",
-    mode: "V5 特码直猜"
-  };
-}
-
-// 兼容旧调用：内部统一用 V5
-function predictNextV4(data, window) { return predictNextV5(data, window); }
-
-function backtestV4(data, testN) {
-  testN = testN || 30;
-  if (data.length < testN + 10) return null;
-  const si = data.length - testN;
-  let comboHit = 0, killOk = 0, rangeHit = 0, teHit = 0, total = 0, maxStreak = 0, curStreak = 0;
-  for (let i = si; i < data.length; i++) {
-    const pred = predictNextV4(data.slice(0, i), 100);
-    if (!pred) continue;
-    const actual = data[i];
-    total++;
-    if (actual.combo === pred.push) { comboHit++; curStreak++; if (curStreak > maxStreak) maxStreak = curStreak; }
-    else { curStreak = 0; }
-    if (actual.combo !== pred.kill) killOk++;
-    if (actual.sum >= pred.sumRange[0] && actual.sum <= pred.sumRange[1]) rangeHit++;
-    if (pred.te.indexOf(actual.sum) !== -1) teHit++;
-  }
-  return {
-    total,
-    comboHit: total > 0 ? Math.round(comboHit/total*100) : 0,
-    killOk: total > 0 ? Math.round(killOk/total*100) : 0,
-    rangeHit: total > 0 ? Math.round(rangeHit/total*100) : 0,
-    teHit: total > 0 ? Math.round(teHit/total*100) : 0,
-    maxStreak
-  };
-}
-
-function backtest(data, window) {
-  window = window || 200;
-  const slice = data.slice(-window);
-  let gh = 0, kc = 0, sh = 0;
-  for (let i = 1; i < slice.length; i++) {
-    if (slice[i-1].combo === slice[i].combo) gh++;
-    if (slice[i-1].combo !== slice[i].combo) kc++;
-    if (Math.abs(slice[i-1].sum - slice[i].sum) <= 2) sh++;
-  }
-  const t = slice.length - 1;
-  return { groupHit: t>0?Math.round(gh/t*100):0, killCorrect: t>0?Math.round(kc/t*100):0, sumHit: t>0?Math.round(sh/t*100):0, total: t };
-}
-
-// ==================== 倒计时 ====================
-let timer = null;
-let _remainSec = 0;
-const PERIOD_LEN = 210; // 3分30秒一期
-
-function isMaintenanceNow() {
-  const now = new Date();
-  const cur = now.getHours() * 60 + now.getMinutes();
-  // 维护窗口：北京时间 19:00-19:30（夏令时 19:00，冬令时 20:00）
-  const isDST = now.getTimezoneOffset() < 480;
-  const start = (isDST ? 19 : 20) * 60;
-  const end = start + 30;
-  return cur >= start && cur < end;
-}
-
-function startCountdown(countdownStr) {
-  if (timer) clearInterval(timer);
-  if (countdownStr && typeof countdownStr === "string" && countdownStr.indexOf(":") !== -1) {
-    const parts = countdownStr.split(":");
-    const m = parseInt(parts[0]) || 0;
-    const s = parseInt(parts[1]) || 0;
-    _remainSec = m * 60 + s;
-  } else {
-    _remainSec = PERIOD_LEN - (Math.floor(Date.now() / 1000) % PERIOD_LEN);
-  }
-  tick();
-  timer = setInterval(tick, 1000);
-}
-
-function tick() {
-  _remainSec = Math.max(0, _remainSec - 1);
-  if (_remainSec <= 0) _remainSec = PERIOD_LEN;
-
-  const inMaint = isMaintenanceNow();
-  const banner = document.getElementById("maintBanner");
-  if (inMaint) banner.classList.add("show");
-  else banner.classList.remove("show");
-
-  const m = Math.floor(_remainSec / 60);
-  const s = _remainSec % 60;
-  document.getElementById("cdTime").textContent =
-    String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
-  document.getElementById("cdLabel").textContent = inMaint ? "维护中" : "距下期开奖";
-
-  const circ = 2 * Math.PI * 60;
-  const ratio = Math.min(1, _remainSec / PERIOD_LEN);
-  const ring = document.getElementById("progRing");
-  ring.style.strokeDasharray = circ;
-  ring.style.strokeDashoffset = circ * (1 - ratio);
-}
-
-// ==================== 渲染 ====================
-function render(data) {
-  if (!data.length) throw new Error("数据为空");
-  document.getElementById("main").style.display = "grid";
-
-  const latest = data[data.length - 1];
-
-  // 最新期
-  document.getElementById("latestIssue").textContent = latest.nbr;
-  document.getElementById("latestNums").textContent =
-    latest.a + " + " + latest.b + " + " + latest.c + " = " + latest.sum;
-  document.getElementById("latestSum").textContent = latest.sum;
-
-  // 日期时间（来自接口原始返回，绝不伪造）
-  document.getElementById("latestDate").textContent = latest.date || "";
-  document.getElementById("latestTime").textContent = latest.time || "";
-  document.getElementById("periodLabel").textContent = "期号 " + latest.nbr;
-
-  // 组合标签
-  const tag = document.getElementById("latestTag");
-  tag.textContent = latest.combo;
-  tag.className = "tag " + (latest.combo.indexOf("大") === 0 ? "da" : "xiao");
-
-  // 形态标签
-  const shapeTag = document.getElementById("latestShape");
-  shapeTag.textContent = latest.shape;
-  let shapeCls = "shuang";
-  if (latest.shape === "豹子") shapeCls = "gold";
-  else if (latest.shape === "顺子") shapeCls = "cyan";
-  else if (latest.shape === "对子") shapeCls = "pink";
-  shapeTag.className = "tag " + shapeCls;
-
-  // 形态详情
-  document.getElementById("shapeDetail").innerHTML =
-    '<span class="shape-tag">单双：' + latest.parity + '</span>' +
-    '<span class="shape-tag">大小：' + latest.size + '</span>' +
-    '<span class="shape-tag">极值：' + latest.extreme + '</span>' +
-    '<span class="shape-tag">组合：' + latest.combo + '</span>';
-
-  // 原始号码
-  if (latest.rawNums && latest.rawNums.length) {
-    let numsHtml = '原始20码: <b>' + latest.rawNums.join(', ') + '</b>';
-    if (latest.bonus) numsHtml += ' &nbsp;|&nbsp; 特码: <b style="color:var(--gold)">' + latest.bonus + '</b>';
-    document.getElementById("rawNums").innerHTML = numsHtml;
-  }
-
-  // 历史表（日期原样显示，不做任何修改）
-  const tbody = document.getElementById("histBody");
-  tbody.innerHTML = "";
-  const histData = data.slice(-50).slice().reverse();
-  for (let i = 0; i < histData.length; i++) {
-    const d = histData[i];
-    const tr = document.createElement("tr");
-    tr.innerHTML =
-      '<td>' + d.nbr + '</td>' +
-      '<td>' + (d.date ? d.date : "-") + '</td>' +
-      '<td>' + (d.time ? d.time.slice(0,5) : "-") + '</td>' +
-      '<td class="num">' + d.a + '+' + d.b + '+' + d.c + '</td>' +
-      '<td>' + d.sum + '</td>' +
-      '<td><span class="tag ' + (d.shape==="豹子"?"gold":d.shape==="顺子"?"cyan":d.shape==="对子"?"pink":"shuang") + '">' + d.shape + '</span></td>' +
-      '<td><span class="tag ' + (d.combo.indexOf("大")===0?"da":"xiao") + '">' + d.combo + '</span></td>';
-    tbody.appendChild(tr);
-  }
-
-  // 形态分布
-  const r100 = data.slice(-100);
-  let dd = 0, dx = 0, xd = 0, xx = 0;
-  for (let i = 0; i < r100.length; i++) {
-    if (r100[i].combo === "大单") dd++;
-    else if (r100[i].combo === "大双") dx++;
-    else if (r100[i].combo === "小单") xd++;
-    else if (r100[i].combo === "小双") xx++;
-  }
-  document.getElementById("cntDD").textContent = dd;
-  document.getElementById("cntDX").textContent = dx;
-  document.getElementById("cntXD").textContent = xd;
-  document.getElementById("cntXX").textContent = xx;
-
-  // 趋势
-  const r15 = data.slice(-15);
-  let bigN = 0, danN = 0;
-  for (let i = 0; i < r15.length; i++) { if (r15[i].size === "大") bigN++; if (r15[i].parity === "单") danN++; }
-  document.getElementById("trendBig").textContent =
-    "大 " + Math.round(bigN/15*100) + "% / 小 " + Math.round((15-bigN)/15*100) + "%";
-  document.getElementById("trendOdd").textContent =
-    "单 " + Math.round(danN/15*100) + "% / 双 " + Math.round((15-danN)/15*100) + "%";
-  document.getElementById("barBig").style.width = Math.round(bigN/15*100) + "%";
-  document.getElementById("barOdd").style.width = Math.round(danN/15*100) + "%";
-
-  // 形态 chips
-  const chips = document.getElementById("comboDist").children;
-  const order = ["大单", "大双", "小单", "小双"];
-  const pred = predictNextV4(data, 100);
-  const active = pred ? [pred.push] : [];
-  for (let i = 0; i < 4 && i < chips.length; i++) {
-    const c = order[i];
-    let val = 0;
-    if (c === "大单") val = dd;
-    else if (c === "大双") val = dx;
-    else if (c === "小单") val = xd;
-    else val = xx;
-    chips[i].querySelector(".count").textContent = val;
-    chips[i].querySelector(".pct").textContent =
-      r100.length > 0 ? Math.round(val/r100.length*100) + "%" : "0%";
-    chips[i].className = "combo-chip" + (active.indexOf(c) !== -1 ? " active" : "");
-  }
-
-  // V5 预测渲染
-  if (pred) {
-    // 主推3特码 → 大球
-    const mainRow = document.getElementById("predMain");
-    if (mainRow) {
-      mainRow.innerHTML = "";
-      const mainArr = (pred.main && pred.main.length) ? pred.main : (pred.te||[]).slice(0,3);
-      for (let i=0;i<3;i++) {
-        const sp = document.createElement("span");
-        sp.className = "te-ball" + (i===0 ? " primary" : "");
-        sp.textContent = (mainArr[i]!=null) ? String(mainArr[i]).padStart(2,"0") : "-";
-        mainRow.appendChild(sp);
-      }
-    }
-    // 候补2特码 → 小球
-    const bakRow = document.getElementById("predBackup");
-    if (bakRow) {
-      bakRow.innerHTML = "";
-      const bakArr = (pred.backup && pred.backup.length) ? pred.backup : (pred.te||[]).slice(3,5);
-      for (let i=0;i<bakArr.length;i++) {
-        const sp = document.createElement("span");
-        sp.className = "te-ball small";
-        sp.textContent = String(bakArr[i]).padStart(2,"0");
-        bakRow.appendChild(sp);
-      }
-    }
-    // 杀5
-    const k5 = document.getElementById("predKill5");
-    if (k5) k5.textContent = (pred.kill5||[]).map(function(v){return String(v).padStart(2,"0");}).join(" / ");
-    // 和值重心
-    const sumEl = document.getElementById("predSum");
-    if (sumEl) sumEl.textContent = pred.emaCenter != null ? "≈ " + pred.emaCenter + "  (区间 [" + (pred.sumRange||[]).join(",") + "])" : "--";
-    // 押组/杀组（兼容）
-    const pk = document.getElementById("predPush"); if (pk) pk.textContent = pred.push||"--";
-    const pkill = document.getElementById("predKill"); if (pkill) pkill.textContent = pred.kill||"--";
-    // 置信度
-    const cp = document.getElementById("confPct"); if (cp) cp.textContent = (pred.confidence||0)+"%";
-    const cbar = document.getElementById("confBar"); if (cbar) cbar.style.width = Math.min(100,pred.confidence||0)+"%";
-    // 模式标签
-    const pm = document.getElementById("predMode");
-    if (pm) { pm.textContent = pred.mode || "V5 特码直猜"; pm.className = "tag gold"; }
-    // 隐藏旧诚实框（已被新设计取代）
-    const hb = document.getElementById("honestBox"); if (hb) hb.style.display="none";
-    const dw = document.getElementById("dragonWarn"); if (dw) dw.classList.remove("show");
-  }
-
-  // 回测
-  const bt = backtest(data, 200);
-  document.getElementById("stHit").textContent = bt.groupHit + "%";
-  document.getElementById("stKill").textContent = bt.killCorrect + "%";
-  document.getElementById("stSum").textContent = bt.sumHit + "%";
-  document.getElementById("stCnt").textContent = bt.total;
-
-  const v4bt = backtestV4(data, 30);
-  if (v4bt) {
-    document.getElementById("v3Group").textContent = v4bt.comboHit + "%";
-    document.getElementById("v3Single").textContent = Math.round((v4bt.comboHit+v4bt.rangeHit)/2) + "%";
-    document.getElementById("v3Te").textContent = v4bt.teHit + "%";
-    document.getElementById("v3Kill").textContent = v4bt.killOk + "%";
-    document.getElementById("v3Streak").textContent = v4bt.maxStreak || "-";
-    document.getElementById("v3Range").textContent = v4bt.rangeHit + "%";
-  }
-
-  // 开奖比对
-  const rc = document.getElementById("resultCompare");
-  rc.innerHTML = "";
-  const recent20 = data.slice(-21);
-  if (pred && recent20.length > 1) {
-    for (let i = recent20.length - 1; i >= 1; i--) {
-      const prevData = recent20.slice(0, i);
-      const p = predictNextV4(prevData, 100);
-      const actual = recent20[i];
-      if (!p) continue;
-      const hit = actual.combo === p.push;
-      const inRange = (actual.sum >= p.sumRange[0] && actual.sum <= p.sumRange[1]);
-      const row = document.createElement("div");
-      row.className = "ph-row";
-      const status = hit ? '✓ 押中' : ('✗ 押' + p.push + ' 杀' + p.kill);
-      const rangeStr = inRange ? ' ✓区间中' : ' ✗区间外';
-      row.innerHTML =
-        '<span>' + actual.nbr + ' | ' + (actual.date||"") + ' | 和值' + actual.sum + ' (' + actual.combo + ')</span>' +
-        '<span class="' + (hit?'ph-hit':'ph-miss') + '">' + status + '</span>' +
-        '<span class="' + (inRange?'ph-hit':'ph-miss') + '">' + rangeStr + '</span>';
-      rc.appendChild(row);
-    }
-  }
-}
-
-// ==================== UI 辅助 ====================
-function markSrc(ok, text, warn) {
-  const b = document.getElementById("srcBadge");
-  b.textContent = text;
-  let cls = "src-badge";
-  if (!ok) cls += " off";
-  else if (warn) cls += " warn";
-  else cls += " ok";
-  b.className = cls;
-}
-
-function showToast(msg) {
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(function() { t.classList.remove("show"); }, 2500);
-}
-
-function showErr(html) {
-  const b = document.getElementById("errBox");
-  b.innerHTML = html;
-  b.classList.add("show");
-}
-
-// ==================== 启动 ====================
-async function main() {
-  const btn = document.getElementById("btnRefresh");
-  btn.classList.add("spin");
-  document.getElementById("loading").style.display = "block";
-  document.getElementById("main").style.display = "none";
+async function main(){
+  const btn=document.getElementById("btnRefresh");btn.classList.add("spin");
+  document.getElementById("loading").style.display="block";
+  document.getElementById("main").style.display="none";
   document.getElementById("errBox").classList.remove("show");
-
-  try {
-    // 策略1: 直连 pc28.help（主要方式，浏览器端通常可以通过 Cloudflare）
-    markSrc(false, "● 正在连接 pc28.help …", false);
-    let apiJson;
-    try {
-      apiJson = await fetchLatest();
-    } catch(err) {
-      console.warn("pc28.help 直连失败:", err.message);
-      throw err;
-    }
-
-    // 转换 API 数据为内部标准格式
-    const history = loadHistory();
-    const seenNbrs = new Set(history.map(function(d) { return d.nbr; }));
-    let newCount = 0;
-
-    const records = apiJson.data || [];
-    for (let i = 0; i < records.length; i++) {
-      const rec = records[i];
-      const nbrStr = String(rec.nbr || "");
-      if (!nbrStr || seenNbrs.has(nbrStr)) continue;
-      try {
-        const std = apiRecordToStandard(rec);
-        // 严格校验
-        if (std.a + std.b + std.c !== std.sum) {
-          console.warn("校验失败，跳过:", nbrStr, std);
-          continue;
-        }
-        history.push(std);
-        seenNbrs.add(nbrStr);
-        newCount++;
-      } catch(e) {
-        console.warn("解析记录失败:", nbrStr, e.message);
-      }
-    }
-
-    // 排序 + 截断
-    history.sort(function(x, y) { return parseInt(x.nbr) - parseInt(y.nbr); });
-    if (history.length > MAX_HISTORY) history = history.slice(-MAX_HISTORY);
-    saveHistory(history);
-
-    if (!history.length) throw new Error("未能获取到任何有效数据");
-
-    // 严格校验所有数据
-    const validData = [];
-    for (let i = 0; i < history.length; i++) {
-      const d = history[i];
-      if (d.sum >= 0 && d.sum <= 27 && d.a + d.b + d.c === d.sum && d.rawNums && d.rawNums.length >= 19) {
-        validData.push(d);
-      }
-    }
-
-    if (!validData.length) throw new Error("所有数据校验失败");
-
-    // 渲染
-    render(validData);
-
-    // 倒计时
-    const cd = (records[0] && records[0].countdown) || (apiJson.countdown) || "";
-    startCountdown(cd);
-
-    // 数据源徽章（显示真实日期）
-    const latestRec = validData[validData.length - 1];
-    const dateStr = latestRec.date ? latestRec.date : "无日期";
-    markSrc(true, "● pc28.help 直连 · " + validData.length + "期 · 最新: " + latestRec.nbr + " (" + dateStr + ")", false);
-
-    if (newCount > 0) {
-      showToast("✅ 新增 " + newCount + " 期 · 共" + validData.length + "期 · 最新" + latestRec.date);
-    } else {
-      showToast("✅ 已同步 · " + validData.length + "期 · " + latestRec.date);
-    }
-
-  } catch (err) {
-    console.error("数据加载失败:", err);
-
-    // 策略2: 降级到 localStorage 缓存
-    const cached = loadHistory();
-    if (cached.length > 0) {
-      const validCached = [];
-      for (let i = 0; i < cached.length; i++) {
-        const d = cached[i];
-        if (d.sum >= 0 && d.sum <= 27 && d.a + d.b + d.c === d.sum) validCached.push(d);
-      }
-      if (validCached.length > 0) {
-        render(validCached);
-        startCountdown(null);
-        const lastCached = validCached[validCached.length - 1];
-        markSrc(true, "● 本地缓存 · " + validCached.length + "期 · " + lastCached.nbr + " (" + lastCached.date + ")", true);
-        showToast("⚠️ 使用本地缓存（" + validCached.length + "期）· 接口不可用");
-        document.getElementById("loading").style.display = "none";
-        btn.classList.remove("spin");
-        return;
-      }
-    }
-
-    // 策略3: 降级到 data.json 静态文件
-    try {
-      markSrc(false, "● 尝试加载本地种子数据 …", true);
-      const seed = await fetchSeedData();
-      if (seed.length > 0) {
-        const validSeed = [];
-        for (let i = 0; i < seed.length; i++) {
-          const d = seed[i];
-          if (d.sum >= 0 && d.sum <= 27 && d.a + d.b + d.c === d.sum) validSeed.push(d);
-        }
-        if (validSeed.length > 0) {
-          // 存入 localStorage 供后续使用
-          saveHistory(validSeed);
-          render(validSeed);
-          startCountdown(null);
-          const lastSeed = validSeed[validSeed.length - 1];
-          markSrc(true, "● 种子数据 · " + validSeed.length + "期 · " + lastSeed.nbr + " (" + lastSeed.date + ")", true);
-          showToast("⚠️ 使用种子数据（" + validSeed.length + "期）· 接口不可用");
-          document.getElementById("loading").style.display = "none";
-          btn.classList.remove("spin");
-          return;
-        }
-      }
-    } catch(e) {
-      console.warn("种子数据也失败:", e.message);
-    }
-
-    // 全部失败
-    showErr("⚠️ 数据加载失败：" + err.message +
-      "<br><br>可能原因：" +
-      "<br>1. pc28.help 服务暂时不可用" +
-      "<br>2. 网络连接问题" +
-      "<br>3. Cloudflare 限制" +
-      "<br><br>请检查网络后点击右下角按钮重试。");
-  } finally {
-    document.getElementById("loading").style.display = "none";
-    btn.classList.remove("spin");
-  }
+  try{
+    markSrc(false,"● 正在连接 pc28.help …",false);
+    const json=await fetchLatest();
+    const hist=loadHistory();const seen=new Set(hist.map(d=>d.nbr));let nc=0;
+    for(const rec of(json.data||[])){const n=String(rec.nbr||"");if(!n||seen.has(n))continue;try{const s=apiToStd(rec);if(s.a+s.b+s.c!==s.sum){console.warn("校验失败:",n);continue;}hist.push(s);seen.add(n);nc++;}catch(e){console.warn("解析失败:",n,e.message);}}
+    hist.sort((x,y)=>parseInt(x.nbr)-parseInt(y.nbr));
+    if(hist.length>MAX_HISTORY)hist=hist.slice(-MAX_HISTORY);
+    saveHistory(hist);
+    if(!hist.length)throw new Error("无有效数据");
+    const valid=hist.filter(d=>d.sum>=0&&d.sum<=27&&d.a+d.b+d.c===d.sum&&d.rawNums&&d.rawNums.length>=19);
+    if(!valid.length)throw new Error("数据校验全部失败");
+    render(valid);
+    startCD((json.data[0]&&json.data[0].countdown)||json.countdown||"");
+    const lv=valid[valid.length-1];
+    markSrc(true,"● pc28.help 直连 · "+valid.length+"期 · 最新: "+lv.nbr+" ("+lv.date+")",false);
+    showToast(nc>0?"✅ 新增 "+nc+" 期 · 共"+valid.length+"期":"✅ 已同步 · "+valid.length+"期");
+  }catch(err){
+    console.error("加载失败:",err);
+    const cached=loadHistory().filter(d=>d.sum>=0&&d.sum<=27&&d.a+d.b+d.c===d.sum);
+    if(cached.length>0){render(cached);startCD(null);const lc=cached[cached.length-1];markSrc(true,"● 本地缓存 · "+cached.length+"期 · "+lc.nbr+" ("+lc.date+")",true);showToast("⚠️ 使用本地缓存（"+cached.length+"期）");}
+    else{try{const sd=await fetchSeed();const v=sd.filter(d=>d.sum>=0&&d.sum<=27&&d.a+d.b+d.c===d.sum);if(v.length>0){saveHistory(v);render(v);startCD(null);const lv=v[v.length-1];markSrc(true,"● 种子数据 · "+v.length+"期 · "+lv.nbr+" ("+lv.date+")",true);showToast("⚠️ 使用种子数据（"+v.length+"期）");}else{showErr("⚠️ 数据加载失败："+err.message);}}catch(e){showErr("⚠️ 数据加载失败："+err.message);}}
+  }finally{document.getElementById("loading").style.display="none";btn.classList.remove("spin");}
 }
 
-// 事件绑定
-document.getElementById("btnRefresh").addEventListener("click", main);
-// 每60秒自动刷新（检测新期号）
-setInterval(function() { if (!document.hidden) main(); }, 60000);
-document.addEventListener("visibilitychange", function() {
-  if (!document.hidden) main();
-});
-
-// 启动
+document.getElementById("btnRefresh").addEventListener("click",main);
+setInterval(()=>{if(!document.hidden)main();},60000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)main();});
 main();
 </script>
 </body>
