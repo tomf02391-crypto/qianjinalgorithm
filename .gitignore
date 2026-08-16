@@ -1,10 +1,5 @@
-# Python
 __pycache__/
 *.pyc
-*.pyo
-.venv/
-venv/
 .DS_Store
+node_modules/
 *.log
-.env
-*.token
