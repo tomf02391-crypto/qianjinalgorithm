@@ -19,9 +19,12 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: 抓取最新数据
+      - name: 安装依赖
+        run: pip install requests 2>/dev/null || true
+
+      - name: 抓取最新数据（仅真实数据）
         run: python3 fetch_data.py
-        continue-on-error: true  # 即使失败也继续（保留旧data.json）
+        continue-on-error: true  # 失败时保留旧data.json，绝不生成假数据
 
       - name: 提交 data.json
         run: |
