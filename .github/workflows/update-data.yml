@@ -1,37 +1,62 @@
 name: 更新PC28数据快照
+
 on:
   schedule:
-    - cron: '*/5 * * * *'  # 每5分钟
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
 
-      - name: 设置 Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
-      - name: 安装依赖
-        run: pip install requests 2>/dev/null || true
+      - name: Install deps
+        run: pip install requests
 
-      - name: 抓取最新数据（仅真实数据）
-        run: python3 fetch_data.py
-        continue-on-error: true  # 失败时保留旧data.json，绝不生成假数据
+      - name: Check maintenance window
+        id: check_time
+        run: |
+          HOUR=$(TZ='Asia/Shanghai' date +%H)
+          MIN=$(TZ='Asia/Shanghai' date +%M)
+          echo "北京时间: ${HOUR}:${MIN}"
+          # 维护窗口 19:00-19:30 跳过
+          if [ "$HOUR" = "19" ] && [ "$MIN" -ge "0" ] && [ "$MIN" -lt "30" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "⚠️ 维护窗口，跳过"
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "✅ 正常运行"
+          fi
 
-      - name: 提交 data.json
+      - name: Fetch & Predict
+        if: steps.check_time.outputs.skip != 'true'
+        run: python fetch_data.py
+
+      - name: Diagnose failure
+        if: failure()
+        run: |
+          echo "=== 诊断信息 ==="
+          echo "时间: $(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S')"
+          curl -s -o /dev/null -w "pc28.help: %{http_code}\n" "https://pc28.help/api/keno.json" --max-time 5 || echo "pc28.help: 不可达"
+          python -c "import fetch_data; print('fetch_data.py 导入正常')" 2>&1 || echo "fetch_data.py 导入失败"
+
+      - name: Commit
+        if: steps.check_time.outputs.skip != 'true'
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data.json
-          git diff --cached --quiet || git commit -m "chore: 自动更新PC28数据 $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git diff --cached --quiet || git commit -m "chore: 更新PC28数据+V8预测"
           git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true

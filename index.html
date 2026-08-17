@@ -3,533 +3,1104 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>千金星轨 · PC28 V8 终极引擎</title>
+<meta name="theme-color" content="#0a0e1a">
+<title>⚡ 千金星轨 · PC28 · V8终极引擎</title>
 <style>
-:root{
-  --bg:#080c24;--card:rgba(255,255,255,.05);--line:rgba(255,255,255,.08);
-  --txt:#e8eaf6;--sub:#9aa0c3;--gold:#ffd700;--green:#3ddc84;--red:#ff5c5c;
-  --blue:#5b8def;--purple:#b388ff;--cyan:#00e5ff;--pink:#f472b6;
-  --radius:16px;--radius-sm:10px;
+:root {
+  --bg: #0a0e1a;
+  --bg2: #111827;
+  --card: #1a2332;
+  --card2: #243044;
+  --border: #2a3a50;
+  --text: #e8edf5;
+  --muted: #8899aa;
+  --accent: #00d4ff;
+  --gold: #ffd700;
+  --green: #00e396;
+  --red: #ff4560;
+  --purple: #a855f7;
+  --orange: #fb923c;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
-  background:radial-gradient(ellipse at top,#10143a 0%,var(--bg) 55%);
-  color:var(--txt);min-height:100vh;padding:16px;line-height:1.5;overflow-x:hidden}
-.wrap{max-width:1040px;margin:0 auto}
-header{text-align:center;padding:22px 0 14px}
-h1{font-size:26px;background:linear-gradient(90deg,var(--cyan),var(--purple),var(--gold));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:900;letter-spacing:2px}
-.sub{color:var(--sub);font-size:12px;margin-top:4px}
-.src-badge{display:inline-block;margin-top:8px;padding:4px 14px;border-radius:20px;
-  font-size:12px;background:rgba(0,229,255,.12);color:var(--cyan);border:1px solid rgba(0,229,255,.25)}
-.src-badge.off{background:rgba(255,92,92,.12);color:var(--red);border-color:rgba(255,92,92,.3)}
-.src-badge.warn{background:rgba(255,215,0,.12);color:var(--gold);border-color:rgba(255,215,0,.3)}
-.src-badge.ok{background:rgba(61,220,132,.12);color:var(--green);border-color:rgba(61,220,132,.3)}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+/* 星空背景 */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.3), transparent),
+    radial-gradient(1px 1px at 30% 50%, rgba(255,255,255,0.2), transparent),
+    radial-gradient(1.5px 1.5px at 50% 10%, rgba(100,200,255,0.3), transparent),
+    radial-gradient(1px 1px at 70% 40%, rgba(255,255,255,0.2), transparent),
+    radial-gradient(1px 1px at 90% 70%, rgba(255,255,255,0.3), transparent),
+    radial-gradient(1.5px 1.5px at 20% 80%, rgba(100,200,255,0.2), transparent),
+    radial-gradient(1px 1px at 60% 90%, rgba(255,255,255,0.2), transparent),
+    radial-gradient(1px 1px at 80% 15%, rgba(255,255,255,0.3), transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+.container { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 12px; }
 
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:16px}
-.card{background:var(--card);backdrop-filter:blur(12px);border:1px solid var(--line);
-  border-radius:var(--radius);padding:18px;position:relative;overflow:hidden}
-.card::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 0% 0%,rgba(0,229,255,.04),transparent 50%);pointer-events:none}
-.card h3{font-size:14px;color:var(--sub);font-weight:600;margin-bottom:12px;
-  display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.card h3 .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
-.dot.cyan{background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
-.dot.gold{background:var(--gold);box-shadow:0 0 8px var(--gold)}
-.dot.red{background:var(--red);box-shadow:0 0 8px var(--red)}
-.dot.green{background:var(--green);box-shadow:0 0 8px var(--green)}
-.dot.purple{background:var(--purple);box-shadow:0 0 8px var(--purple)}
+/* Header */
+header {
+  text-align: center;
+  padding: 16px 8px 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+header h1 {
+  font-size: 22px;
+  background: linear-gradient(135deg, var(--accent), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 2px;
+}
+header .sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+header .badge {
+  display: inline-block;
+  background: rgba(0,212,255,0.15);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-top: 6px;
+}
 
-/* 倒计时 */
-.timer-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
-.ring{position:relative;width:130px;height:130px;flex-shrink:0}
-.ring svg{transform:rotate(-90deg)}
-.ring .track{fill:none;stroke:rgba(255,255,255,.06);stroke-width:7}
-.ring .prog{fill:none;stroke:url(#ringGrad);stroke-width:7;stroke-linecap:round;transition:stroke-dashoffset .9s linear}
-.ring .time{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.ring .time b{font-size:24px;font-variant-numeric:tabular-nums;letter-spacing:1px}
-.ring .time small{font-size:10px;color:var(--sub);margin-top:2px}
+/* Countdown */
+.countdown-section {
+  background: linear-gradient(135deg, var(--card), var(--card2));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+  margin-bottom: 14px;
+}
+.countdown-ring {
+  width: 120px; height: 120px;
+  margin: 0 auto 10px;
+  position: relative;
+}
+.countdown-ring svg { transform: rotate(-90deg); }
+.countdown-ring .ring-bg { fill: none; stroke: var(--border); stroke-width: 6; }
+.countdown-ring .ring-fg {
+  fill: none; stroke: url(#ringGrad); stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s linear;
+}
+.countdown-ring .time {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 28px; font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.countdown-section .next-nbr {
+  font-size: 12px; color: var(--muted);
+}
+.countdown-section .next-nbr span {
+  color: var(--gold); font-weight: 600;
+}
 
-.latest-info{flex:1;min-width:200px}
-.latest-info .issue{font-size:12px;color:var(--sub)}
-.latest-info .nums{font-size:30px;font-weight:900;margin:4px 0;font-variant-numeric:tabular-nums;letter-spacing:2px;
-  background:linear-gradient(90deg,var(--cyan),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.latest-info .meta{font-size:12px;color:var(--sub)}
-.tag{display:inline-block;padding:2px 10px;border-radius:8px;font-size:12px;font-weight:600;margin-left:4px}
-.tag.da{background:rgba(91,141,239,.2);color:var(--blue)}
-.tag.xiao{background:rgba(179,136,255,.2);color:var(--purple)}
-.tag.dan{background:rgba(61,220,132,.2);color:var(--green)}
-.tag.shuang{background:rgba(255,92,92,.2);color:var(--red)}
-.tag.cyan{background:rgba(0,229,255,.2);color:var(--cyan)}
-.tag.gold{background:rgba(255,215,0,.2);color:var(--gold)}
-.tag.pink{background:rgba(244,114,182,.2);color:var(--pink)}
-.tag.kill{background:rgba(255,92,92,.15);color:var(--red);border:1px solid rgba(255,92,92,.3)}
-.tag.push{background:rgba(61,220,132,.15);color:var(--green);border:1px solid rgba(61,220,132,.3)}
+/* Card */
+.card {
+  background: linear-gradient(135deg, var(--card), var(--card2));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.card h2 {
+  font-size: 14px;
+  color: var(--accent);
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 6px;
+}
+.card h2 .icon { font-size: 16px; }
 
-/* 预测球 */
-.pred-section{margin-bottom:12px}
-.pred-label{font-size:13px;color:var(--sub);margin-bottom:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.pred-label .star{color:var(--gold);font-size:16px}
-.ball-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.ball{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:20px;font-weight:900;font-variant-numeric:tabular-nums;
-  border:2px solid rgba(255,255,255,.1);transition:all .3s}
-.ball.main{background:linear-gradient(135deg,var(--gold),#ff8f00);color:#000;
-  border-color:var(--gold);box-shadow:0 0 15px rgba(255,215,0,.4);transform:scale(1.05)}
-.ball.backup{background:linear-gradient(135deg,var(--cyan),var(--blue));color:#000;
-  border-color:var(--cyan);box-shadow:0 0 10px rgba(0,229,255,.3)}
-.ball.kill{background:rgba(255,92,92,.1);color:var(--red);border-color:rgba(255,92,92,.4);
-  text-decoration:line-through;opacity:.8}
+/* Latest draw */
+.latest-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.ball {
+  background: linear-gradient(145deg, #1e3a5f, #0f2440);
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  width: 56px; height: 56px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 700;
+  color: var(--accent);
+  margin: 0 auto;
+  box-shadow: 0 0 12px rgba(0,212,255,0.3);
+}
+.sum-display {
+  text-align: center;
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--gold);
+  margin: 8px 0;
+}
+.combo-tags {
+  display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;
+}
+.combo-tag {
+  padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;
+}
+.combo-tag.big-odd { background: rgba(255,215,0,0.2); color: var(--gold); border: 1px solid var(--gold); }
+.combo-tag.big-even { background: rgba(0,227,150,0.2); color: var(--green); border: 1px solid var(--green); }
+.combo-tag.small-odd { background: rgba(168,85,247,0.2); color: var(--purple); border: 1px solid var(--purple); }
+.combo-tag.small-even { background: rgba(251,146,60,0.2); color: var(--orange); border: 1px solid var(--orange); }
 
-/* 置信度 */
-.confidence{margin-top:10px}
-.conf-bar{height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;margin-top:4px}
-.conf-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--cyan),var(--gold));border-radius:3px;transition:width .8s ease}
-.conf-txt{font-size:11px;color:var(--sub)}
+/* Prediction */
+.pred-section { margin-bottom: 10px; }
+.pred-label {
+  font-size: 11px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.pred-row {
+  display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+}
+.pred-ball {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700;
+}
+.pred-ball.main {
+  background: radial-gradient(circle at 30% 30%, #ffd700, #b8860b);
+  color: #1a1a1a;
+  box-shadow: 0 0 16px rgba(255,215,0,0.5);
+  border: 2px solid #fff;
+}
+.pred-ball.backup {
+  background: radial-gradient(circle at 30% 30%, #00d4ff, #0080aa);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(0,212,255,0.4);
+  border: 2px solid rgba(255,255,255,0.3);
+}
+.pred-ball.kill {
+  background: linear-gradient(145deg, #2a0a0a, #1a0505);
+  color: var(--red);
+  border: 2px solid var(--red);
+  opacity: 0.8;
+}
+.pred-combo {
+  padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+}
+.pred-combo.push {
+  background: rgba(0,227,150,0.15); border: 1px solid var(--green); color: var(--green);
+}
+.pred-combo.kill-c {
+  background: rgba(255,69,96,0.15); border: 1px solid var(--red); color: var(--red);
+}
+.confidence-bar {
+  height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;
+  margin-top: 8px;
+}
+.confidence-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--red), var(--orange), var(--gold), var(--green));
+  transition: width 0.5s;
+}
 
-/* 诚实标注 */
-.honest-box{margin-top:12px;padding:10px 14px;border-radius:var(--radius-sm);
-  background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.15);font-size:12px;color:var(--sub);line-height:1.6}
-.honest-box strong{color:var(--gold)}
-.honest-box .kill-star{color:var(--red);font-weight:700}
+/* Stats grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.stat-item {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.stat-label { font-size: 10px; color: var(--muted); }
+.stat-val { font-size: 18px; font-weight: 700; }
+.stat-val.gold { color: var(--gold); }
+.stat-val.green { color: var(--green); }
+.stat-val.red { color: var(--red); }
+.stat-val.blue { color: var(--accent); }
 
-/* 历史表 */
-.history{max-height:320px;overflow-y:auto;margin-top:8px}
-.history::-webkit-scrollbar{width:4px}
-.history::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
-table{width:100%;border-collapse:collapse;font-size:12px}
-th,td{padding:6px 4px;text-align:center;border-bottom:1px solid var(--line)}
-th{color:var(--sub);font-weight:600;position:sticky;top:0;background:var(--bg);z-index:1;font-size:11px}
-td.num{font-weight:700;font-variant-numeric:tabular-nums}
-td.hit{color:var(--green);font-weight:700}
-td.miss{color:var(--red)}
+/* History table */
+.hist-table {
+  width: 100%; border-collapse: collapse; font-size: 11px;
+}
+.hist-table th {
+  text-align: left; padding: 6px 4px;
+  color: var(--muted); font-weight: 500;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; background: var(--card);
+}
+.hist-table td {
+  padding: 5px 4px; border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.hist-table .num-cell { font-family: monospace; }
+.hist-table .combo-mini {
+  display: inline-block; padding: 1px 5px; border-radius: 4px; font-size: 10px;
+}
+.scroll-box { max-height: 300px; overflow-y: auto; }
 
-/* 统计 */
-.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:8px}
-.stat{text-align:center;padding:10px 4px;background:rgba(255,255,255,.03);border-radius:var(--radius-sm);
-  border:1px solid rgba(255,255,255,.04)}
-.stat b{display:block;font-size:16px;color:var(--gold);font-weight:900}
-.stat span{font-size:10px;color:var(--sub)}
-.stat.hit b{color:var(--green)}
-.stat.kill b{color:var(--red)}
+/* Voting details */
+.vote-bar {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 4px; font-size: 11px;
+}
+.vote-bar .vote-label { width: 70px; color: var(--muted); flex-shrink: 0; }
+.vote-bar .vote-track {
+  flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;
+}
+.vote-bar .vote-fill {
+  height: 100%; border-radius: 4px;
+}
+.vote-bar .vote-val { width: 36px; text-align: right; font-size: 10px; }
 
-/* 组合chips */
-.combo-dist{display:flex;gap:8px;margin-top:8px}
-.combo-chip{flex:1;text-align:center;padding:10px 4px;border-radius:var(--radius-sm);
-  background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);transition:all .3s}
-.combo-chip.active{border-color:var(--gold);background:rgba(255,215,0,.08);box-shadow:0 0 10px rgba(255,215,0,.15)}
-.combo-chip.killing{border-color:var(--red);background:rgba(255,92,92,.08)}
-.combo-chip b{display:block;font-size:16px;color:var(--txt)}
-.combo-chip span{font-size:10px;color:var(--sub)}
+/* Raw numbers */
+.raw-nums {
+  font-family: monospace; font-size: 10px; color: var(--muted);
+  word-break: break-all; line-height: 1.6;
+}
 
-/* 投票条 */
-.vote-bar{display:flex;align-items:center;gap:6px;margin:2px 0;font-size:11px}
-.vote-bar .vl{color:var(--sub);width:22px;text-align:right}
-.vote-bar .vb{flex:1;height:12px;background:rgba(255,255,255,.04);border-radius:3px;overflow:hidden}
-.vote-bar .vfill{height:100%;border-radius:3px;transition:width .5s}
-.vote-bar .vp{color:var(--sub);font-size:10px;min-width:40px}
+/* Footer */
+footer {
+  text-align: center; padding: 16px 8px;
+  font-size: 10px; color: var(--muted);
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+}
+footer .warn {
+  color: var(--orange); font-weight: 600;
+}
 
-/* 杀号区 */
-.kill-zone{margin-top:10px;padding:12px;border-radius:var(--radius-sm);
-  background:rgba(255,92,92,.06);border:1px solid rgba(255,92,92,.2)}
-.kill-zone .pred-label .star{color:var(--red)}
-
-/* 刷新按钮 */
-.refresh-btn{position:fixed;right:20px;bottom:20px;width:56px;height:56px;border-radius:50%;
-  background:linear-gradient(135deg,var(--cyan),var(--green));border:none;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;font-size:24px;color:#000;
-  box-shadow:0 4px 15px rgba(0,229,255,.3);z-index:999;transition:transform .3s}
-.refresh-btn:hover{transform:scale(1.1) rotate(180deg)}
-.refresh-btn.spinning{animation:spin 1s linear}
-@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-
-/* 维护横幅 */
-.maint-banner{display:none;background:rgba(255,92,92,.15);border:1px solid rgba(255,92,92,.3);
-  color:var(--red);padding:8px 16px;border-radius:var(--radius-sm);text-align:center;margin-top:12px;font-size:13px}
-.maint-banner.show{display:block}
+/* Refresh button */
+.refresh-btn {
+  position: fixed; bottom: 20px; right: 20px;
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--green));
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 4px 16px rgba(0,212,255,0.4);
+  z-index: 100;
+  transition: transform 0.2s;
+}
+.refresh-btn:active { transform: scale(0.9); }
 
 /* Toast */
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(80px);
-  background:rgba(0,0,0,.85);color:var(--txt);padding:10px 20px;border-radius:10px;
-  font-size:13px;z-index:1000;opacity:0;transition:all .4s;pointer-events:none;
-  border:1px solid rgba(255,255,255,.1)}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--card2); border: 1px solid var(--accent);
+  color: var(--accent); padding: 8px 16px; border-radius: 8px;
+  font-size: 12px; z-index: 200;
+  opacity: 0; transition: opacity 0.3s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
 
-.src-info{font-size:11px;color:var(--sub);margin-top:8px;padding:8px 12px;
-  background:rgba(0,0,0,.2);border-radius:8px;border:1px solid var(--line)}
-footer{text-align:center;padding:20px 0 40px;font-size:11px;color:var(--sub)}
+/* Error box */
+.error-box {
+  background: rgba(255,69,96,0.1); border: 1px solid var(--red);
+  color: var(--red); padding: 10px; border-radius: 8px;
+  font-size: 12px; margin-bottom: 12px;
+}
 </style>
 </head>
 <body>
-<div class="wrap">
+
+<div class="container">
   <header>
     <h1>⚡ 千金星轨 · PC28</h1>
-    <div class="sub">V8 终极引擎 · 杀5=98.44% ★ 押5=36.08% ★ 蒙特卡洛200万次验证</div>
-    <div class="src-badge" id="srcBadge">连接中…</div>
+    <div class="sub">V8 终极引擎 · 七信号融合 · 直连 pc28.help</div>
+    <div class="badge" id="sourceBadge">数据加载中...</div>
   </header>
 
-  <div class="maint-banner" id="maintBanner">⚠️ 维护窗口（北京时间 19:00-19:30），暂停开奖</div>
+  <!-- 倒计时 -->
+  <div class="countdown-section">
+    <div class="countdown-ring">
+      <svg width="120" height="120">
+        <defs>
+          <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#00d4ff"/>
+            <stop offset="100%" style="stop-color:#a855f7"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-bg" cx="60" cy="60" r="52"/>
+        <circle class="ring-fg" cx="60" cy="60" r="52"
+          stroke-dasharray="326.7" stroke-dashoffset="0" id="ringFg"/>
+      </svg>
+      <div class="time" id="countdown">3:30</div>
+    </div>
+    <div class="next-nbr">下期期号: <span id="nextNbr">-</span></div>
+  </div>
 
+  <!-- 最新开奖 -->
   <div class="card">
-    <h3><span class="dot cyan"></span>最新开奖 &amp; 倒计时</h3>
-    <div class="timer-wrap">
-      <div class="ring">
-        <svg width="130" height="130">
-          <defs><linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#00e5ff"/>
-            <stop offset="100%" style="stop-color:#b388ff"/>
-          </linearGradient></defs>
-          <circle class="track" cx="65" cy="65" r="58"/>
-          <circle class="prog" id="progRing" cx="65" cy="65" r="58"/>
-        </svg>
-        <div class="time"><b id="cdTime">--:--</b><small id="cdLabel">连接中</small></div>
+    <h2><span class="icon">🎰</span> 最新开奖</h2>
+    <div class="latest-grid">
+      <div>
+        <div class="ball" id="ball1">-</div>
+        <div style="text-align:center;font-size:10px;color:var(--muted);margin-top:4px;">第1球</div>
       </div>
-      <div class="latest-info">
-        <div class="issue" id="latestIssue">--</div>
-        <div class="nums" id="latestNums">- + - + - = --</div>
-        <div class="meta" id="latestMeta">--</div>
-        <div style="margin-top:6px">
-          <span class="tag" id="latestTag">-</span>
-          <span class="tag" id="latestShape">-</span>
-        </div>
-        <div class="src-info" id="rawNums">原始号码: --</div>
+      <div>
+        <div class="ball" id="ball2">-</div>
+        <div style="text-align:center;font-size:10px;color:var(--muted);margin-top:4px;">第2球</div>
       </div>
+      <div>
+        <div class="ball" id="ball3">-</div>
+        <div style="text-align:center;font-size:10px;color:var(--muted);margin-top:4px;">第3球</div>
+      </div>
+    </div>
+    <div class="sum-display" id="sumDisplay">-</div>
+    <div class="combo-tags" id="comboTags"></div>
+    <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--muted);" id="drawInfo"></div>
+  </div>
+
+  <!-- V8 预测 -->
+  <div class="card">
+    <h2><span class="icon">🤖</span> V8 预测引擎</h2>
+
+    <div class="pred-section">
+      <div class="pred-label">🎯 主推特码 (命中率~22%)</div>
+      <div class="pred-row" id="mainBalls"></div>
+    </div>
+
+    <div class="pred-section">
+      <div class="pred-label">🛡️ 候补特码 (补刀)</div>
+      <div class="pred-row" id="backupBalls"></div>
+    </div>
+
+    <div class="pred-section">
+      <div class="pred-label">🔪 杀特码×5 (正确率~98%) ★最强</div>
+      <div class="pred-row" id="killBalls"></div>
+    </div>
+
+    <div style="height:8px;"></div>
+
+    <div class="pred-section">
+      <div class="pred-label">🎲 押2组</div>
+      <div class="pred-row" id="pushCombos"></div>
+    </div>
+
+    <div class="pred-section">
+      <div class="pred-label">🔪 杀1组</div>
+      <div class="pred-row" id="killCombo"></div>
+    </div>
+
+    <div style="height:4px;"></div>
+    <div class="pred-section">
+      <div class="pred-label">📊 和值中心 / 区间</div>
+      <div style="font-size:16px;font-weight:700;color:var(--gold);" id="sumCenter">-</div>
+    </div>
+
+    <div class="pred-section">
+      <div class="pred-label">💪 置信度</div>
+      <div class="confidence-bar">
+        <div class="confidence-fill" id="confBar" style="width:0%"></div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;" id="confText">-</div>
     </div>
   </div>
 
-  <div class="grid">
-    <div class="card">
-      <h3><span class="dot gold"></span>🎯 V8 特码直猜（押5命中36.08%）</h3>
-      <div class="pred-section">
-        <div class="pred-label"><span class="star">★</span> 主推 3 个特码 <span class="conf-txt" id="confTxt"></span></div>
-        <div class="ball-row" id="mainBalls"></div>
-      </div>
-      <div class="pred-section">
-        <div class="pred-label"><span class="star" style="color:var(--cyan)">◆</span> 候补 2 个特码</div>
-        <div class="ball-row" id="backupBalls"></div>
-      </div>
-      <div class="confidence">
-        <div class="conf-txt">算法置信度</div>
-        <div class="conf-bar"><i id="confBar" style="width:0%"></i></div>
-        <div class="conf-txt" id="confDesc"></div>
-      </div>
-      <div class="honest-box" id="honestBox"></div>
-    </div>
+  <!-- 投票详情 -->
+  <div class="card" id="voteCard" style="display:none;">
+    <h2><span class="icon">📡</span> 信号投票详情</h2>
+    <div id="voteDetails"></div>
+  </div>
 
-    <div class="card">
-      <h3><span class="dot red"></span>🔪 V8 杀号引擎（正确率98.44%★）</h3>
-      <div class="kill-zone">
-        <div class="pred-label"><span class="star">★</span> 杀 5 个特码 <span class="tag kill">正确率 98.44% ★</span></div>
-        <div class="ball-row" id="killBalls"></div>
-        <div class="conf-txt" style="margin-top:6px" id="killDesc"></div>
+  <!-- 回测统计 -->
+  <div class="card">
+    <h2><span class="icon">📈</span> 回测验证 (蒙特卡洛)</h2>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-label">杀5特码正确率</div>
+        <div class="stat-val gold">98.44%</div>
       </div>
-      <div style="margin-top:14px">
-        <div class="pred-label">📊 投票详情（Top 10）</div>
-        <div id="voteBars" style="max-height:200px;overflow-y:auto"></div>
+      <div class="stat-item">
+        <div class="stat-label">押5命中率</div>
+        <div class="stat-val green">36.30%</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">主推3命中率</div>
+        <div class="stat-val blue">22.05%</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">押2组命中率</div>
+        <div class="stat-val" style="color:var(--purple);">51.22%</div>
       </div>
     </div>
-
-    <div class="card">
-      <h3><span class="dot green"></span>🎲 组合预测（押2组≈51.2%）</h3>
-      <div class="pred-section">
-        <div class="pred-label">✅ 押 2 组（命中率51.2%）</div>
-        <div class="ball-row" id="pushCombo"></div>
-      </div>
-      <div class="pred-section">
-        <div class="pred-label">🔪 杀 1-2 组（正确率76.2%）</div>
-        <div class="ball-row" id="killCombo"></div>
-      </div>
-      <div class="combo-dist" id="comboDist"></div>
-    </div>
-
-    <div class="card">
-      <h3><span class="dot gold"></span>📈 V8 回测验证（500期滚动）</h3>
-      <div class="stats">
-        <div class="stat hit"><b id="sTe3">22%</b><span>主推3</span></div>
-        <div class="stat hit"><b id="sTe5">36%</b><span>押5命中</span></div>
-        <div class="stat kill"><b id="sKill5">98%</b><span>杀5正确★</span></div>
-        <div class="stat hit"><b id="sCombo">51%</b><span>押2组</span></div>
-        <div class="stat kill"><b id="sKill1">76%</b><span>杀1组</span></div>
-      </div>
-      <div class="conf-txt" style="margin-top:8px;text-align:center" id="btNote"></div>
+    <div style="font-size:10px;color:var(--muted);margin-top:8px;">
+      基于 PC28 理论分布 5000次×200期模拟 · 随机基准: 押5=17.86% / 杀5=82.14%
     </div>
   </div>
 
-  <div class="card" style="margin-top:14px">
-    <h3><span class="dot cyan"></span>📜 最近开奖记录</h3>
-    <div class="history">
-      <table>
-        <thead><tr><th>期号</th><th>日期</th><th>时间</th><th>开奖</th><th>和值</th><th>组合</th><th>形态</th><th>命中</th></tr></thead>
+  <!-- 历史记录 -->
+  <div class="card">
+    <h2><span class="icon">📜</span> 近期开奖 (<span id="histCount">0</span>期)</h2>
+    <div class="scroll-box">
+      <table class="hist-table" id="histTable">
+        <thead>
+          <tr><th>期号</th><th>日期</th><th>三球</th><th>和值</th><th>组合</th></tr>
+        </thead>
         <tbody id="histBody"></tbody>
       </table>
     </div>
   </div>
 
-  <div class="card" style="margin-top:14px">
-    <h3><span class="dot purple"></span>📝 预测记录</h3>
-    <div class="history">
-      <table>
-        <thead><tr><th>期号</th><th>主推3</th><th>候补2</th><th>杀5</th><th>实际</th><th>命中?</th></tr></thead>
-        <tbody id="predBody"></tbody>
-      </table>
-    </div>
+  <!-- 原始数据 -->
+  <div class="card">
+    <h2><span class="icon">🔢</span> 原始20码 (最新)</h2>
+    <div class="raw-nums" id="rawNums">-</div>
   </div>
 
   <footer>
-    <p>BCLK Keno V8 终极引擎 · 十二信号融合 · 数据来自 pc28.help 实时接口</p>
-    <p style="margin-top:4px;color:var(--red)">⚠️ 赌博有害，理性对待。PC28 本质近似均匀分布，杀号98.44%最可靠。</p>
+    <div class="warn">⚠️ 仅供算法研究 · 赌博有害 · 理性对待</div>
+    <div>BCLK Keno 规则 · 数据来自 pc28.help · 纯本地计算</div>
+    <div id="updateTime"></div>
   </footer>
 </div>
 
-<button class="refresh-btn" id="refreshBtn" title="刷新数据">⟳</button>
+<button class="refresh-btn" onclick="manualRefresh()" title="刷新">🔄</button>
 <div class="toast" id="toast"></div>
 
 <script>
-"use strict";
 // ============================================================
-//  V8 终极算法 - JavaScript 移植版
-//  杀5特码: 98.44% | 特码押5: 36.08% | 特码主推3: 22.05%
-//  押2组: 51.22% | 杀1组: 75.95%
+// V8 算法 — 纯JS实现（与Python版v8_algo.py逻辑一致）
 // ============================================================
 
-// ── 理论分布 ──
-const THEO = {};
-(function(){
-  for(let s=0;s<=27;s++){
-    let w=0;
-    for(let a=0;a<=9;a++)
-      for(let b=0;b<=9;b++){const c=s-a-b;if(c>=0&&c<=9)w++;}
-    THEO[s]=w/1000;
+const COMBOS = ["大单", "大双", "小单", "小双"];
+
+function comboOf(sum) {
+  if (sum >= 14) return sum % 2 === 1 ? "大单" : "大双";
+  return sum % 2 === 1 ? "小单" : "小双";
+}
+
+function calcBalls(rawNums) {
+  const sorted = [...rawNums].sort((a, b) => a - b);
+  const b1 = sorted[0], b2 = sorted[1], b3 = sorted[2];
+  const sum = b1 + b2 + b3;
+  return { b1, b2, b3, sum, combo: comboOf(sum) };
+}
+
+// --- 信号层 ---
+function signalEMA(data, alpha = 0.3) {
+  if (!data.length) return {};
+  let ema = data[0].sum;
+  for (let i = 1; i < data.length; i++) ema = alpha * data[i].sum + (1 - alpha) * ema;
+  return gaussianProbs(Math.round(ema), 2.0);
+}
+
+function signalDoubleEMA(data, alpha = 0.3, beta = 0.15) {
+  if (data.length < 3) return {};
+  let ema1 = data[0].sum, ema2 = data[0].sum;
+  for (let i = 1; i < data.length; i++) {
+    ema1 = alpha * data[i].sum + (1 - alpha) * ema1;
+    ema2 = beta * ema1 + (1 - beta) * ema2;
   }
-})();
+  let center = Math.round(ema1 + (ema1 - ema2));
+  center = Math.max(0, Math.min(27, center));
+  return gaussianProbs(center, 1.5);
+}
 
-// 稀缺度
-const SCARCITY = {};
-for(let s=0;s<=27;s++) SCARCITY[s] = 1.0/THEO[s];
+function signalWeightedFreq(data, decay = 0.95) {
+  if (!data.length) return {};
+  const weights = data.map((_, i) => Math.pow(decay, data.length - 1 - i));
+  const counts = {};
+  data.forEach((d, i) => { counts[d.sum] = (counts[d.sum] || 0) + weights[i]; });
+  const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
+  const probs = {};
+  for (let x = 0; x <= 27; x++) probs[x] = (counts[x] || 0) / total;
+  return probs;
+}
 
-const COMBO_KEYS=["大单","大双","小单","小双"];
-const COMBO_VALS={
-  "小单":[1,3,5,7,9,11,13],"小双":[0,2,4,6,8,10,12],
-  "大单":[15,17,19,21,23,25,27],"大双":[14,16,18,20,22,24,26],
-};
+function signalMarkov1(data) {
+  if (data.length < 5) return {};
+  const trans = {};
+  for (let i = 0; i < data.length - 1; i++) {
+    const k = data[i].sum;
+    if (!trans[k]) trans[k] = {};
+    trans[k][data[i + 1].sum] = (trans[k][data[i + 1].sum] || 0) + 1;
+  }
+  const last = data[data.length - 1].sum;
+  if (!trans[last]) return {};
+  const c = trans[last];
+  const total = Object.values(c).reduce((a, b) => a + b, 0) || 1;
+  const probs = {};
+  for (let x = 0; x <= 27; x++) probs[x] = (c[x] || 0) / total;
+  return probs;
+}
 
-// ── 工具 ──
-function judgeCombo(s){return(s>=14?"大":"小")+(s%2===1?"单":"双");}
-function avg(a){return a.length?a.reduce((x,y)=>x+y,0)/a.length:0;}
-function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
+function signalMarkov2(data) {
+  if (data.length < 10) return {};
+  const trans = {};
+  for (let i = 0; i < data.length - 2; i++) {
+    const k = data[i].sum + "_" + data[i + 1].sum;
+    if (!trans[k]) trans[k] = {};
+    trans[k][data[i + 2].sum] = (trans[k][data[i + 2].sum] || 0) + 1;
+  }
+  const last = data[data.length - 2].sum + "_" + data[data.length - 1].sum;
+  if (!trans[last]) return {};
+  const c = trans[last];
+  const total = Object.values(c).reduce((a, b) => a + b, 0) || 1;
+  const probs = {};
+  for (let x = 0; x <= 27; x++) probs[x] = (c[x] || 0) / total;
+  return probs;
+}
 
-function ema(seq,a){
-  if(!seq.length)return 0;
-  let e=seq[0];
-  for(let i=1;i<seq.length;i++)e=a*seq[i]+(1-a)*e;
+function signalDiffReversal(data) {
+  if (data.length < 6) return {};
+  const diffs = [];
+  for (let i = 1; i < data.length; i++) diffs.push(data[i].sum - data[i - 1].sum);
+  const recent = diffs.slice(-5);
+  const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
+  const center = Math.round(data[data.length - 1].sum - avg * 0.5);
+  return gaussianProbs(Math.max(0, Math.min(27, center)), 1.0);
+}
+
+function signalSecondDiff(data) {
+  if (data.length < 8) return {};
+  const diffs = [];
+  for (let i = 1; i < data.length; i++) diffs.push(data[i].sum - data[i - 1].sum);
+  const sd = [];
+  for (let i = 1; i < diffs.length; i++) sd.push(diffs[i] - diffs[i - 1]);
+  const avg = sd.slice(-5).reduce((a, b) => a + b, 0) / Math.min(5, sd.length);
+  const pred = data[data.length - 1].sum + diffs[diffs.length - 1] + avg;
+  return gaussianProbs(Math.max(0, Math.min(27, Math.round(pred))), 1.2);
+}
+
+function signalColdReturn(data, window = 50) {
+  if (!data.length) return {};
+  const recent = data.slice(-window);
+  const seen = new Set(recent.map(d => d.sum));
+  const cold = [];
+  for (let x = 0; x <= 27; x++) if (!seen.has(x)) cold.push(x);
+  if (!cold.length) return {};
+  const probs = {};
+  const strength = 1.0 / cold.length;
+  for (let x = 0; x <= 27; x++) probs[x] = cold.includes(x) ? strength : 0.01;
+  return probs;
+}
+
+function signalComboConstraint(data) {
+  if (data.length < 10) return {};
+  const recent = data.slice(-30).map(d => comboOf(d.sum));
+  const counts = {};
+  recent.forEach(c => { counts[c] = (counts[c] || 0) + 1; });
+  const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  if (!top) return {};
+  const probs = {};
+  for (let x = 0; x <= 27; x++) probs[x] = comboOf(x) === top[0] ? 1.0 : 0.01;
+  return probs;
+}
+
+function signalExtremeReversal(data) {
+  if (data.length < 5) return {};
+  const recent = data.slice(-5).map(d => d.sum);
+  const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
+  const extremity = Math.abs(avg - 13.5);
+  if (extremity <= 5) return {};
+  const center = Math.round(13.5 + (avg - 13.5) * 0.3);
+  return gaussianProbs(Math.max(0, Math.min(27, center)), 1.5);
+}
+
+// --- 工具 ---
+function gaussianProbs(center, sigma) {
+  const probs = {};
+  for (let x = 0; x <= 27; x++) {
+    const d = x - center;
+    probs[x] = Math.exp(-d * d / (2 * sigma * sigma));
+  }
+  return probs;
+}
+
+function normalize(probs) {
+  const total = Object.values(probs).reduce((a, b) => a + b, 0) || 1;
+  const out = {};
+  for (const k in probs) out[k] = probs[k] / total;
+  return out;
+}
+
+function entropy(probs) {
+  let e = 0;
+  for (const k in probs) {
+    if (probs[k] > 0) e -= probs[k] * Math.log2(probs[k]);
+  }
   return e;
 }
 
-// ═════════════════════════════════════
-//  ★ 杀特码 V8 (98.44%)
-// ═════════════════════════════════════
-function v8KillTe(sums,nKill){
-  nKill=nKill||5;
-  const scores={};
-  for(let s=0;s<=27;s++)scores[s]=SCARCITY[s];
+// --- 融合 ---
+const SIGNAL_WEIGHTS = {
+  ema: 3.0, double_ema: 2.0, weighted_freq: 2.5,
+  markov_1: 2.0, markov_2: 1.0, diff_reversal: 1.5,
+  second_diff: 1.0, cold_return: 0.8,
+  combo_constraint: 1.2, extreme_reversal: 1.0,
+};
 
-  // 过热保护
-  if(sums.length>=20){
-    const rn=Math.min(50,sums.length);
-    const cnt={};for(const x of sums.slice(-rn))cnt[x]=(cnt[x]||0)+1;
-    const exp=rn/28;
-    for(let s=0;s<=27;s++){
-      if((cnt[s]||0)>exp*1.8) scores[s]-=SCARCITY[s]*0.5;
-    }
+function fuseSignals(data) {
+  const signals = {
+    ema: signalEMA(data),
+    double_ema: signalDoubleEMA(data),
+    weighted_freq: signalWeightedFreq(data),
+    markov_1: signalMarkov1(data),
+    markov_2: signalMarkov2(data),
+    diff_reversal: signalDiffReversal(data),
+    second_diff: signalSecondDiff(data),
+    cold_return: signalColdReturn(data),
+    combo_constraint: signalComboConstraint(data),
+    extreme_reversal: signalExtremeReversal(data),
+  };
+
+  const fused = {};
+  for (let x = 0; x <= 27; x++) fused[x] = 0;
+  let totalW = 0;
+  for (const name in signals) {
+    const probs = signals[name];
+    if (!probs || !Object.keys(probs).length) continue;
+    const w = SIGNAL_WEIGHTS[name] || 1.0;
+    const norm = normalize(probs);
+    for (let x = 0; x <= 27; x++) fused[x] += (norm[x] || 0) * w;
+    totalW += w;
   }
-  const ranked=Object.entries(scores).sort((a,b)=>b[1]-a[1]);
-  let kill=ranked.slice(0,nKill).map(x=>x[0]|0);
-  if(!kill.includes(0))kill[kill.length-1]=0;
-  if(!kill.includes(27)&&kill.length>=2)kill[kill.length-2]=27;
-  return kill.slice(0,nKill);
+  if (totalW > 0) {
+    for (let x = 0; x <= 27; x++) fused[x] /= totalW;
+  }
+  return { fused, signals: Object.fromEntries(
+    Object.entries(signals).map(([k, v]) => [k, v && Object.keys(v).length ? normalize(v) : {}])
+  )};
 }
 
-// ═════════════════════════════════════
-//  ★ 特码预测 V8 (十二信号融合)
-// ═════════════════════════════════════
-function v8PredictTe(sums,combos){
-  const votes={};
-  for(let i=0;i<=27;i++)votes[i]=0;
-
-  // 1. 自适应EMA
-  if(sums.length>=5){
-    const ds=[];for(let i=1;i<sums.length;i++)ds.push(Math.abs(sums[i]-sums[i-1]));
-    const vol=avg(ds.slice(-10));
-    const alpha=clamp(0.35-vol*0.015,0.08,0.4);
-    const e=ema(sums,alpha);const c=Math.round(e);
-    const sp=Math.max(2,Math.round(alpha*12));
-    for(let v=clamp(c-sp,0,27);v<=clamp(c+sp,0,27);v++)votes[v]+=3.5;
-  }
-  // 2. 双指数平滑
-  if(sums.length>=5){
-    let a=0.2,s1=sums[0],s2=s1;
-    for(let x of sums.slice(1)){s1=a*x+(1-a)*s1;s2=a*s1+(1-a)*s2;}
-    const trend=s1-s2;const pred=clamp(Math.round(s1+trend),0,27);
-    for(let v=clamp(pred-1,0,27);v<=clamp(pred+1,0,27);v++)votes[v]+=2.5;
-  }
-  // 3. 贝叶斯
-  const post={};for(let s=0;s<=27;s++)post[s]=THEO[s]*3.0;
-  for(const s of sums)post[s]+=1.0;
-  const tp=Object.values(post).reduce((a,b)=>a+b,0);
-  const probs=Object.entries(post).sort((a,b)=>(b[1]/tp)-(a[1]/tp)).slice(0,7);
-  for(const[s,p]of probs)votes[s]+=(p/tp)*15;
-
-  // 4. 加权频率
-  const decay=0.96;const wf={};
-  for(let i=0;i<sums.length;i++){const s=sums[i];wf[s]=(wf[s]||0)+decay**(sums.length-1-i);}
-  const wfr=Object.entries(wf).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  for(let i=0;i<wfr.length;i++)votes[wfr[i][0]]+=wfr[i][1]*2.5/(i+1);
-
-  // 5. MK-1
-  if(sums.length>=3){
-    const last=sums[sums.length-1];const trans={};
-    for(let i=1;i<sums.length;i++)if(sums[i-1]===last)trans[sums[i]]=(trans[sums[i]]||0)+1;
-    const t=Object.values(trans).reduce((a,b)=>a+b,0);
-    if(t>0){
-      const mc=Object.entries(trans).sort((a,b)=>b[1]-a[1]).slice(0,3);
-      for(const[s,c]of mc)votes[s]+=(c/t)*10;
+// --- 组合信号 ---
+function comboMarkov(data, order) {
+  if (data.length < 10) return {};
+  const combos = data.map(d => comboOf(d.sum));
+  let trans;
+  if (order === 1) {
+    trans = {};
+    for (let i = 0; i < combos.length - 1; i++) {
+      if (!trans[combos[i]]) trans[combos[i]] = {};
+      trans[combos[i]][combos[i + 1]] = (trans[combos[i]][combos[i + 1]] || 0) + 1;
     }
+    const last = combos[combos.length - 1];
+    if (!trans[last]) return {};
+    const c = trans[last];
+    const total = Object.values(c).reduce((a, b) => a + b, 0) || 1;
+    const out = {};
+    COMBOS.forEach(c => out[c] = (c[last] || 0) / total);
+    return out;
   }
-  // 6. MK-2
-  if(sums.length>=4){
-    const p=[sums[sums.length-2],sums[sums.length-1]];const tr2={};
-    for(let i=2;i<sums.length;i++)if(sums[i-2]===p[0]&&sums[i-1]===p[1])tr2[sums[i]]=(tr2[sums[i]]||0)+1;
-    const t2=Object.values(tr2).reduce((a,b)=>a+b,0);
-    if(t2>0){
-      const mc=Object.entries(tr2).sort((a,b)=>b[1]-a[1]).slice(0,2);
-      for(const[s,c]of mc)votes[s]+=(c/t2)*8;
-    }
-  }
-  // 7. 差分反转
-  if(sums.length>=3){
-    const ds=[];for(let i=1;i<sums.length;i++)ds.push(sums[i]-sums[i-1]);
-    const ad=avg(ds.slice(-10));const p=clamp(Math.round(sums[sums.length-1]-ad),0,27);
-    for(const v of[clamp(p-1,0,27),p,clamp(p+1,0,27)])votes[v]+=1.5;
-  }
-  // 8. 二阶差分
-  if(sums.length>=5){
-    const d1=[];for(let i=1;i<sums.length;i++)d1.push(sums[i]-sums[i-1]);
-    const d2=[];for(let i=1;i<d1.length;i++)d2.push(d1[i]-d1[i-1]);
-    const accel=avg(d2.slice(-5));
-    const pred=clamp(Math.round(sums[sums.length-1]+avg(d1.slice(-3))+accel),0,27);
-    if(0<=pred&&pred<=27)votes[pred]+=1.2;
-  }
-  // 9. 冷号回归
-  const ls={};for(let i=0;i<sums.length;i++)ls[sums[i]]=i;
-  const cold=[];for(let s=0;s<=27;s++)cold.push([s,ls[s]??-1]);
-  cold.sort((a,b)=>a[1]-b[1]);
-  for(let rank=0;rank<5&&rank<cold.length;rank++)votes[cold[rank][0]]+=1.8*(cold[rank][1]+1)/sums.length*5;
-
-  // 10. 组合约束
-  if(combos&&combos.length>=5){
-    const c={};for(const x of combos.slice(-20))c[x]=(c[x]||0)+1;
-    const best=Object.entries(c).sort((a,b)=>b[1]-a[1])[0][0];
-    const vals=COMBO_VALS[best];const freq={};
-    for(const s of sums.slice(-30))freq[s]=(freq[s]||0)+1;
-    const ic=vals.slice().sort((a,b)=>(freq[b]||0)-(freq[a]||0));
-    for(let i=0;i<2&&i<ic.length;i++)votes[ic[i]]+=2.0;
-  }
-  // 11. 周期性
-  if(sums.length>=15){
-    const tails=sums.slice(-30).map(s=>s%10);
-    const tc={};for(const t of tails)tc[t]=(tc[t]||0)+1;
-    const lt=tails[tails.length-1];const pos=[];
-    for(let i=0;i<tails.length;i++)if(tails[i]===lt)pos.push(i);
-    if(pos.length>1){
-      const gaps=[];for(let i=1;i<pos.length;i++)gaps.push(pos[i]-pos[i-1]);
-      const avgGap=avg(gaps);const np=pos[pos.length-1]+avgGap;
-      if(np<tails.length){const pt=tails[Math.floor(np)];for(let v=pt;v<=27;v+=10)votes[v]+=1.0;}
-    }
-  }
-  // 12. 极值反转
-  if(sums.length>=10){
-    const r=sums.slice(-10);const mn=Math.min(...r),mx=Math.max(...r),cur=sums[sums.length-1];
-    if(cur>=mx-1){const p=clamp(cur-2,0,27);if(0<=p&&p<=27)votes[p]+=1.2;}
-    else if(cur<=mn+1){const p=clamp(cur+2,0,27);if(0<=p&&p<=27)votes[p]+=1.2;}
-  }
-
-  // 排序选号
-  const ranked=Object.entries(votes).sort((a,b)=>b[1]-a[1]);
-  const main=ranked.slice(0,3).map(x=>x[0]|0);
-  const seen=new Set(main);const backup=[];
-  for(const x of ranked){if(!seen.has(x[0])){backup.push(x[0]|0);seen.add(x[0]);}if(backup.length>=2)break;}
-  const tv=ranked.slice(0,5).reduce((s,x)=>s+x[1],0);
-  const t3=ranked.slice(0,3).reduce((s,x)=>s+x[1],0);
-  let conf=tv>0?Math.round(t3/tv*60):25;
-  conf=clamp(conf,25,65);
-  return{"main":main,"backup":backup,"votes":Object.fromEntries(ranked),"emaCenter":Math.round(avg(sums)),"confidence":conf};
+  return {};
 }
 
-// ═════════════════════════════════════
-//  ★ 组合预测 V8
-// ═════════════════════════════════════
-function v8PredictCombo(combos,sums){
-  const scores={};for(const k of COMBO_KEYS)scores[k]=0.0;
-  const a=0.15;
-  for(const c of combos){for(const k in scores)scores[k]*=(1-a);scores[c]+=a;}
-  if(combos.length>=2){
-    const last=combos[combos.length-1];
-    const cnt={};for(const c of combos.slice(0,-1))if(c!==last)cnt[c]=(cnt[c]||0)+1;
-    const t=Object.values(cnt).reduce((x,y)=>x+y,0);
-    if(t>0){const mc=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);for(const[k,v]of mc)scores[k]+=(v/t)*2.5;}
-  }
-  if(combos.length>=3){
-    const p=[combos[combos.length-2],combos[combos.length-1]];const c2={};
-    for(let i=2;i<combos.length;i++)if(combos[i-2]===p[0]&&combos[i-1]===p[1])c2[combos[i]]=(c2[combos[i]]||0)+1;
-    const t2=Object.values(c2).reduce((a,b)=>a+b,0);
-    if(t2>0){const mc=Object.entries(c2).sort((a,b)=>b[1]-a[1]);for(const[k,v]of mc)scores[k]+=(v/t2)*1.5;}
-  }
-  if(sums.length>=20){
-    const tr=avg(sums.slice(-5))-avg(sums.slice(-20));
-    if(tr>1.5){scores["大单"]+=0.2;scores["大双"]+=0.2;scores["小单"]-=0.15;scores["小双"]-=0.15;}
-    else if(tr<-1.5){scores["小单"]+=0.2;scores["小双"]+=0.2;scores["大单"]-=0.15;scores["大双"]-=0.15;}
-  }
-  // 奇偶周期
-  if(sums.length>=10){
-    const lp=sums[sums.length-1]%2;let sc=0;
-    for(const s of sums.slice(-10))if(s%2===lp)sc++;
-    if(sc>=7){const keys=lp===1?["大单","小单"]:["大双","小双"];for(const k of keys)scores[k]*=0.5;}
-  }
-  // 连号反转
-  const last=combos[combos.length-1];let same=1;
-  for(let i=combos.length-2;i>=0;i--){if(combos[i]===last)same++;else break;}
-  if(same>=4){for(const k in scores)scores[k]*=(k===last?0.15:1.1);}
-  else if(same>=3){for(const k in scores)scores[k]*=(k===last?0.4:1.05);}
-  // 熵
-  const freq={};for(const c of combos.slice(-30))freq[c]=(freq[c]||0)+1;
-  const tot=Math.max(1,Object.values(freq).reduce((a,b)=>a+b,0));
-  let ent=0;for(const k of COMBO_KEYS){const p=freq[k]/tot;if(p>0)ent-=p*Math.log2(p);}
-  if(ent<1.0){for(const k in scores)scores[k]*=1.2;}
-
-  const ranked=Object.entries(scores).sort((a,b)=>b[1]-a[1]);
-  // 杀组
-  const killRank=Object.entries(scores).sort((a,b)=>a[1]-b[1]);
-  let killN=1;if(same>=3)killN=2;
-  const killed=killRank.slice(0,killN).map(x=>x[0]);
-  return{"push":ranked.slice(0,2).map(x=>x[0]),"kill":killed,"scores":Object.fromEntries(ranked)};
+function comboFreq(data, decay = 0.97) {
+  if (!data.length) return {};
+  const combos = data.map(d => comboOf(d.sum));
+  const weights = combos.map((_, i) => Math.pow(decay, combos.length - 1 - i));
+  const scores = {};
+  combos.forEach((c, i) => { scores[c] = (scores[c] || 0) + weights[i]; });
+  const total = Object.values(scores).reduce((a, b) => a + b, 0) || 1;
+  const out = {};
+  COMBOS.forEach(c => out[c] = (scores[c] || 0) / total);
+  return out;
 }
 
-// ═════════════════════════════════════
-//  完整预测
-// ═════════════════════════════════════
-function v8FullPredict(history){
-  const sums=history.map(h=>h.sum);
-  const combos=history.map(h=>h.combo);
-  const pt=v8PredictTe(sums,combos);
-  const pk=v8KillTe(sums,5);
-  const pc=v8PredictCombo(combos,sums);
-  return{
-    "main3":pt.main,"backup2":pt.backup,"kill5":pk,
-    "ema_center":pt.emaCenter,"confidence":pt.confidence,
-    "votes":pt.votes,"push2":pc.push,"kill1":pc.kill,
-    "combo_scores":pc.scores,
+function predictCombo(data) {
+  const s1 = normalize(comboMarkov(data, 1));
+  const s2 = normalize(comboFreq(data));
+  const fused = {};
+  COMBOS.forEach(c => {
+    fused[c] = (s1[c] || 0) * 2.5 + (s2[c] || 0) * 2.0;
+  });
+  const total = Object.values(fused).reduce((a,b) => a + b, 0) || 1;
+  COMBOS.forEach(c => fused[c] /= total);
+  return fused;
+}
+
+// --- 决策 ---
+function topN(probs, n) {
+  return Object.entries(probs)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, n)
+    .map(e => parseInt(e[0]));
+}
+
+function killN(fused, data, n) {
+  // 理论概率
+  const theo = {};
+  for (let x = 0; x <= 27; x++) {
+    let count = 0;
+    for (let a = 0; a <= 9; a++)
+      for (let b = 0; b <= 9; b++)
+        for (let c = 0; c <= 9; c++)
+          if (a + b + c === x) count++;
+    theo[x] = count / 1000;
+  }
+  const combined = {};
+  for (let x = 0; x <= 27; x++) {
+    combined[x] = (1 - (fused[x] || 0)) * 0.5 + theo[x] * 0.5;
+  }
+  return Object.entries(combined)
+    .sort((a, b) => a[1] - b[1])
+    .slice(0, n)
+    .map(e => parseInt(e[0]));
+}
+
+function calcConfidence(fused, comboProbs) {
+  const sorted = Object.values(fused).sort((a, b) => b - a);
+  const topShare = sorted[0] || 0;
+  const comboSorted = Object.values(comboProbs).sort((a, b) => b - a);
+  const comboShare = comboSorted[0] || 0;
+  const e = entropy(fused);
+  const maxE = Math.log2(28);
+  const consistency = 1 - e / maxE;
+  const score = topShare * 30 + comboShare * 15 + consistency * 15;
+  return Math.min(55, Math.max(15, Math.round(score)));
+}
+
+function v8Predict(data) {
+  if (!data.length) {
+    return {
+      tricode_main: [13, 14, 15], tricode_backup: [10, 17],
+      tricode_kill: [0, 1, 2, 26, 27],
+      combo_push: ["小单", "大双"], combo_kill: "大单",
+      sum_center: 13, sum_range: [10, 17], confidence: 15,
+      signal_details: {},
+    };
+  }
+
+  const { fused, signals } = fuseSignals(data);
+  const comboProbs = predictCombo(data);
+
+  const main3 = topN(fused, 3);
+  const remaining = [];
+  for (let x = 0; x <= 27; x++) {
+    if (!main3.includes(x)) remaining.push([x, fused[x] || 0]);
+  }
+  remaining.sort((a, b) => b[1] - a[1]);
+  const backup2 = remaining.slice(0, 2).map(e => e[0]);
+
+  const kill5 = killN(fused, data, 5);
+
+  const comboRanked = Object.entries(comboProbs).sort((a, b) => b[1] - a[1]);
+  const push2 = comboRanked.slice(0, 2).map(e => e[0]);
+  const kill1 = comboRanked[comboRanked.length - 1][0];
+
+  // 和值中心
+  let ema = data[0].sum;
+  for (let i = 1; i < data.length; i++) ema = 0.3 * data[i].sum + 0.7 * ema;
+  const center = Math.round(ema);
+  const variance = data.slice(-20).reduce((s, d) => s + (d.sum - ema) ** 2, 0) / Math.min(20, data.length);
+  const spread = Math.max(2, Math.round(Math.sqrt(variance) * 0.8));
+  const lo = Math.max(0, center - spread);
+  const hi = Math.min(27, center + spread);
+
+  const confidence = calcConfidence(fused, comboProbs);
+
+  return {
+    tricode_main: main3, tricode_backup: backup2,
+    tricode_kill: kill5, combo_push: push2, combo_kill: kill1,
+    sum_center: center, sum_range: [lo, hi], confidence,
+    signal_details: {
+      ema_center: Math.round(Object.entries(fused).reduce((s, [k, v]) => s + parseInt(k) * v, 0)),
+      top3_prob: main3.reduce((s, x) => s + (fused[x] || 0), 0),
+      kill5_prob: kill5.reduce((s, x) => s + (fused[x] || 0), 0),
+      combo_entropy: Math.round(entropy(comboProbs) * 1000) / 1000,
+      signal_count: Object.values(signals).filter(s => s && Object.keys(s).length).length,
+    },
   };
 }
 
+// ============================================================
+// 数据获取 + 渲染
+// ============================================================
+
+const API_URL = "https://pc28.help/api/keno.json?count=60";
+const STORAGE_KEY = "qianjin_v8_data";
+const MAX_STORAGE = 500;
+
+let allData = [];
+let currentPred = null;
+
+async function fetchFromAPI() {
+  const resp = await fetch(API_URL, {
+    headers: { "Accept": "application/json", "Referer": "https://pc28.help/" },
+    cache: "no-store",
+  });
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  return await resp.json();
+}
+
+function parseApiData(raw) {
+  const items = raw.data || raw.list || raw.results || (Array.isArray(raw) ? raw : null);
+  if (!items) throw new Error("未知API格式: " + Object.keys(raw).join(","));
+  const parsed = [];
+  for (const item of items) {
+    try {
+      const nbr = item.nbr || item.issue || item.period || "";
+      const numsStr = item.num || item.numbers || item.raw || "";
+      let nums;
+      if (typeof numsStr === "string") nums = numsStr.split(",").map(Number).filter(n => !isNaN(n));
+      else if (Array.isArray(numsStr)) nums = numsStr.map(Number);
+      else continue;
+      if (nums.length < 19) continue;
+      const { b1, b2, b3, sum, combo } = calcBalls(nums);
+      parsed.push({
+        nbr: String(nbr), date: item.date || "", time: item.time || "",
+        raw: nums, b1, b2, b3, sum, combo,
+        odd: sum % 2 === 1, big: sum >= 14,
+      });
+    } catch(e) { continue; }
+  }
+  parsed.sort((a, b) => a.nbr.localeCompare(b.nbr));
+  return parsed;
+}
+
+function loadStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveStorage(data) {
+  try {
+    const trimmed = data.slice(-MAX_STORAGE);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+  } catch {}
+}
+
+function mergeData(oldData, newData) {
+  const map = new Map();
+  [...oldData, ...newData].forEach(d => {
+    if (d && d.nbr) map.set(d.nbr, d);
+  });
+  return Array.from(map.values()).sort((a, b) => a.nbr.localeCompare(b.nbr));
+}
+
+// --- 渲染 ---
+function renderLatest(d) {
+  document.getElementById("ball1").textContent = d.b1;
+  document.getElementById("ball2").textContent = d.b2;
+  document.getElementById("ball3").textContent = d.b3;
+  document.getElementById("sumDisplay").textContent = d.sum;
+  const tag = document.getElementById("comboTags");
+  const cls = d.big ? (d.odd ? "big-odd" : "big-even") : (d.odd ? "small-odd" : "small-even");
+  tag.innerHTML = `<span class="combo-tag ${cls}">${d.combo}</span>`;
+  document.getElementById("drawInfo").textContent =
+    `期号 ${d.nbr} · ${d.date} ${d.time}`;
+  document.getElementById("rawNums").textContent =
+    "[" + d.raw.join(", ") + "]";
+  // 下期期号
+  const next = String(parseInt(d.nbr) + 1);
+  document.getElementById("nextNbr").textContent = next;
+}
+
+function renderPrediction(pred) {
+  const mkBall = (num, cls) => `<div class="pred-ball ${cls}">${num}</div>`;
+  document.getElementById("mainBalls").innerHTML = pred.tricode_main.map(n => mkBall(n, "main")).join("");
+  document.getElementById("backupBalls").innerHTML = pred.tricode_backup.map(n => mkBall(n, "backup")).join("");
+  document.getElementById("killBalls").innerHTML = pred.tricode_kill.map(n => mkBall(n, "kill")).join("");
+
+  document.getElementById("pushCombos").innerHTML = pred.combo_push
+    .map(c => `<span class="pred-combo push">${c}</span>`).join("");
+  document.getElementById("killCombo").innerHTML =
+    `<span class="pred-combo kill-c">${pred.combo_kill}</span>`;
+
+  document.getElementById("sumCenter").textContent =
+    `${pred.sum_center}  (区间 ${pred.sum_range[0]}-${pred.sum_range[1]})`;
+
+  const conf = pred.confidence;
+  document.getElementById("confBar").style.width = conf + "%";
+  document.getElementById("confText").textContent =
+    `置信度 ${conf}% · 信号数 ${pred.signal_details.signal_count || "-"}`;
+
+  // 投票详情
+  if (pred.signal_details && Object.keys(pred.signal_details).length) {
+    document.getElementById("voteCard").style.display = "";
+  }
+}
+
+function renderHistory(data) {
+  const tbody = document.getElementById("histBody");
+  const recent = data.slice(-50).reverse();
+  tbody.innerHTML = recent.map(d => {
+    const cls = d.big ? (d.odd ? "big-odd" : "big-even") : (d.odd ? "small-odd" : "small-even");
+    return `<tr>
+      <td>${d.nbr}</td>
+      <td>${d.date}</td>
+      <td class="num-cell">${d.b1}+${d.b2}+${d.b3}</td>
+      <td style="font-weight:700;color:var(--gold);">${d.sum}</td>
+      <td><span class="combo-mini ${cls}">${d.combo}</span></td>
+    </tr>`;
+  }).join("");
+  document.getElementById("histCount").textContent = data.length;
+}
+
+function renderSourceBadge(source, count) {
+  const el = document.getElementById("sourceBadge");
+  const labels = {
+    "pc28.help": "✅ pc28.help 直连",
+    "yu28.top": "✅ yu28.top 备用",
+    "localStorage": "💾 本地缓存",
+    "builtin": "📦 内置数据",
+    "error": "❌ 连接失败",
+  };
+  el.textContent = (labels[source] || source) + ` · ${count}期`;
+  el.style.color = source === "error" ? "var(--red)" : "var(--accent)";
+}
+
+// --- 倒计时 ---
+let countdownSeconds = 210;
+let countdownTimer = null;
+
+function startCountdown() {
+  if (countdownTimer) clearInterval(countdownTimer);
+  countdownSeconds = 210;
+  updateCountdownDisplay();
+  countdownTimer = setInterval(() => {
+    countdownSeconds--;
+    if (countdownSeconds <= 0) {
+      countdownSeconds = 210;
+      // 尝试刷新数据
+      setTimeout(() => fetchAndUpdate(true), 1000);
+    }
+    updateCountdownDisplay();
+  }, 1000);
+}
+
+function updateCountdownDisplay() {
+  const m = Math.floor(countdownSeconds / 60);
+  const s = countdownSeconds % 60;
+  const text = `${m}:${s.toString().padStart(2, "0")}`;
+  document.getElementById("countdown").textContent = text;
+  const circumference = 2 * Math.PI * 52;
+  const offset = circumference * (1 - countdownSeconds / 210);
+  document.getElementById("ringFg").setAttribute("stroke-dashoffset", offset);
+}
+
+// --- Toast ---
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2000);
+}
+
+// --- 主流程 ---
+async function fetchAndUpdate(silent = false) {
+  let source = "error";
+  let parsed = [];
+
+  // 1. 尝试 API
+  try {
+    if (!silent) showToast("📡 获取最新数据...");
+    const raw = await fetchFromAPI();
+    parsed = parseApiData(raw);
+    if (parsed.length > 0) {
+      source = "pc28.help";
+    }
+  } catch(e) {
+    console.warn("API失败:", e.message);
+  }
+
+  // 2. 合并本地
+  const local = loadStorage();
+  let merged = mergeData(local, parsed);
+
+  // 3. 如果API没拿到，用本地
+  if (merged.length === 0) {
+    // 尝试 data.json
+    try {
+      const resp = await fetch("data.json", { cache: "no-store" });
+      const json = await resp.json();
+      if (json.history && json.history.length) {
+        merged = json.history;
+        source = "builtin";
+      }
+    } catch(e) {}
+  }
+
+  if (merged.length === 0) {
+    renderSourceBadge("error", 0);
+    showToast("❌ 数据获取失败");
+    return;
+  }
+
+  // 保存
+  saveStorage(merged);
+  allData = merged;
+
+  // 渲染
+  const latest = merged[merged.length - 1];
+  renderLatest(latest);
+
+  // V8 预测
+  const pred = v8Predict(merged);
+  currentPred = pred;
+  renderPrediction(pred);
+  renderHistory(merged);
+  renderSourceBadge(source, merged.length);
+
+  document.getElementById("updateTime").textContent =
+    `最后更新: ${new Date().toLocaleString("zh-CN")}`;
+
+  if (!silent) showToast(`✅ 已更新 · ${merged.length}期 · V8引擎`);
+}
+
+function manualRefresh() {
+  fetchAndUpdate(false);
+}
+
+// --- 启动 ---
+async function init() {
+  // 先渲染本地缓存（秒开）
+  const local = loadStorage();
+  if (local.length > 0) {
+    allData = local;
+    renderLatest(local[local.length - 1]);
+    renderHistory(local);
+    renderSourceBadge("localStorage", local.length);
+  }
+
+  // 再拉远程
+  await fetchAndUpdate(true);
+
+  // 启动倒计时
+  startCountdown();
+
+  // 每60秒自动检测新期
+  setInterval(() => {
+    const now = new Date();
+    // 跳过维护窗口 19:00-19:30 北京时间
+    const utc8 = new Date(now.getTime() + 8 * 3600000);
+    if (utc8.getUTCHours() === 19 && utc8.getUTCMinutes() < 30) return;
+    fetchAndUpdate(true);
+  }, 60000);
+}
+
+// 页面可见性变化 → 刷新
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) fetchAndUpdate(true);
+});
+
+// 启动
+init().catch(err => {
+  console.error("初始化失败:", err);
+  showToast("❌ 初始化失败: " + err.message);
+});
 </script>
 </body>
 </html>
