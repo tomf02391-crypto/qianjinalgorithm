@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>⚡ 千金星轨 · BCLC PC28</title>
+<style>
+:root {
+  --bg: #0a0e1a;
+  --card: #111827;
+  --card2: #1a2332;
+  --border: #1e3a5f;
+  --accent: #00d4ff;
+  --accent2: #ffd700;
+  --green: #00ff88;
+  --red: #ff4757;
+  --orange: #ffa502;
+  --purple: #a855f7;
+  --text: #e8eef5;
+  --text2: #94a3b8;
+  --big: #ff4757;
+  --small: #2ed573;
+  --dan: #ffa502;
+  --shuang: #70a1ff;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height:100vh;
+  padding-bottom:80px;
+}
+.header {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+.header-top {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:6px;
+}
+.header h1 {
+  font-size: 18px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing:1px;
+}
+.badge {
+  display:inline-flex; align-items:center; gap:4px;
+  font-size:10px; padding:2px 8px; border-radius:10px;
+  background:#0d3320; color:var(--green); border:1px solid #1a5c3a;
+}
+.badge.off { background:#3d1515; color:var(--red); border-color:#5c1a1a; }
+.badge.warn { background:#3d2f15; color:var(--orange); border-color:#5c451a; }
+.info-row {
+  display:flex; gap:12px; font-size:11px; color:var(--text2);
+  flex-wrap:wrap;
+}
+.info-row span { white-space:nowrap; }
+
+/* 倒计时 */
+.countdown-wrap {
+  background: var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px 16px;
+  margin:10px;
+  text-align:center;
+}
+.countdown-num {
+  font-size:42px; font-weight:900;
+  background: linear-gradient(180deg, var(--accent), #0090aa);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:2px;
+}
+.countdown-label { font-size:11px; color:var(--text2); margin-top:2px; }
+
+/* 最新开奖 */
+.latest-card {
+  background: var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px 16px;
+  margin:10px;
+}
+.latest-card .title {
+  font-size:12px; color:var(--text2); margin-bottom:8px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.balls-row {
+  display:flex; gap:8px; align-items:center; justify-content:center;
+  margin:8px 0;
+}
+.ball {
+  width:48px; height:48px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; font-weight:900;
+  border:2px solid;
+}
+.ball.a { border-color:var(--accent); color:var(--accent); background:rgba(0,212,255,0.08); }
+.ball.b { border-color:var(--accent2); color:var(--accent2); background:rgba(255,215,0,0.08); }
+.ball.c { border-color:var(--purple); color:var(--purple); background:rgba(168,85,247,0.08); }
+.ball-sum {
+  width:56px; height:56px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:24px; font-weight:900;
+  border:3px solid var(--green); color:var(--green);
+  background:rgba(0,255,136,0.08);
+  margin-left:4px;
+}
+.plus { font-size:20px; color:var(--text2); }
+
+.combo-row {
+  display:flex; gap:6px; justify-content:center; margin-top:8px; flex-wrap:wrap;
+}
+.tag {
+  font-size:11px; padding:3px 10px; border-radius:6px; font-weight:600;
+}
+.tag-big { background:rgba(255,71,87,0.15); color:var(--big); border:1px solid rgba(255,71,87,0.3); }
+.tag-small { background:rgba(46,213,115,0.15); color:var(--small); border:1px solid rgba(46,213,115,0.3); }
+.tag-dan { background:rgba(255,165,2,0.15); color:var(--dan); border:1px solid rgba(255,165,2,0.3); }
+.tag-shuang { background:rgba(112,161,255,0.15); color:var(--shuang); border:1px solid rgba(112,161,255,0.3); }
+.tag-combo { background:rgba(168,85,247,0.15); color:var(--purple); border:1px solid rgba(168,85,247,0.3); }
+.tag-pattern { background:rgba(0,212,255,0.12); color:var(--accent); border:1px solid rgba(0,212,255,0.3); }
+
+/* 原始20码 */
+.raw-nums {
+  margin-top:10px; padding:8px;
+  background:var(--card2); border-radius:8px;
+  font-size:10px; color:var(--text2);
+  word-break:break-all; line-height:1.6;
+}
+.raw-nums strong { color:var(--accent); }
+
+/* 预测区 */
+.pred-section {
+  background: var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px 16px;
+  margin:10px;
+}
+.pred-section .sec-title {
+  font-size:13px; font-weight:700; margin-bottom:10px;
+  display:flex; align-items:center; gap:6px;
+}
+.pred-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:8px;
+}
+.pred-box {
+  background:var(--card2); border:1px solid var(--border);
+  border-radius:8px; padding:10px; text-align:center;
+}
+.pred-box .label { font-size:10px; color:var(--text2); margin-bottom:4px; }
+.pred-box .value { font-size:18px; font-weight:800; }
+.pred-box.kill .value { color:var(--red); }
+.pred-box.main .value { color:var(--accent2); }
+.pred-box.pick .value { color:var(--green); }
+.pred-box.combo .value { color:var(--purple); }
+
+.special-balls {
+  display:flex; gap:6px; justify-content:center; margin-top:6px; flex-wrap:wrap;
+}
+.special-ball {
+  width:36px; height:36px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; font-weight:800;
+  border:2px solid var(--accent2); color:var(--accent2);
+  background:rgba(255,215,0,0.08);
+}
+.special-ball.backup {
+  border-color:var(--purple); color:var(--purple);
+  background:rgba(168,85,247,0.08); font-size:14px;
+}
+.special-ball.kill {
+  border-color:var(--red); color:var(--red);
+  background:rgba(255,71,87,0.08); font-size:14px;
+}
+
+/* 历史表 */
+.history-section {
+  background: var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px 16px;
+  margin:10px;
+}
+.history-table {
+  width:100%; border-collapse:collapse; font-size:11px;
+}
+.history-table th {
+  text-align:left; padding:6px 4px; color:var(--text2);
+  border-bottom:1px solid var(--border); font-weight:500;
+}
+.history-table td {
+  padding:5px 4px; border-bottom:1px solid rgba(30,58,95,0.4);
+}
+.history-table tr.hit { background:rgba(0,255,136,0.04); }
+.history-table tr.miss { background:rgba(255,71,87,0.03); }
+.dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+.dot.hit { background:var(--green); }
+.dot.miss { background:var(--red); }
+
+/* 统计 */
+.stats-row {
+  display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;
+}
+.stat-mini {
+  flex:1; min-width:80px;
+  background:var(--card2); border:1px solid var(--border);
+  border-radius:8px; padding:8px; text-align:center;
+}
+.stat-mini .v { font-size:16px; font-weight:800; }
+.stat-mini .l { font-size:9px; color:var(--text2); margin-top:2px; }
+.stat-mini.green .v { color:var(--green); }
+.stat-mini.red .v { color:var(--red); }
+.stat-mini.gold .v { color:var(--accent2); }
+.stat-mini.blue .v { color:var(--accent); }
+
+/* 记录点 */
+.record-dots {
+  display:flex; gap:3px; margin-top:6px; flex-wrap:wrap;
+}
+.record-dot {
+  width:10px; height:10px; border-radius:50%;
+}
+.record-dot.hit { background:var(--green); }
+.record-dot.miss { background:var(--red); }
+
+/* 刷新按钮 */
+.refresh-btn {
+  position:fixed; right:16px; bottom:16px;
+  width:56px; height:56px; border-radius:50%;
+  border:none; cursor:pointer;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  font-size:24px; color:#000; font-weight:900;
+  box-shadow:0 4px 16px rgba(0,212,255,0.3);
+  z-index:200;
+  display:flex; align-items:center; justify-content:center;
+}
+.refresh-btn:active { transform:scale(0.92); }
+
+/* 消息条 */
+.msg-bar {
+  margin:10px; padding:10px 14px;
+  border-radius:8px; font-size:12px;
+  display:flex; align-items:center; gap:8px;
+}
+.msg-bar.ok { background:rgba(0,255,136,0.08); border:1px solid rgba(0,255,136,0.2); color:var(--green); }
+.msg-bar.err { background:rgba(255,71,87,0.08); border:1px solid rgba(255,71,87,0.2); color:var(--red); }
+.msg-bar.warn { background:rgba(255,165,2,0.08); border:1px solid rgba(255,165,2,0.2); color:var(--orange); }
+.msg-bar.info { background:rgba(0,212,255,0.08); border:1px solid rgba(0,212,255,0.2); color:var(--accent); }
+
+/* 进度条 */
+.progress-bar {
+  height:4px; background:var(--card2); border-radius:2px; margin-top:6px; overflow:hidden;
+}
+.progress-fill {
+  height:100%; border-radius:2px;
+  transition:width 0.5s ease;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <h1>⚡ 千金星轨 · BCLC PC28</h1>
+    <span class="badge" id="connBadge">🔌 连接中...</span>
+  </div>
+  <div class="info-row">
+    <span id="infoSource">数据源: -</span>
+    <span id="infoTZ">时区: -</span>
+    <span id="infoPeriod">期号: -</span>
+  </div>
+</div>
+
+<div class="countdown-wrap">
+  <div class="countdown-num" id="countdown">--:--</div>
+  <div class="countdown-label" id="countdownLabel">等待下一期开奖</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%; background:var(--accent);"></div></div>
+</div>
+
+<div id="msgContainer"></div>
+
+<!-- 最新开奖 -->
+<div class="latest-card" id="latestCard" style="display:none;">
+  <div class="title">
+    <span>🎯 最新开奖</span>
+    <span id="latestPeriod" style="color:var(--accent);font-weight:700;"></span>
+  </div>
+  <div class="balls-row" id="ballsRow"></div>
+  <div class="combo-row" id="comboRow"></div>
+  <div class="raw-nums" id="rawNums"></div>
+</div>
+
+<!-- 预测区 -->
+<div class="pred-section" id="predSection" style="display:none;">
+  <div class="sec-title">🔮 下一期预测 <span style="font-size:10px;color:var(--text2);font-weight:400;" id="predConf"></span></div>
+  <div class="pred-grid">
+    <div class="pred-box main">
+      <div class="label">🎯 主推特码</div>
+      <div class="special-balls" id="mainBalls"></div>
+    </div>
+    <div class="pred-box backup" style="border-color:rgba(168,85,247,0.3);">
+      <div class="label" style="color:var(--purple);">🛡️ 候补特码</div>
+      <div class="special-balls" id="backupBalls"></div>
+    </div>
+    <div class="pred-box kill">
+      <div class="label">🔪 杀特码</div>
+      <div class="special-balls" id="killBalls"></div>
+    </div>
+    <div class="pred-box combo">
+      <div class="label">🎲 组合押/杀</div>
+      <div class="value" id="comboPred" style="font-size:13px;"></div>
+    </div>
+  </div>
+  <div style="margin-top:8px;">
+    <div style="font-size:10px;color:var(--text2);margin-bottom:3px;">投票详情</div>
+    <div class="record-dots" id="voteDots"></div>
+  </div>
+</div>
+
+<!-- 历史记录 -->
+<div class="history-section" id="historySection" style="display:none;">
+  <div class="sec-title">📋 近期开奖记录 <span style="font-size:10px;color:var(--text2);font-weight:400;" id="recordStats"></span></div>
+  <div style="overflow-x:auto;">
+    <table class="history-table" id="historyTable">
+      <thead>
+        <tr><th>期号</th><th>时间</th><th>三球</th><th>特码</th><th>组合</th><th>形态</th><th>主推</th><th>杀号</th></tr>
+      </thead>
+      <tbody id="historyBody"></tbody>
+    </table>
+  </div>
+  <div class="stats-row" id="statsRow"></div>
+</div>
+
+<button class="refresh-btn" onclick="BCData.refresh()" title="立即刷新">⟳</button>
+
+<script>
+// ============================================================
+// BCLC PC28 数据接口（内置完整版）
+// ============================================================
+const BCData = (() => {
+  'use strict';
+
+  // ---- 配置 ----
+  const CFG = {
+    bclcEndpoints: [
+      'https://lotto.bclc.com/keno/results.json',
+      'https://www.bclc.com/content/dam/bclc/keno/results.json',
+      'https://www.bclc.com/etc/designs/bclc/keno/latest.json',
+    ],
+    mirrorEndpoints: [
+      { name:'yu28', url:'https://yu28.top/api/bclc?count=30', parser:'yu28' },
+      { name:'pc28help', url:'https://pc28.help/api/bclc.json', parser:'pc28help' },
+      { name:'cors1', url:'https://corsproxy.io/?https://lotto.bclc.com/keno/results.json', parser:'bclc' },
+      { name:'cors2', url:'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://lotto.bclc.com/keno/results.json'), parser:'bclc' },
+    ],
+    drawInterval: 210, // 3分30秒
+    localStorageKey: 'bclc_pc28_data_v1',
+    maxHistory: 200,
+  };
+
+  // ---- 工具函数 ----
+  const $ = id => document.getElementById(id);
+  const now = () => new Date();
+  const bjTime = () => {
+    const d = new Date();
+    const utc = d.getTime() + d.getTimezoneOffset() * 60000;
+    return new Date(utc + 8 * 3600000); // 北京时间
+  };
+
+  // 判断夏令时（简化：3月第二个周日~11月第一个周日）
+  function isDST(date) {
+    const d = date || bjTime();
+    const year = d.getUTCFullYear();
+    // 近似：3月8日~11月1日
+    const dstStart = new Date(Date.UTC(year, 2, 8));
+    const dstEnd = new Date(Date.UTC(year, 10, 1));
+    const utc = new Date(d.getTime() - 8*3600000);
+    return utc >= dstStart && utc < dstEnd;
+  }
+
+  // BCLC 开奖时段（北京时间）
+  function getSessionInfo(bjDate) {
+    const dst = isDST(bjDate);
+    const startHour = dst ? 20 : 21;
+    const endHour = dst ? 19 : 20;
+    return { dst, startHour, endHour, tzName: dst ? 'PDT' : 'PST' };
+  }
+
+  function isOpenNow(bjDate) {
+    const d = bjDate || bjTime();
+    const { startHour, endHour } = getSessionInfo(d);
+    const h = d.getHours();
+    if (startHour === 20) return h >= 20 || h < 19;
+    return h >= 21 || h < 20;
+  }
+
+  // 获取当前期号 & 下一期倒计时
+  function getPeriodInfo(bjDate) {
+    const d = bjDate || bjTime();
+    const { startHour } = getSessionInfo(d);
+    
+    // 找当天开奖起始点
+    let sessionStart = new Date(d);
+    sessionStart.setHours(startHour, 0, 0, 0);
+    
+    let elapsed, periodSeq;
+    if (d >= sessionStart) {
+      elapsed = (d - sessionStart) / 1000;
+      periodSeq = Math.floor(elapsed / CFG.drawInterval) + 1;
+    } else {
+      // 属于前一天的末期
+      const prevStart = new Date(d);
+      prevStart.setDate(d.getDate() - 1);
+      prevStart.setHours(startHour, 0, 0, 0);
+      elapsed = (d - prevStart) / 1000;
+      periodSeq = Math.floor(elapsed / CFG.drawInterval) + 1;
+      sessionStart = prevStart;
+    }
+    
+    const dateStr = sessionStart.toISOString().slice(2,10).replace(/-/g,'');
+    const period = dateStr + String(periodSeq).padStart(4,'0');
+    
+    // 下一期时间
+    const nextDraw = new Date(sessionStart.getTime() + periodSeq * CFG.drawInterval * 1000);
+    const countdown = Math.max(0, Math.ceil((nextDraw - d) / 1000));
+    
+    return { period, countdown, nextDraw, periodSeq, sessionStart };
+  }
+
+  // ---- 核心解析：20码 → PC28 三球 ----
+  function parse20ToPC28(nums) {
+    if (!nums || nums.length !== 20) throw new Error('需要20个号码');
+    const n = [...nums].sort((a,b) => a-b);
+    const a = (n[1] + n[4] + n[7] + n[10] + n[13] + n[16]) % 10;
+    const b = (n[2] + n[5] + n[8] + n[11] + n[14] + n[17]) % 10;
+    const c = (n[3] + n[6] + n[9] + n[12] + n[15] + n[18]) % 10;
+    return { a, b, c, sum: a+b+c, raw: n };
+  }
+
+  // ---- 术语 ----
+  function getCombo(sum) {
+    const size = sum < 14 ? '小' : '大';
+    const parity = sum % 2 === 1 ? '单' : '双';
+    return size + parity;
+  }
+  function detectPattern(a, b, c) {
+    const s = [a,b,c].sort();
+    if (a===b && b===c) return '豹子';
+    if (a===b || b===c || a===c) return '对子';
+    if (s[1]-s[0]===1 && s[2]-s[1]===1) return '顺子';
+    return '杂六';
+  }
+
+  // ---- 种子数据生成（确定性） ----
+  function seededRandom(seed, min, max, count) {
+    const nums = new Set();
+    let s = seed;
+    while (nums.size < count) {
+      s = (s * 9301 + 49297) % 233280;
+      const v = min + Math.floor((s / 233280) * (max - min + 1));
+      nums.add(v);
+    }
+    return [...nums].sort((a,b) => a-b);
+  }
+
+  function generateSeedDraws(count) {
+    const draws = [];
+    const bj = bjTime();
+    const { periodSeq:curSeq } = getPeriodInfo(bj);
+    const { sessionStart } = getPeriodInfo(bj);
+    
+    for (let i = count - 1; i >= 0; i--) {
+      const t = new Date(sessionStart.getTime() + (curSeq - i - 1) * CFG.drawInterval * 1000);
+      if (t > bj) break;
+      
+      const seed = parseInt(t.toISOString().replace(/[^0-9]/g,'').slice(0,12));
+      const nums = seededRandom(seed, 0, 79, 20);
+      const r = parse20ToPC28(nums);
+      
+      const dateStr = t.toISOString().slice(0,10);
+      const timeStr = t.toISOString().slice(11,19);
+      const periodDate = t.toISOString().slice(2,10).replace(/-/g,'');
+      const seq = Math.floor((t - sessionStart) / (CFG.drawInterval*1000)) + 1;
+      const period = periodDate + String(seq).padStart(4,'0');
+      
+      draws.push({
+        period, date: dateStr, time: timeStr,
+        rawNums: nums,
+        a:r.a, b:r.b, c:r.c, sum:r.sum,
+        combo: getCombo(r.sum),
+        pattern: detectPattern(r.a,r.b,r.c),
+        source: 'seed'
+      });
+    }
+    return draws;
+  }
+
+  // ---- HTTP 请求（兼容各种环境） ----
+  async function httpGet(url, timeout = 12000) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeout);
+    try {
+      const resp = await fetch(url, { signal: ctrl.signal, cache:'no-cache' });
+      clearTimeout(timer);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      return await resp.json();
+    } catch(e) {
+      clearTimeout(timer);
+      throw e;
+    }
+  }
+
+  // ---- 解析各种返回格式 ----
+  function parseBCLCData(data) {
+    const draws = [];
+    let items = data;
+    if (data.draws) items = data.draws;
+    else if (data.results) items = data.results;
+    else if (data.data) items = data.data;
+    if (!Array.isArray(items)) return draws;
+
+    for (const item of items) {
+      try {
+        let nums = item.numbers || item.nums || item.drawNumbers || item.rawNums;
+        if (typeof nums === 'string') nums = nums.split(/[, ]+/).map(Number);
+        if (!nums || nums.length !== 20) continue;
+        nums = nums.map(Number).sort((a,b) => a-b);
+        if (nums.some(n => isNaN(n) || n<0 || n>79)) continue;
+        
+        const r = parse20ToPC28(nums);
+        const period = item.drawNumber || item.period || item.qihao || '';
+        const date = item.drawDate || item.date || '';
+        const time = item.drawTime || item.time || '';
+        
+        draws.push({
+          period, date, time,
+          rawNums: nums,
+          a:r.a, b:r.b, c:r.c, sum:r.sum,
+          combo: getCombo(r.sum),
+          pattern: detectPattern(r.a,r.b,r.c),
+          source: 'bclc'
+        });
+      } catch(e) { continue; }
+    }
+    return draws;
+  }
+
+  function parseMirrorData(data, type) {
+    const draws = [];
+    let items = data;
+    if (data.data) items = data.data;
+    else if (data.list) items = data.list;
+    if (!Array.isArray(items)) return draws;
+
+    for (const item of items) {
+      try {
+        let nums = item.nums || item.numbers || item.rawNums;
+        if (typeof nums === 'string') nums = nums.split(/[, ]+/).map(Number);
+        if (!nums || nums.length !== 20) continue;
+        nums = nums.map(Number).sort((a,b) => a-b);
+        
+        const r = parse20ToPC28(nums);
+        draws.push({
+          period: item.qihao || item.period || item.nbr || '',
+          date: item.date || '',
+          time: item.time || '',
+          rawNums: nums,
+          a:r.a, b:r.b, c:r.c, sum:r.sum,
+          combo: getCombo(r.sum),
+          pattern: detectPattern(r.a,r.b,r.c),
+          source: type
+        });
+      } catch(e) { continue; }
+    }
+    return draws;
+  }
+
+  // ---- 主抓取流程 ----
+  async function fetchAll() {
+    const bj = bjTime();
+    const { dst, tzName } = getSessionInfo(bj);
+    const { countdown, nextDraw } = getPeriodInfo(bj);
+    const isOpen = isOpenNow(bj);
+
+    let draws = [];
+    let source = 'none';
+    let msg = '';
+
+    // 1. BCLC 官方
+    for (const url of CFG.bclcEndpoints) {
+      try {
+        const data = await httpGet(url, 10000);
+        const parsed = parseBCLCData(data);
+        if (parsed.length > 0) { draws = parsed; source = 'bclc_official'; break; }
+      } catch(e) { /* try next */ }
+    }
+
+    // 2. 第三方镜像
+    if (draws.length === 0) {
+      for (const m of CFG.mirrorEndpoints) {
+        try {
+          const data = await httpGet(m.url, 10000);
+          const parsed = m.parser === 'bclc' ? parseBCLCData(data) : parseMirrorData(data, m.name);
+          if (parsed.length > 0) { draws = parsed; source = m.name; break; }
+        } catch(e) { /* try next */ }
+      }
+    }
+
+    // 3. 本地种子兜底
+    if (draws.length === 0) {
+      draws = generateSeedDraws(30);
+      source = 'seed';
+      msg = '⚠️ 外部接口不可达，使用本地种子数据';
+    } else {
+      msg = `✅ 数据源: ${source} | ${draws.length}期`;
+    }
+
+    // 去重 + 排序（最新在前）
+    const seen = new Set();
+    draws = draws.filter(d => {
+      if (seen.has(d.period)) return false;
+      seen.add(d.period);
+      return true;
+    }).sort((a,b) => b.period.localeCompare(a.period));
+
+    // 存入 localStorage
+    const store = {
+      draws: draws.slice(0, CFG.maxHistory),
+      lastUpdate: bj.toISOString(),
+      source,
+      tzName,
+    };
+    try { localStorage.setItem(CFG.localStorageKey, JSON.stringify(store)); } catch(e) {}
+
+    return {
+      success: true,
+      source,
+      draws: draws.slice(0, 50),
+      countdown,
+      nextDraw: nextDraw.toISOString(),
+      isOpen,
+      tzName,
+      message: msg,
+      bjTime: bj.toISOString(),
+    };
+  }
+
+  // ---- 从 localStorage 读取 ----
+  function loadLocal() {
+    try {
+      const raw = localStorage.getItem(CFG.localStorageKey);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch(e) { return null; }
+  }
+
+  // ---- 公开接口 ----
+  return {
+    fetch: fetchAll,
+    loadLocal,
+    parse20ToPC28,
+    getCombo,
+    detectPattern,
+    getPeriodInfo,
+    isOpenNow,
+    isDST,
+    CFG,
+  };
+})();
+
+// ============================================================
+// 预测引擎（V8 简化版，基于真实数据）
+// ============================================================
+const Predictor = (() => {
+  function predict(draws) {
+    if (!draws || draws.length < 10) return null;
+    
+    const recent = draws.slice(0, 50);
+    const sums = recent.map(d => d.sum);
+    const combos = recent.map(d => d.combo);
+    
+    // 1. EMA 和值
+    let ema = sums[0];
+    const k = 0.3;
+    for (let i = 1; i < sums.length; i++) ema = k * sums[i] + (1-k) * ema;
+    
+    // 2. 频率统计
+    const freq = {};
+    recent.forEach((d, i) => {
+      const w = 1 + (recent.length - i) * 0.05;
+      freq[d.sum] = (freq[d.sum] || 0) + w;
+    });
+    
+    // 3. 组合频率
+    const comboFreq = {};
+    combos.forEach(c => { comboFreq[c] = (comboFreq[c] || 0) + 1; });
+    const sortedCombos = Object.entries(comboFreq).sort((a,b) => b[1]-a[1]);
+    const topCombo = sortedCombos[0] ? sortedCombos[0][0] : '小单';
+    
+    // 4. 杀组合（最少出现的）
+    const bottomCombo = sortedCombos[sortedCombos.length-1] ? sortedCombos[sortedCombos.length-1][0] : '大双';
+    
+    // 5. 特码主推（EMA附近 + 高频）
+    const center = Math.round(ema);
+    const candidates = [];
+    for (let v = Math.max(0, center-3); v <= Math.min(27, center+3); v++) {
+      candidates.push({ v, score: (freq[v]||0) + (v===center?3:0) + (Math.abs(v-center)<=1?2:0) });
+    }
+    candidates.sort((a,b) => b.score - a.score);
+    const main3 = candidates.slice(0,3).map(c => c.v);
+    const backup2 = candidates.slice(3,5).map(c => c.v);
+    
+    // 6. 杀特码（概率最低的5个）
+    const allFreq = {};
+    for (let i=0;i<=27;i++) allFreq[i] = freq[i] || 0;
+    const killList = Object.entries(allFreq).sort((a,b) => a[1]-b[1]).slice(0,5).map(x => Number(x[0]));
+    
+    // 7. 置信度
+    const spread = Math.max(...candidates.map(c=>c.score)) - Math.min(...candidates.map(c=>c.score));
+    const confidence = Math.min(55, 25 + spread * 8);
+    
+    return {
+      mainBalls: main3,
+      backupBalls: backup2,
+      killBalls: killList,
+      pickCombos: [topCombo, sortedCombos[1]?sortedCombos[1][0]:'小双'],
+      killCombo: bottomCombo,
+      center: center,
+      confidence: Math.round(confidence),
+      ema: ema.toFixed(1),
+      voteDetails: candidates.slice(0,8).map(c => ({v:c.v, s:c.score.toFixed(1)})),
+    };
+  }
+  return { predict };
+})();
+
+// ============================================================
+// UI 渲染
+// ============================================================
+let APP_DATA = null;
+let COUNTDOWN_TIMER = null;
+
+function showMsg(text, type) {
+  const el = document.getElementById('msgContainer');
+  const cls = type === 'ok' ? 'ok' : type === 'err' ? 'err' : type === 'warn' ? 'warn' : 'info';
+  el.innerHTML = `<div class="msg-bar ${cls}">${text}</div>`;
+}
+
+function renderConnection(data) {
+  const badge = document.getElementById('connBadge');
+  const srcMap = {
+    'bclc_official': { text:'✅ BCLC官方', cls:'' },
+    'yu28': { text:'🔄 yu28镜像', cls:'warn' },
+    'pc28help': { text:'🔄 pc28.help', cls:'warn' },
+    'cors1': { text:'🔄 CORS代理', cls:'warn' },
+    'cors2': { text:'🔄 CORS代理', cls:'warn' },
+    'seed': { text:'⚠️ 本地种子', cls:'off' },
+  };
+  const info = srcMap[data.source] || { text: data.source, cls:'warn' };
+  badge.textContent = info.text;
+  badge.className = 'badge' + (info.cls ? ' ' + info.cls : '');
+  
+  document.getElementById('infoSource').textContent = '数据源: ' + data.source;
+  document.getElementById('infoTZ').textContent = '时区: ' + data.tzName;
+}
+
+function renderCountdown(cd, isOpen, nextDraw) {
+  const m = Math.floor(cd / 60);
+  const s = cd % 60;
+  document.getElementById('countdown').textContent = 
+    String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  
+  const label = document.getElementById('countdownLabel');
+  if (isOpen) {
+    label.textContent = '下一期开奖倒计时 · 开奖中 🟢';
+    label.style.color = 'var(--green)';
+  } else {
+    const nd = new Date(nextDraw);
+    label.textContent = '下一期: ' + nd.toLocaleString('zh-CN', {timeZone:'Asia/Shanghai'});
+    label.style.color = 'var(--orange)';
+  }
+  
+  // 进度条
+  const elapsed = 210 - (cd % 210);
+  const pct = (elapsed / 210 * 100).toFixed(0);
+  const fill = document.getElementById('progressFill');
+  fill.style.width = pct + '%';
+  fill.style.background = isOpen ? 'var(--green)' : 'var(--orange)';
+}
+
+function renderLatest(draw) {
+  document.getElementById('latestCard').style.display = '';
+  document.getElementById('latestPeriod').textContent = draw.period;
+  
+  const row = document.getElementById('ballsRow');
+  row.innerHTML = `
+    <div class="ball a">${draw.a}</div>
+    <span class="plus">+</span>
+    <div class="ball b">${draw.b}</div>
+    <span class="plus">+</span>
+    <div class="ball c">${draw.c}</div>
+    <span class="plus">=</span>
+    <div class="ball-sum">${draw.sum}</div>
+  `;
+  
+  const comboRow = document.getElementById('comboRow');
+  const sizeTag = draw.sum < 14 ? 'tag-small' : 'tag-big';
+  const sizeText = draw.sum < 14 ? '小' : '大';
+  const parityTag = draw.sum % 2 === 1 ? 'tag-dan' : 'tag-shuang';
+  const parityText = draw.sum % 2 === 1 ? '单' : '双';
+  comboRow.innerHTML = `
+    <span class="tag ${sizeTag}">${sizeText}</span>
+    <span class="tag ${parityTag}">${parityText}</span>
+    <span class="tag tag-combo">${draw.combo}</span>
+    <span class="tag tag-pattern">${draw.pattern}</span>
+  `;
+  
+  const raw = document.getElementById('rawNums');
+  raw.innerHTML = `<strong>20码:</strong> ${draw.rawNums.join(', ')}`;
+}
+
+function renderPrediction(pred, draws) {
+  if (!pred) return;
+  document.getElementById('predSection').style.display = '';
+  
+  document.getElementById('predConf').textContent = `(置信度${pred.confidence}% EMA=${pred.ema})`;
+  
+  document.getElementById('mainBalls').innerHTML = 
+    pred.mainBalls.map(v => `<div class="special-ball">${v}</div>`).join('');
+  document.getElementById('backupBalls').innerHTML = 
+    pred.backupBalls.map(v => `<div class="special-ball backup">${v}</div>`).join('');
+  document.getElementById('killBalls').innerHTML = 
+    pred.killBalls.map(v => `<div class="special-ball kill">${v}</div>`).join('');
+  
+  document.getElementById('comboPred').innerHTML = 
+    `押:<b style="color:var(--green)">${pred.pickCombos.join('+')}</b> 杀:<b style="color:var(--red)">${pred.killCombo}</b>`;
+  
+  // 投票详情
+  const dots = pred.voteDetails.map(v => 
+    `<span class="record-dot hit" title="特码${v.v} 权重${v.s}" style="opacity:${Math.min(1, 0.3+parseFloat(v.s)/10)}">${v.v}</span>`
+  ).join('');
+  document.getElementById('voteDots').innerHTML = dots;
+}
+
+function renderHistory(draws, pred) {
+  if (!draws || draws.length === 0) return;
+  document.getElementById('historySection').style.display = '';
+  
+  const body = document.getElementById('historyBody');
+  const recent = draws.slice(0, 20);
+  
+  body.innerHTML = recent.map(d => {
+    const mainHit = pred && pred.mainBalls.includes(d.sum) ? 'hit' : 'miss';
+    const killCorrect = pred && !pred.killBalls.includes(d.sum) ? 'hit' : 'miss';
+    const sizeTag = d.sum < 14 ? '小' : '大';
+    const parity = d.sum % 2 === 1 ? '单' : '双';
+    return `<tr class="${mainHit==='hit'?'hit':'miss'}">
+      <td style="font-weight:600;color:var(--accent);">${d.period.slice(-6)}</td>
+      <td style="color:var(--text2);font-size:10px;">${d.time||''}</td>
+      <td><b style="color:var(--accent);">${d.a}</b><b style="color:var(--accent2);">${d.b}</b><b style="color:var(--purple);">${d.c}</b></td>
+      <td style="font-weight:800;font-size:13px;color:${d.sum>=14?'var(--big)':'var(--small)'};">${d.sum}</td>
+      <td><span class="tag tag-combo" style="font-size:9px;padding:1px 5px;">${d.combo}</span></td>
+      <td><span class="tag tag-pattern" style="font-size:9px;padding:1px 5px;">${d.pattern}</span></td>
+      <td><div class="dot ${mainHit}" title="主推${mainHit==='hit'?'中':'未中'}"></div></td>
+      <td><div class="dot ${killCorrect}" title="杀号${killCorrect==='hit'?'正确':'错误'}"></div></td>
+    </tr>`;
+  }).join('');
+  
+  // 统计
+  const total = recent.length;
+  let mainHits = 0, killCorrects = 0;
+  recent.forEach(d => {
+    if (pred && pred.mainBalls.includes(d.sum)) mainHits++;
+    if (pred && !pred.killBalls.includes(d.sum)) killCorrects++;
+  });
+  
+  document.getElementById('recordStats').textContent = 
+    `${total}期 | 主推命中 ${mainHits}/${total} | 杀号正确 ${killCorrects}/${total}`;
+  
+  const mhPct = total > 0 ? (mainHits/total*100).toFixed(0) : 0;
+  const kcPct = total > 0 ? (killCorrects/total*100).toFixed(0) : 0;
+  
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-mini gold"><div class="v">${mhPct}%</div><div class="l">主推命中率</div></div>
+    <div class="stat-mini green"><div class="v">${kcPct}%</div><div class="l">杀号正确率</div></div>
+    <div class="stat-mini blue"><div class="v">${total}</div><div class="l">统计期数</div></div>
+    <div class="stat-mini ${pred&&pred.confidence>40?'gold':'red'}"><div class="v">${pred?pred.confidence:0}%</div><div class="l">置信度</div></div>
+  `;
+}
+
+// ---- 主刷新流程 ----
+async function refresh() {
+  showMsg('🔄 正在连接 BCLC 数据接口...', 'info');
+  
+  // 先渲染本地缓存
+  const local = BCData.loadLocal();
+  if (local && local.draws && local.draws.length > 0) {
+    APP_DATA = local;
+    renderConnection({ source: local.source + '(缓存)', tzName: local.tzName });
+    renderCountdown(BCData.getPeriodInfo().countdown, BCData.isOpenNow(), new Date(BCData.getPeriodInfo().nextDraw));
+    renderLatest(local.draws[0]);
+    const pred = Predictor.predict(local.draws);
+    renderPrediction(pred, local.draws);
+    renderHistory(local.draws, pred);
+  }
+  
+  try {
+    const data = await BCData.fetch();
+    APP_DATA = data;
+    renderConnection(data);
+    showMsg(data.message, data.source === 'seed' ? 'warn' : 'ok');
+    renderCountdown(data.countdown, data.isOpen, new Date(data.nextDraw));
+    
+    if (data.draws.length > 0) {
+      renderLatest(data.draws[0]);
+      document.getElementById('infoPeriod').textContent = '最新期: ' + data.draws[0].period;
+      const pred = Predictor.predict(data.draws);
+      renderPrediction(pred, data.draws);
+      renderHistory(data.draws, pred);
+    }
+  } catch(e) {
+    showMsg('❌ 数据获取失败: ' + e.message, 'err');
+  }
+}
+
+// ---- 倒计时循环 ----
+function startCountdown() {
+  if (COUNTDOWN_TIMER) clearInterval(COUNTDOWN_TIMER);
+  COUNTDOWN_TIMER = setInterval(() => {
+    const info = BCData.getPeriodInfo();
+    const isOpen = BCData.isOpenNow();
+    renderCountdown(info.countdown, isOpen, info.nextDraw);
+    
+    // 倒计时归零时自动刷新
+    if (info.countdown <= 1) {
+      refresh();
+    }
+  }, 1000);
+}
+
+// ---- 初始化 ----
+BCData.refresh = refresh;
+window.addEventListener('DOMContentLoaded', () => {
+  refresh().then(() => startCountdown());
+});
+window.addEventListener('online', refresh);
+setInterval(refresh, 5 * 60 * 1000); // 每5分钟自动刷新
+</script>
+</body>
+</html>
