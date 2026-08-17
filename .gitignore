@@ -1,6 +1,4 @@
-__pycache__/
 *.pyc
-.DS_Store
-node_modules/
-*.log
-.git/
+__pycache__/
+.tool_output/
+*.zip

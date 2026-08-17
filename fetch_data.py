@@ -1,577 +1,322 @@
 #!/usr/bin/env python3
 """
-fetch_data.py — V9真数据版
-从 pc28.help 拉取真实PC28数据 + V9预测
-关键修复：
-  1. 正确解析 kj.json 格式（number=特码字符串）
-  2. 正确解析 keno.json 格式（20码原始数据）
-  3. 绝不生成假数据，失败就保留旧数据
-  4. 记录每期预测的对错
-降级策略: pc28.help/kj → pc28.help/keno → yu28.top → 保留旧数据
-"""
+fetch_data.py — GitHub Actions 抓取 PC28 真实开奖数据 + V8 预测引擎
 
+数据源（优先级递减）：
+  1) pc28.help/api/keno.json    ← 用户验证可用，含原始20码
+  2) yu28.top/api/kj.json       ← 备用
+  3) 内置真实数据 + 本地算法     ← 兜底（绝不生成假数据）
+
+输出：data.json（供 index.html 在浏览器端 API 不可用时兜底）
+"""
 import json
+import urllib.request
+import urllib.parse
+import datetime
 import sys
 import os
-import time
-import random
-from datetime import datetime, timedelta
-from pathlib import Path
-
-try:
-    import requests
-    HAS_REQUESTS = True
-except:
-    import urllib.request
-    import ssl
-    HAS_REQUESTS = False
-
-# ============================================================
-# HTTP
-# ============================================================
-def http_get(url, timeout=10):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "application/json",
-        "Referer": "https://pc28.help/",
-    }
-    if HAS_REQUESTS:
-        r = requests.get(url, headers=headers, timeout=timeout, verify=False)
-        r.raise_for_status()
-        return r.text
-    else:
-        ctx = ssl.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
-        req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, context=ctx, timeout=timeout) as resp:
-            return resp.read().decode("utf-8")
-
-# ============================================================
-# 解析工具
-# ============================================================
-def combo_of(sum_val):
-    if sum_val >= 14:
-        return "大单" if sum_val % 2 == 1 else "大双"
-    return "小单" if sum_val % 2 == 1 else "小双"
-
-def decompose_sum(s):
-    """从特码反推最可能的三球组合"""
-    results = []
-    for a in range(10):
-        for b in range(10):
-            for c in range(10):
-                if a + b + c == s:
-                    sorted_combo = sorted([a, b, c])
-                    results.append(tuple(sorted_combo))
-    # 去重
-    seen = set()
-    unique = []
-    for r in results:
-        if r not in seen:
-            seen.add(r)
-            unique.append(r)
-    # 优先对子/豹子
-    unique.sort(key=lambda x: (not (x[0]==x[1] or x[1]==x[2]), x[0]))
-    return list(unique[0]) if unique else [0, 0, 0]
-
-def calc_from_raw(nums):
-    """从20码计算三球"""
-    sorted_nums = sorted(nums)
-    b1, b2, b3 = sorted_nums[0], sorted_nums[1], sorted_nums[2]
-    total = b1 + b2 + b3
-    return {"b1": b1, "b2": b2, "b3": b3, "sum": total, "combo": combo_of(total)}
-
-# ============================================================
-# 接口1: kj.json → {countdown, data:[{nbr,date,time,number,num,combination}], message}
-# ============================================================
-def fetch_kj(url="https://pc28.help/api/kj.json?nbr=60"):
-    text = http_get(url)
-    data = json.loads(text)
-    
-    # 检查是否被Cloudflare拦截
-    if "title" in data and data.get("status") == 403:
-        raise RuntimeError(f"Cloudflare拦截: {data.get('detail','')}")
-    
-    items = data.get("data") or data.get("list") or data.get("results") or []
-    if not items and isinstance(data, list):
-        items = data
-    if not items:
-        raise ValueError(f"kj.json 无数据, keys={list(data.keys()) if isinstance(data,dict) else type(data)}")
-    
-    parsed = []
-    for item in items:
-        try:
-            nbr = str(item.get("nbr") or item.get("issue") or item.get("period") or "")
-            # number 或 num 是特码
-            num_val = item.get("number") or item.get("num") or item.get("sum") or item.get("value")
-            if num_val is None:
-                continue
-            sum_val = int(num_val)
-            if sum_val < 0 or sum_val > 27:
-                continue
-            
-            date_str = item.get("date") or item.get("draw_date") or ""
-            time_str = item.get("time") or item.get("draw_time") or ""
-            combo_str = item.get("combination") or item.get("combo") or combo_of(sum_val)
-            
-            # 从特码反推三球
-            balls = decompose_sum(sum_val)
-            
-            parsed.append({
-                "nbr": nbr,
-                "date": date_str,
-                "time": time_str,
-                "raw": balls,
-                "b1": balls[0], "b2": balls[1], "b3": balls[2],
-                "sum": sum_val,
-                "combo": combo_str,
-                "odd": sum_val % 2 == 1,
-                "big": sum_val >= 14,
-            })
-        except Exception:
-            continue
-    
-    if not parsed:
-        raise ValueError("kj.json 解析后无有效数据")
-    
-    parsed.sort(key=lambda x: x.get("nbr", ""))
-    return parsed
-
-# ============================================================
-# 接口2: keno.json → 20码原始数据
-# ============================================================
-def fetch_keno(url="https://pc28.help/api/keno.json?count=60"):
-    text = http_get(url)
-    data = json.loads(text)
-    
-    if "title" in data and data.get("status") == 403:
-        raise RuntimeError(f"Cloudflare拦截: {data.get('detail','')}")
-    
-    items = data.get("data") or data.get("list") or data.get("results") or []
-    if not items and isinstance(data, list):
-        items = data
-    if not items:
-        raise ValueError(f"keno.json 无数据")
-    
-    parsed = []
-    for item in items:
-        try:
-            nbr = str(item.get("nbr") or item.get("issue") or item.get("period") or "")
-            
-            # 获取20码
-            nums = item.get("nums") or item.get("numbers") or item.get("raw") or item.get("num")
-            if isinstance(nums, str):
-                nums = [int(x) for x in nums.split(",") if x.strip().isdigit()]
-            elif isinstance(nums, list):
-                nums = [int(x) for x in nums]
-            else:
-                continue
-            
-            if len(nums) < 19:
-                # 如果num是特码字符串（不是20码），尝试另一种解析
-                num_val = item.get("number") or item.get("sum")
-                if num_val is not None:
-                    sum_val = int(num_val)
-                    if 0 <= sum_val <= 27:
-                        balls = decompose_sum(sum_val)
-                        parsed.append({
-                            "nbr": nbr,
-                            "date": item.get("date", ""),
-                            "time": item.get("time", ""),
-                            "raw": balls,
-                            "b1": balls[0], "b2": balls[1], "b3": balls[2],
-                            "sum": sum_val,
-                            "combo": combo_of(sum_val),
-                            "odd": sum_val % 2 == 1,
-                            "big": sum_val >= 14,
-                        })
-                continue
-            
-            info = calc_from_raw(nums)
-            parsed.append({
-                "nbr": nbr,
-                "date": item.get("date", ""),
-                "time": item.get("time", ""),
-                "raw": nums,
-                "b1": info["b1"], "b2": info["b2"], "b3": info["b3"],
-                "sum": info["sum"],
-                "combo": info["combo"],
-                "odd": info["sum"] % 2 == 1,
-                "big": info["sum"] >= 14,
-            })
-        except Exception:
-            continue
-    
-    if not parsed:
-        raise ValueError("keno.json 解析后无有效数据")
-    
-    parsed.sort(key=lambda x: x.get("nbr", ""))
-    return parsed
-
-# ============================================================
-# 接口3: yu28.top 备用
-# ============================================================
-def fetch_yu28(url="https://www.yu28.top/api/v1/pc28/history?limit=60"):
-    text = http_get(url)
-    data = json.loads(text)
-    
-    if "title" in data and data.get("status") == 403:
-        raise RuntimeError(f"Cloudflare拦截: {data.get('detail','')}")
-    
-    items = data.get("data") or data.get("list") or data.get("results") or []
-    if not items and isinstance(data, list):
-        items = data
-    if not items:
-        raise ValueError("yu28.top 无数据")
-    
-    parsed = []
-    for item in items:
-        try:
-            nbr = str(item.get("nbr") or item.get("issue") or "")
-            nums = item.get("num") or item.get("numbers") or item.get("raw") or ""
-            if isinstance(nums, str):
-                nums_list = [int(x) for x in nums.split(",") if x.strip().isdigit()]
-            elif isinstance(nums, list):
-                nums_list = [int(x) for x in nums]
-            else:
-                continue
-            
-            if len(nums_list) >= 19:
-                info = calc_from_raw(nums_list)
-            elif len(nums_list) == 1:
-                # 可能是特码
-                s = nums_list[0]
-                if 0 <= s <= 27:
-                    balls = decompose_sum(s)
-                    info = {"b1": balls[0], "b2": balls[1], "b3": balls[2], "sum": s, "combo": combo_of(s)}
-                else:
-                    continue
-            else:
-                continue
-            
-            parsed.append({
-                "nbr": nbr,
-                "date": item.get("date", ""),
-                "time": item.get("time", ""),
-                "raw": nums_list if len(nums_list) >= 19 else decompose_sum(info["sum"]),
-                "b1": info["b1"], "b2": info["b2"], "b3": info["b3"],
-                "sum": info["sum"],
-                "combo": info["combo"],
-                "odd": info["sum"] % 2 == 1,
-                "big": info["sum"] >= 14,
-            })
-        except Exception:
-            continue
-    
-    if not parsed:
-        raise ValueError("yu28.top 解析后无有效数据")
-    
-    parsed.sort(key=lambda x: x.get("nbr", ""))
-    return parsed
-
-# ============================================================
-# V9 预测算法（与前端JS版一致）
-# ============================================================
-def gaussian_probs(center, sigma):
-    probs = {}
-    for x in range(28):
-        d = x - center
-        probs[x] = math.exp(-d * d / (2 * sigma * sigma))
-    return probs
-
-def normalize(probs):
-    total = sum(probs.values()) or 1
-    return {k: v / total for k, v in probs.items()}
-
-def signal_ema(data, alpha=0.3):
-    if not data: return {}
-    ema = data[0]["sum"]
-    for d in data[1:]:
-        ema = alpha * d["sum"] + (1 - alpha) * ema
-    return gaussian_probs(round(ema), 2.0)
-
-def signal_double_ema(data):
-    if len(data) < 3: return {}
-    e1 = e2 = data[0]["sum"]
-    for d in data[1:]:
-        e1 = 0.3 * d["sum"] + 0.7 * e1
-        e2 = 0.15 * e1 + 0.85 * e2
-    c = max(0, min(27, round(e1 + (e1 - e2))))
-    return gaussian_probs(c, 1.5)
-
-def signal_weighted_freq(data, decay=0.95):
-    if not data: return {}
-    weights = [decay ** (len(data) - 1 - i) for i in range(len(data))]
-    counts = {}
-    for i, d in enumerate(data):
-        counts[d["sum"]] = counts.get(d["sum"], 0) + weights[i]
-    total = sum(counts.values()) or 1
-    return {x: counts.get(x, 0) / total for x in range(28)}
-
-def signal_markov1(data):
-    if len(data) < 5: return {}
-    trans = {}
-    for i in range(len(data) - 1):
-        k = data[i]["sum"]
-        nxt = data[i + 1]["sum"]
-        if k not in trans: trans[k] = {}
-        trans[k][nxt] = trans[k].get(nxt, 0) + 1
-    last = data[-1]["sum"]
-    if last not in trans: return {}
-    c = trans[last]
-    total = sum(c.values()) or 1
-    return {x: c.get(x, 0) / total for x in range(28)}
-
-def signal_diff_reversal(data):
-    if len(data) < 6: return {}
-    diffs = [data[i]["sum"] - data[i-1]["sum"] for i in range(1, len(data))]
-    recent = diffs[-5:]
-    avg = sum(recent) / len(recent)
-    center = max(0, min(27, round(data[-1]["sum"] - avg * 0.5)))
-    return gaussian_probs(center, 1.0)
-
-def signal_combo_constraint(data):
-    if len(data) < 10: return {}
-    combos = [combo_of(d["sum"]) for d in data[-30:]]
-    counts = {}
-    for c in combos:
-        counts[c] = counts.get(c, 0) + 1
-    top = max(counts, key=counts.get)
-    return {x: 1.0 if combo_of(x) == top else 0.01 for x in range(28)}
-
-def v9_predict(data):
-    if not data:
-        return {
-            "tricode_main": [13, 14, 15], "tricode_backup": [10, 17],
-            "tricode_kill": [0, 1, 2, 26, 27],
-            "combo_push": ["小单", "大双"], "combo_kill": "大单",
-            "sum_center": 13, "sum_range": [10, 17], "confidence": 15,
-        }
-    
-    signals = {
-        "ema": normalize(signal_ema(data)),
-        "double_ema": normalize(signal_double_ema(data)),
-        "freq": normalize(signal_weighted_freq(data)),
-        "mk1": normalize(signal_markov1(data)),
-        "diff": normalize(signal_diff_reversal(data)),
-        "combo": normalize(signal_combo_constraint(data)),
-    }
-    
-    weights = {"ema": 3.0, "double_ema": 2.0, "freq": 2.5, "mk1": 2.0, "diff": 1.5, "combo": 1.2}
-    
-    fused = {x: 0.0 for x in range(28)}
-    total_w = 0
-    for name, probs in signals.items():
-        if not probs: continue
-        w = weights.get(name, 1.0)
-        for x in range(28):
-            fused[x] += probs.get(x, 0) * w
-        total_w += w
-    if total_w > 0:
-        for x in range(28):
-            fused[x] /= total_w
-    
-    # 主推3
-    ranked = sorted(fused.items(), key=lambda kv: kv[1], reverse=True)
-    main3 = [kv[0] for kv in ranked[:3]]
-    backup2 = [kv[0] for kv in ranked[3:5]]
-    
-    # 杀5（理论概率 + 反向融合）
-    theo = {}
-    for x in range(28):
-        count = sum(1 for a in range(10) for b in range(10) for c in range(10) if a+b+c == x)
-        theo[x] = count / 1000
-    combined = {x: (1 - fused.get(x, 0)) * 0.5 + theo[x] * 0.5 for x in range(28)}
-    kill5 = [kv[0] for kv in sorted(combined.items(), key=lambda kv: kv[1])[:5]]
-    
-    # 组合
-    combo_counts = {}
-    for d in data[-20:]:
-        c = d["combo"]
-        combo_counts[c] = combo_counts.get(c, 0) + 1
-    combo_ranked = sorted(combo_counts.items(), key=lambda kv: kv[1], reverse=True)
-    push2 = [kv[0] for kv in combo_ranked[:2]]
-    kill1 = combo_ranked[-1][0] if combo_ranked else "大单"
-    
-    # 和值中心
-    ema = data[0]["sum"]
-    for d in data[1:]:
-        ema = 0.3 * d["sum"] + 0.7 * ema
-    center = round(ema)
-    variance = sum((d["sum"] - ema) ** 2 for d in data[-20:]) / min(20, len(data))
-    spread = max(2, round((variance ** 0.5) * 0.8))
-    lo = max(0, center - spread)
-    hi = min(27, center + spread)
-    
-    # 置信度
-    entropy = -sum(p * (math.log2(p) if p > 0 else 0) for p in fused.values())
-    max_e = math.log2(28)
-    consistency = 1 - entropy / max_e
-    conf = min(55, max(15, round(ranked[0][1] * 30 + consistency * 15)))
-    
-    return {
-        "tricode_main": main3,
-        "tricode_backup": backup2,
-        "tricode_kill": kill5,
-        "combo_push": push2,
-        "combo_kill": kill1,
-        "sum_center": center,
-        "sum_range": [lo, hi],
-        "confidence": conf,
-    }
-
-# ============================================================
-# 对错记录
-# ============================================================
-def update_records(data, pred, old_records):
-    """对比预测和实际结果，更新记录"""
-    if not pred or not data:
-        return old_records
-    
-    latest = data[-1]
-    nbr = latest["nbr"]
-    
-    # 检查是否已有
-    if any(r.get("nbr") == nbr for r in old_records):
-        return old_records
-    
-    main_hit = latest["sum"] in pred["tricode_main"]
-    backup_hit = latest["sum"] in pred["tricode_backup"]
-    kill_correct = latest["sum"] not in pred["tricode_kill"]
-    combo_hit = latest["combo"] in pred["combo_push"]
-    
-    record = {
-        "nbr": nbr,
-        "sum": latest["sum"],
-        "combo": latest["combo"],
-        "main_hit": main_hit,
-        "backup_hit": backup_hit,
-        "kill_correct": kill_correct,
-        "combo_hit": combo_hit,
-        "main_pred": pred["tricode_main"],
-        "kill_pred": pred["tricode_kill"],
-        "date": latest.get("date", ""),
-    }
-    old_records.append(record)
-    return old_records[-100:]  # 保留最近100期
-
-# ============================================================
-# 主流程
-# ============================================================
+import re
 import math
 
-def main():
-    print("=" * 55)
-    print("🔄 V9 真数据抓取 + 预测 + 对错记录")
-    print("=" * 55)
-    
-    data = None
-    source = ""
-    errors = []
-    
-    # 尝试顺序: kj → keno → yu28
-    attempts = [
-        ("pc28.help/kj", lambda: fetch_kj()),
-        ("pc28.help/keno", lambda: fetch_keno()),
-        ("yu28.top", lambda: fetch_yu28()),
-    ]
-    
-    for name, func in attempts:
-        try:
-            print(f"\n📡 尝试 {name} ...")
-            result = func()
-            if result and len(result) > 0:
-                data = result
-                source = name
-                print(f"  ✅ 成功! {len(data)}期")
-                print(f"  最新: 期{data[-1]['nbr']} 特码{data[-1]['sum']} {data[-1]['combo']}")
-                break
-        except Exception as e:
-            msg = str(e)[:100]
-            errors.append(f"{name}: {msg}")
-            print(f"  ❌ {msg}")
-    
-    if not data:
-        print(f"\n⚠️ 所有接口失败:")
-        for e in errors:
-            print(f"  {e}")
-        print("  保留旧数据不更新")
-        return
-    
-    # 数据校验
-    valid = []
-    for d in data:
-        if d["sum"] < 0 or d["sum"] > 27: continue
-        if d["b1"] + d["b2"] + d["b3"] != d["sum"]: continue
-        if not d.get("date") and not d.get("time"):
-            # 至少要有期号和特码
-            pass
-        valid.append(d)
-    
-    print(f"\n📊 有效数据: {len(valid)}期 (来源: {source})")
-    
-    if len(valid) < 5:
-        print("⚠️ 数据不足5期，跳过预测")
-        pred = None
+# ===== V8 算法核心（内嵌，无外部依赖）=====
+
+def calc_balls(raw_nums):
+    """从20个原始号码计算三球（与JS端完全一致）"""
+    s = sorted(raw_nums)
+    b1 = (s[0] + s[7]) % 10
+    b2 = (s[1] + s[8]) % 10
+    b3 = (s[2] + s[9]) % 10
+    return b1, b2, b3, b1 + b2 + b3
+
+def analyze(b1, b2, b3, total):
+    """完整形态分析"""
+    odd = total % 2 == 1
+    big = total >= 14
+    combo = ("大" if big else "小") + ("单" if odd else "双")
+    # 组合
+    pair = b1 == b2 or b2 == b3 or b1 == b3
+    all_same = b1 == b2 == b3
+    if all_same:
+        shape = "豹子"
+    elif pair:
+        shape = "对子"
+    elif odd and (total in [5,7,9,11,13,15,17,19,21,23,25,27]):
+        shape = "杂单"
+    elif not odd and (total in [4,6,8,10,12,14,16,18,20,22,24,26]):
+        shape = "杂双"
     else:
-        pred = v9_predict(valid)
-        print(f"\n🎯 V9 预测:")
-        print(f"  主推: {pred['tricode_main']}")
-        print(f"  候补: {pred['tricode_backup']}")
-        print(f"  杀5:  {pred['tricode_kill']}")
-        print(f"  押2组: {pred['combo_push']}")
-        print(f"  杀1组: {pred['combo_kill']}")
-        print(f"  和值: {pred['sum_center']} 区间{pred['sum_range']}")
-        print(f"  置信度: {pred['confidence']}%")
-    
-    # 更新对错记录
-    records_path = Path(__file__).parent / "records.json"
-    old_records = []
-    if records_path.exists():
-        try:
-            with open(records_path) as f:
-                old_records = json.load(f)
-        except:
-            old_records = []
-    
-    new_records = update_records(valid, pred, old_records)
-    
-    # 统计
-    if new_records:
-        main_hits = sum(1 for r in new_records if r.get("main_hit"))
-        backup_hits = sum(1 for r in new_records if r.get("backup_hit"))
-        kill_correct = sum(1 for r in new_records if r.get("kill_correct"))
-        total = len(new_records)
-        print(f"\n📈 对错记录 (共{total}期):")
-        print(f"  主推命中: {main_hits}/{total} ({main_hits/total*100:.1f}%)")
-        print(f"  含候补: {main_hits+backup_hits}/{total} ({(main_hits+backup_hits)/total*100:.1f}%)")
-        print(f"  杀特码正确: {kill_correct}/{total} ({kill_correct/total*100:.1f}%)")
-    
-    # 写入 data.json
-    output = {
-        "meta": {
-            "source": source,
-            "count": len(valid),
-            "updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "engine": "V9",
-            "records_total": len(new_records),
-        },
-        "history": valid,
-        "prediction": pred,
-        "records": new_records[-20:],  # 最近20期记录
+        shape = "杂六"
+    extreme = "大" if big else ("小" if total <= 5 else "")
+    return {
+        "odd_even": "单" if odd else "双",
+        "big_small": "大" if big else "小",
+        "combination": combo,
+        "extreme": extreme,
+        "shape": shape,
     }
-    
-    out_path = Path(__file__).parent / "data.json"
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(output, f, ensure_ascii=False, indent=2)
-    
-    # 写入 records.json
-    with open(records_path, "w", encoding="utf-8") as f:
-        json.dump(new_records, f, ensure_ascii=False, indent=2)
-    
-    print(f"\n✅ 已写入 {out_path} ({out_path.stat().st_size} bytes)")
-    print(f"✅ 已写入 {records_path}")
+
+def fetch_url(url, headers=None, timeout=15):
+    req = urllib.request.Request(url, headers=headers or {"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return json.loads(r.read().decode())
+
+def fetch_pc28help():
+    """从 pc28.help 获取真实数据"""
+    url = "https://pc28.help/api/keno.json"
+    h = {"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+         "Accept": "application/json",
+         "Referer": "https://pc28.help/"}
+    data = fetch_url(url, h)
+    return data
+
+def parse_pc28help(raw):
+    """解析 pc28.help 返回 → 标准格式"""
+    out = []
+    # 支持多种返回结构
+    items = None
+    if isinstance(raw, dict):
+        items = raw.get("data") or raw.get("list") or raw.get("results")
+    if items is None and isinstance(raw, list):
+        items = raw
+    if not items:
+        # 可能直接是单层对象列表
+        for k, v in (raw if isinstance(raw, dict) else {}).items():
+            if isinstance(v, list):
+                items = v
+                break
+    if not items:
+        return out
+
+    for it in items:
+        try:
+            nbr = str(it.get("nbr") or it.get("issue") or it.get("code") or it.get("period") or "")
+            raw_nums = it.get("num") or it.get("numbers") or it.get("balls") or it.get("data") or []
+            if isinstance(raw_nums, str):
+                raw_nums = [int(x) for x in re.split(r"[,\s]+", raw_nums.strip()) if x.isdigit()]
+            if len(raw_nums) < 6:
+                continue
+            nums = [int(x) for x in raw_nums[:20]]
+            b1, b2, b3, total = calc_balls(nums)
+            ana = analyze(b1, b2, b3, total)
+            dt = it.get("date") or it.get("time") or it.get("draw_time") or ""
+            out.append({
+                "nbr": nbr,
+                "time": dt,
+                "a": b1, "b": b2, "c": b3,
+                "number": f"{b1}+{b2}+{b3}={total}",
+                "sum": total,
+                "combination": ana["combination"],
+                "raw_nums": nums,
+            })
+        except Exception:
+            continue
+    return out
+
+# ===== V8 预测引擎 =====
+
+def v8_predict(data, window=100):
+    """V8 终极预测引擎"""
+    if len(data) < 10:
+        return None
+    recent = data[-window:]
+    sums = [d["sum"] for d in recent]
+    n = len(sums)
+
+    # --- 1. 和值 EMA ---
+    alpha = 0.3
+    ema = sums[0]
+    for s in sums[1:]:
+        ema = alpha * s + (1 - alpha) * ema
+    ema_int = round(ema)
+
+    # --- 2. 加权频率 ---
+    weights = [i + 1 for i in range(n)]
+    freq = {}
+    for i, s in enumerate(sums):
+        freq[s] = freq.get(s, 0) + weights[i]
+    top_sums = sorted(freq.items(), key=lambda x: -x[1])[:5]
+
+    # --- 3. 马尔可夫-1 ---
+    mk1 = {}
+    for i in range(1, n):
+        prev = sums[i-1]
+        cur = sums[i]
+        if prev not in mk1:
+            mk1[prev] = {}
+        mk1[prev][cur] = mk1[prev].get(cur, 0) + 1
+    last = sums[-1]
+    next_candidates = mk1.get(last, {})
+    mk1_top = sorted(next_candidates.items(), key=lambda x: -x[1])[:3]
+
+    # --- 4. 趋势 ---
+    recent10 = sums[-10:]
+    trend = sum(recent10[-5:]) / 5 - sum(recent10[:5]) / 5
+    trend_adj = round(trend * 2)
+
+    # --- 5. 组合预测 ---
+    combos = [d["combination"] for d in recent]
+    combo_weights = {}
+    for i, c in enumerate(combos):
+        w = (i + 1) ** 1.5
+        combo_weights[c] = combo_weights.get(c, 0) + w
+    top_combo = sorted(combo_weights.items(), key=lambda x: -x[1])[:2]
+
+    # ===== 融合投票 =====
+    votes = {}
+    def add_vote(name, weight, candidates):
+        for val, w in candidates:
+            votes[val] = votes.get(val, 0) + w * weight
+
+    # 和值 EMA ±2
+    for offset in range(-2, 3):
+        v = max(0, min(27, ema_int + offset))
+        add_vote("ema", 3.0 - abs(offset) * 0.5, [(v, 1.0)])
+
+    # 加权频率 top5
+    add_vote("freq", 2.5, [(v, w) for v, w in top_sums])
+
+    # MK-1
+    add_vote("mk1", 2.0, [(v, w) for v, w in mk1_top])
+
+    # 趋势
+    trend_val = max(0, min(27, ema_int + trend_adj))
+    add_vote("trend", 1.5, [(trend_val, 1.0)])
+
+    ranked = sorted(votes.items(), key=lambda x: -x[1])
+    top5 = [v for v, _ in ranked[:5]]
+    top3 = [v for v, _ in ranked[:3]]
+
+    # 杀号：频率最低 + 远离 EMA
+    all_sums = list(range(28))
+    inverse_freq = {}
+    for s in all_sums:
+        inverse_freq[s] = 1.0 / (freq.get(s, 0) + 1)
+    kill_candidates = sorted(inverse_freq.items(), key=lambda x: -x[1])
+    kill5 = [v for v, _ in kill_candidates[:5]]
+
+    # 组合锁定
+    push_combo = top_combo[0][0] if top_combo else "小单"
+    kill_combo = "大单" if push_combo != "大单" else "小双"
+
+    # 置信度（诚实上限55%）
+    spread = len(set([v for v, _ in ranked[:5]]))
+    confidence = min(55, 28 + spread * 120 / 5)
+
+    return {
+        "push_sums": top5,
+        "main3": top3,
+        "kill_sums": kill5,
+        "push_combo": push_combo,
+        "kill_combo": kill_combo,
+        "ema": ema_int,
+        "trend": trend_adj,
+        "confidence": round(confidence, 1),
+        "window": n,
+    }
+
+def build_from_seed():
+    """内置真实数据兜底"""
+    sys.path.insert(0, os.path.dirname(__file__))
+    try:
+        import seed_data
+        return seed_data.build()
+    except ImportError:
+        return None
+
+def main():
+    src = ""
+    kj_data = []
+
+    # ===== 尝试 1: pc28.help（用户验证可用）=====
+    print("→ 尝试 pc28.help/api/keno.json ...")
+    try:
+        raw = fetch_pc28help()
+        kj_data = parse_pc28help(raw)
+        if kj_data:
+            src = "pc28.help 直连"
+            print(f"  ✅ 获取 {len(kj_data)} 期真实数据")
+    except Exception as e:
+        print(f"  ❌ pc28.help 失败: {e}")
+
+    # ===== 尝试 2: yu28.top =====
+    if not kj_data:
+        print("→ 尝试 yu28.top ...")
+        try:
+            url = "https://yu28.top/api/kj.json?nbr=100"
+            h = {"User-Agent": "Mozilla/5.0", "X-Api-Key": "yu28_ef248feb94737c55"}
+            raw = fetch_url(url, h)
+            items = raw.get("data") if isinstance(raw, dict) else raw
+            for it in (items or []):
+                try:
+                    nbr = str(it.get("nbr") or it.get("code") or "")
+                    nums = it.get("num") or it.get("numbers") or []
+                    if isinstance(nums, str):
+                        nums = [int(x) for x in re.split(r"[,\s]+", nums.strip()) if x.isdigit()]
+                    if len(nums) < 6:
+                        continue
+                    b1, b2, b3, total = calc_balls([int(x) for x in nums[:20]])
+                    ana = analyze(b1, b2, b3, total)
+                    kj_data.append({
+                        "nbr": nbr, "time": it.get("time") or it.get("date") or "",
+                        "a": b1, "b": b2, "c": b3,
+                        "number": f"{b1}+{b2}+{b3}={total}",
+                        "sum": total, "combination": ana["combination"],
+                    })
+                except:
+                    continue
+            if kj_data:
+                src = "yu28.top"
+                print(f"  ✅ 获取 {len(kj_data)} 期")
+        except Exception as e:
+            print(f"  ❌ yu28.top 失败: {e}")
+
+    # ===== 尝试 3: 内置数据兜底 =====
+    if not kj_data:
+        print("→ 回退到内置真实数据 ...")
+        seed = build_from_seed()
+        if seed:
+            kj_data = seed["kj"]["data"]
+            src = seed["source"]
+            print(f"  ✅ 内置数据 {len(kj_data)} 期")
+
+    if not kj_data:
+        print("❌ 所有数据源均失败，保留旧 data.json")
+        sys.exit(0)
+
+    # ===== V8 预测 =====
+    pred = v8_predict(kj_data, window=min(100, len(kj_data)))
+    if pred:
+        print(f"  📊 V8 预测：押{pred['push_sums']} 杀{pred['kill_sums']} "
+              f"组合押{pred['push_combo']}杀{pred['kill_combo']} 置信{pred['confidence']}%")
+
+    out = {
+        "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
+        "source": src,
+        "game": "pc28",
+        "kj": {"data": kj_data},
+        "sha": {"code": 200, "data": []},
+        "sz": {"code": 200, "data": []},
+        "ds": {"code": 200, "data": []},
+        "dx": {"code": 200, "data": []},
+    }
+    if pred:
+        out["next_prediction"] = {
+            "push": pred["push_sums"],
+            "kill": pred["kill_sums"],
+            "main3": pred["main3"],
+            "push_combo": pred["push_combo"],
+            "kill_combo": pred["kill_combo"],
+            "ema": pred["ema"],
+            "confidence": pred["confidence"],
+        }
+
+    with open("data.json", "w", encoding="utf-8") as f:
+        json.dump(out, f, ensure_ascii=False, indent=2)
+
+    print(f"\n✅ 写入 data.json ← {src}")
+    print(f"   开奖数据：{len(kj_data)} 期")
+    if kj_data:
+        print(f"   最新期：{kj_data[-1]['nbr']} 和值{kj_data[-1]['sum']}")
 
 if __name__ == "__main__":
     main()
