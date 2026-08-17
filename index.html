@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#0a0e1a">
-<title>⚡ 千金星轨 · PC28 · V8终极引擎</title>
+<title>⚡ 千金星轨 · PC28 · V9 真数据版</title>
 <style>
 :root {
   --bg: #0a0e1a;
@@ -29,7 +29,6 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
 }
-/* 星空背景 */
 body::before {
   content: '';
   position: fixed; inset: 0;
@@ -48,117 +47,32 @@ body::before {
 .container { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 12px; }
 
 /* Header */
-header {
-  text-align: center;
-  padding: 16px 8px 12px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 14px;
-}
-header h1 {
-  font-size: 22px;
-  background: linear-gradient(135deg, var(--accent), var(--purple));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  letter-spacing: 2px;
-}
-header .sub {
-  font-size: 11px;
-  color: var(--muted);
-  margin-top: 4px;
-}
-header .badge {
-  display: inline-block;
-  background: rgba(0,212,255,0.15);
-  border: 1px solid var(--accent);
-  color: var(--accent);
-  font-size: 10px;
-  padding: 2px 8px;
-  border-radius: 10px;
-  margin-top: 6px;
-}
+header { text-align: center; padding: 16px 8px 12px; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+header h1 { font-size: 22px; background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px; }
+header .sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+header .badge { display: inline-block; background: rgba(0,212,255,0.15); border: 1px solid var(--accent); color: var(--accent); font-size: 10px; padding: 2px 8px; border-radius: 10px; margin-top: 6px; }
 
 /* Countdown */
-.countdown-section {
-  background: linear-gradient(135deg, var(--card), var(--card2));
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 16px;
-  text-align: center;
-  margin-bottom: 14px;
-}
-.countdown-ring {
-  width: 120px; height: 120px;
-  margin: 0 auto 10px;
-  position: relative;
-}
+.countdown-section { background: linear-gradient(135deg, var(--card), var(--card2)); border: 1px solid var(--border); border-radius: 14px; padding: 16px; text-align: center; margin-bottom: 14px; }
+.countdown-ring { width: 120px; height: 120px; margin: 0 auto 10px; position: relative; }
 .countdown-ring svg { transform: rotate(-90deg); }
 .countdown-ring .ring-bg { fill: none; stroke: var(--border); stroke-width: 6; }
-.countdown-ring .ring-fg {
-  fill: none; stroke: url(#ringGrad); stroke-width: 6;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 1s linear;
-}
-.countdown-ring .time {
-  position: absolute; top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 28px; font-weight: 700;
-  color: var(--accent);
-  font-variant-numeric: tabular-nums;
-}
-.countdown-section .next-nbr {
-  font-size: 12px; color: var(--muted);
-}
-.countdown-section .next-nbr span {
-  color: var(--gold); font-weight: 600;
-}
+.countdown-ring .ring-fg { fill: none; stroke: url(#ringGrad); stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+.countdown-ring .time { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 28px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+.countdown-section .next-nbr { font-size: 12px; color: var(--muted); }
+.countdown-section .next-nbr span { color: var(--gold); font-weight: 600; }
 
 /* Card */
-.card {
-  background: linear-gradient(135deg, var(--card), var(--card2));
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 14px;
-  margin-bottom: 12px;
-}
-.card h2 {
-  font-size: 14px;
-  color: var(--accent);
-  margin-bottom: 10px;
-  display: flex; align-items: center; gap: 6px;
-}
+.card { background: linear-gradient(135deg, var(--card), var(--card2)); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+.card h2 { font-size: 14px; color: var(--accent); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
 .card h2 .icon { font-size: 16px; }
 
 /* Latest draw */
-.latest-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-bottom: 10px;
-}
-.ball {
-  background: linear-gradient(145deg, #1e3a5f, #0f2440);
-  border: 2px solid var(--accent);
-  border-radius: 50%;
-  width: 56px; height: 56px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 22px; font-weight: 700;
-  color: var(--accent);
-  margin: 0 auto;
-  box-shadow: 0 0 12px rgba(0,212,255,0.3);
-}
-.sum-display {
-  text-align: center;
-  font-size: 32px;
-  font-weight: 800;
-  color: var(--gold);
-  margin: 8px 0;
-}
-.combo-tags {
-  display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;
-}
-.combo-tag {
-  padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;
-}
+.latest-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+.ball { background: linear-gradient(145deg, #1e3a5f, #0f2440); border: 2px solid var(--accent); border-radius: 50%; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; color: var(--accent); margin: 0 auto; box-shadow: 0 0 12px rgba(0,212,255,0.3); }
+.sum-display { text-align: center; font-size: 32px; font-weight: 800; color: var(--gold); margin: 8px 0; }
+.combo-tags { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.combo-tag { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
 .combo-tag.big-odd { background: rgba(255,215,0,0.2); color: var(--gold); border: 1px solid var(--gold); }
 .combo-tag.big-even { background: rgba(0,227,150,0.2); color: var(--green); border: 1px solid var(--green); }
 .combo-tag.small-odd { background: rgba(168,85,247,0.2); color: var(--purple); border: 1px solid var(--purple); }
@@ -166,69 +80,21 @@ header .badge {
 
 /* Prediction */
 .pred-section { margin-bottom: 10px; }
-.pred-label {
-  font-size: 11px; color: var(--muted);
-  text-transform: uppercase; letter-spacing: 1px;
-  margin-bottom: 6px;
-}
-.pred-row {
-  display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
-}
-.pred-ball {
-  width: 44px; height: 44px;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px; font-weight: 700;
-}
-.pred-ball.main {
-  background: radial-gradient(circle at 30% 30%, #ffd700, #b8860b);
-  color: #1a1a1a;
-  box-shadow: 0 0 16px rgba(255,215,0,0.5);
-  border: 2px solid #fff;
-}
-.pred-ball.backup {
-  background: radial-gradient(circle at 30% 30%, #00d4ff, #0080aa);
-  color: #fff;
-  box-shadow: 0 0 12px rgba(0,212,255,0.4);
-  border: 2px solid rgba(255,255,255,0.3);
-}
-.pred-ball.kill {
-  background: linear-gradient(145deg, #2a0a0a, #1a0505);
-  color: var(--red);
-  border: 2px solid var(--red);
-  opacity: 0.8;
-}
-.pred-combo {
-  padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
-}
-.pred-combo.push {
-  background: rgba(0,227,150,0.15); border: 1px solid var(--green); color: var(--green);
-}
-.pred-combo.kill-c {
-  background: rgba(255,69,96,0.15); border: 1px solid var(--red); color: var(--red);
-}
-.confidence-bar {
-  height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;
-  margin-top: 8px;
-}
-.confidence-fill {
-  height: 100%; border-radius: 3px;
-  background: linear-gradient(90deg, var(--red), var(--orange), var(--gold), var(--green));
-  transition: width 0.5s;
-}
+.pred-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.pred-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.pred-ball { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; }
+.pred-ball.main { background: radial-gradient(circle at 30% 30%, #ffd700, #b8860b); color: #1a1a1a; box-shadow: 0 0 16px rgba(255,215,0,0.5); border: 2px solid #fff; }
+.pred-ball.backup { background: radial-gradient(circle at 30% 30%, #00d4ff, #0080aa); color: #fff; box-shadow: 0 0 12px rgba(0,212,255,0.4); border: 2px solid rgba(255,255,255,0.3); }
+.pred-ball.kill { background: linear-gradient(145deg, #2a0a0a, #1a0505); color: var(--red); border: 2px solid var(--red); opacity: 0.8; }
+.pred-combo { padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+.pred-combo.push { background: rgba(0,227,150,0.15); border: 1px solid var(--green); color: var(--green); }
+.pred-combo.kill-c { background: rgba(255,69,96,0.15); border: 1px solid var(--red); color: var(--red); }
+.confidence-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+.confidence-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--red), var(--orange), var(--gold), var(--green)); transition: width 0.5s; }
 
 /* Stats grid */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-.stat-item {
-  background: rgba(0,0,0,0.2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 10px;
-}
+.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.stat-item { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
 .stat-label { font-size: 10px; color: var(--muted); }
 .stat-val { font-size: 18px; font-weight: 700; }
 .stat-val.gold { color: var(--gold); }
@@ -237,87 +103,42 @@ header .badge {
 .stat-val.blue { color: var(--accent); }
 
 /* History table */
-.hist-table {
-  width: 100%; border-collapse: collapse; font-size: 11px;
-}
-.hist-table th {
-  text-align: left; padding: 6px 4px;
-  color: var(--muted); font-weight: 500;
-  border-bottom: 1px solid var(--border);
-  position: sticky; top: 0; background: var(--card);
-}
-.hist-table td {
-  padding: 5px 4px; border-bottom: 1px solid rgba(255,255,255,0.05);
-}
+.hist-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.hist-table th { text-align: left; padding: 6px 4px; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--card); }
+.hist-table td { padding: 5px 4px; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .hist-table .num-cell { font-family: monospace; }
-.hist-table .combo-mini {
-  display: inline-block; padding: 1px 5px; border-radius: 4px; font-size: 10px;
-}
+.hist-table .combo-mini { display: inline-block; padding: 1px 5px; border-radius: 4px; font-size: 10px; }
+.hist-table .hit { color: var(--green); font-weight: 700; }
+.hist-table .miss { color: var(--red); font-weight: 700; }
 .scroll-box { max-height: 300px; overflow-y: auto; }
 
-/* Voting details */
-.vote-bar {
-  display: flex; align-items: center; gap: 6px;
-  margin-bottom: 4px; font-size: 11px;
-}
-.vote-bar .vote-label { width: 70px; color: var(--muted); flex-shrink: 0; }
-.vote-bar .vote-track {
-  flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;
-}
-.vote-bar .vote-fill {
-  height: 100%; border-radius: 4px;
-}
-.vote-bar .vote-val { width: 36px; text-align: right; font-size: 10px; }
+/* Hit/Miss record */
+.record-bar { display: flex; gap: 2px; margin-top: 8px; flex-wrap: wrap; }
+.record-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.record-dot.hit { background: var(--green); box-shadow: 0 0 4px rgba(0,227,150,0.5); }
+.record-dot.miss { background: var(--red); box-shadow: 0 0 4px rgba(255,69,96,0.5); }
+.record-summary { font-size: 11px; color: var(--muted); margin-top: 6px; }
 
 /* Raw numbers */
-.raw-nums {
-  font-family: monospace; font-size: 10px; color: var(--muted);
-  word-break: break-all; line-height: 1.6;
-}
+.raw-nums { font-family: monospace; font-size: 10px; color: var(--muted); word-break: break-all; line-height: 1.6; }
 
 /* Footer */
-footer {
-  text-align: center; padding: 16px 8px;
-  font-size: 10px; color: var(--muted);
-  border-top: 1px solid var(--border);
-  margin-top: 12px;
-}
-footer .warn {
-  color: var(--orange); font-weight: 600;
-}
+footer { text-align: center; padding: 16px 8px; font-size: 10px; color: var(--muted); border-top: 1px solid var(--border); margin-top: 12px; }
+footer .warn { color: var(--orange); font-weight: 600; }
 
 /* Refresh button */
-.refresh-btn {
-  position: fixed; bottom: 20px; right: 20px;
-  width: 52px; height: 52px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--green));
-  border: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 22px;
-  box-shadow: 0 4px 16px rgba(0,212,255,0.4);
-  z-index: 100;
-  transition: transform 0.2s;
-}
+.refresh-btn { position: fixed; bottom: 20px; right: 20px; width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--green)); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 16px rgba(0,212,255,0.4); z-index: 100; transition: transform 0.2s; }
 .refresh-btn:active { transform: scale(0.9); }
 
 /* Toast */
-.toast {
-  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-  background: var(--card2); border: 1px solid var(--accent);
-  color: var(--accent); padding: 8px 16px; border-radius: 8px;
-  font-size: 12px; z-index: 200;
-  opacity: 0; transition: opacity 0.3s;
-  pointer-events: none;
-}
+.toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--card2); border: 1px solid var(--accent); color: var(--accent); padding: 8px 16px; border-radius: 8px; font-size: 12px; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
 .toast.show { opacity: 1; }
 
 /* Error box */
-.error-box {
-  background: rgba(255,69,96,0.1); border: 1px solid var(--red);
-  color: var(--red); padding: 10px; border-radius: 8px;
-  font-size: 12px; margin-bottom: 12px;
-}
+.error-box { background: rgba(255,69,96,0.1); border: 1px solid var(--red); color: var(--red); padding: 10px; border-radius: 8px; font-size: 12px; margin-bottom: 12px; }
+
+/* API debug */
+.debug-box { background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 8px; font-size: 10px; color: var(--muted); font-family: monospace; margin-top: 8px; max-height: 100px; overflow-y: auto; }
 </style>
 </head>
 <body>
@@ -325,7 +146,7 @@ footer .warn {
 <div class="container">
   <header>
     <h1>⚡ 千金星轨 · PC28</h1>
-    <div class="sub">V8 终极引擎 · 七信号融合 · 直连 pc28.help</div>
+    <div class="sub">V9 真数据版 · 多接口容灾 · 对错记录</div>
     <div class="badge" id="sourceBadge">数据加载中...</div>
   </header>
 
@@ -370,9 +191,9 @@ footer .warn {
     <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--muted);" id="drawInfo"></div>
   </div>
 
-  <!-- V8 预测 -->
+  <!-- 预测 -->
   <div class="card">
-    <h2><span class="icon">🤖</span> V8 预测引擎</h2>
+    <h2><span class="icon">🤖</span> V9 预测引擎</h2>
 
     <div class="pred-section">
       <div class="pred-label">🎯 主推特码 (命中率~22%)</div>
@@ -416,10 +237,17 @@ footer .warn {
     </div>
   </div>
 
-  <!-- 投票详情 -->
-  <div class="card" id="voteCard" style="display:none;">
-    <h2><span class="icon">📡</span> 信号投票详情</h2>
-    <div id="voteDetails"></div>
+  <!-- 对错记录 -->
+  <div class="card">
+    <h2><span class="icon">✅❌</span> 预测对错记录</h2>
+    <div class="pred-label">最近20期 · 主推特码命中情况</div>
+    <div class="record-bar" id="recordBar"></div>
+    <div class="record-summary" id="recordSummary">暂无记录</div>
+
+    <div style="height:10px;"></div>
+    <div class="pred-label">杀特码正确率（最近20期）</div>
+    <div class="record-bar" id="killRecordBar"></div>
+    <div class="record-summary" id="killRecordSummary">暂无记录</div>
   </div>
 
   <!-- 回测统计 -->
@@ -450,21 +278,21 @@ footer .warn {
 
   <!-- 历史记录 -->
   <div class="card">
-    <h2><span class="icon">📜</span> 近期开奖 (<span id="histCount">0</span>期)</h2>
+    <h2><span class="icon">📜</span> 近期开奖+预测对比 (<span id="histCount">0</span>期)</h2>
     <div class="scroll-box">
       <table class="hist-table" id="histTable">
         <thead>
-          <tr><th>期号</th><th>日期</th><th>三球</th><th>和值</th><th>组合</th></tr>
+          <tr><th>期号</th><th>日期</th><th>三球</th><th>和值</th><th>组合</th><th>主推</th><th>结果</th></tr>
         </thead>
         <tbody id="histBody"></tbody>
       </table>
     </div>
   </div>
 
-  <!-- 原始数据 -->
-  <div class="card">
-    <h2><span class="icon">🔢</span> 原始20码 (最新)</h2>
-    <div class="raw-nums" id="rawNums">-</div>
+  <!-- 接口调试 -->
+  <div class="card" id="debugCard" style="display:none;">
+    <h2><span class="icon">🔧</span> 接口调试</h2>
+    <div class="debug-box" id="debugBox"></div>
   </div>
 
   <footer>
@@ -479,24 +307,219 @@ footer .warn {
 
 <script>
 // ============================================================
-// V8 算法 — 纯JS实现（与Python版v8_algo.py逻辑一致）
+// V9 真数据版
+// 多接口容灾 + 正确解析 kj.json/keno.json 两种格式
+// + 预测对错记录
 // ============================================================
 
 const COMBOS = ["大单", "大双", "小单", "小双"];
+const TOTAL_SECONDS = 210; // 3分30秒
 
+// ============================================================
+// 工具函数
+// ============================================================
 function comboOf(sum) {
   if (sum >= 14) return sum % 2 === 1 ? "大单" : "大双";
   return sum % 2 === 1 ? "小单" : "小双";
 }
 
-function calcBalls(rawNums) {
+function calcBallsFromRaw(rawNums) {
   const sorted = [...rawNums].sort((a, b) => a - b);
   const b1 = sorted[0], b2 = sorted[1], b3 = sorted[2];
   const sum = b1 + b2 + b3;
   return { b1, b2, b3, sum, combo: comboOf(sum) };
 }
 
-// --- 信号层 ---
+// 从特码反推最可能的三球组合
+// 优先选有重复数字的（对子/豹子更常见）
+function decomposeSum(sum) {
+  const combos = [];
+  for (let a = 0; a <= 9; a++) {
+    for (let b = 0; b <= 9; b++) {
+      for (let c = 0; c <= 9; c++) {
+        if (a + b + c === sum) {
+          const s = [a, b, c].sort((x, y) => x - y);
+          combos.push(s);
+        }
+      }
+    }
+  }
+  // 去重
+  const seen = new Set();
+  const unique = [];
+  for (const c of combos) {
+    const key = c.join(',');
+    if (!seen.has(key)) { seen.add(key); unique.push(c); }
+  }
+  // 优先返回有重复数字的（对子概率更高）
+  unique.sort((a, b) => {
+    const aDup = a[0] === a[1] || a[1] === a[2] ? 1 : 0;
+    const bDup = b[0] === b[1] || b[1] === b[2] ? 1 : 0;
+    return bDup - aDup;
+  });
+  return unique[0] || [0, 0, 0];
+}
+
+// ============================================================
+// 多接口容灾数据获取
+// ============================================================
+const API_SOURCES = [
+  // 格式1: kj.json → {countdown, data:[{nbr,date,time,number,num,combination}], message}
+  { url: "https://pc28.help/api/kj.json?nbr=60", type: "kj", name: "pc28.help/kj" },
+  // 格式2: keno.json → {data:[{nbr,date,time,nums:[20码]}]}
+  { url: "https://pc28.help/api/keno.json?count=60", type: "keno", name: "pc28.help/keno" },
+  // 备选: yu28
+  { url: "https://www.yu28.top/api/v1/pc28/history?limit=60", type: "yu28", name: "yu28.top" },
+  // CORS代理方案
+  { url: "https://corsproxy.io/?https://pc28.help/api/kj.json?nbr=60", type: "kj", name: "corsproxy/kj" },
+  { url: "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://pc28.help/api/kj.json?nbr=60"), type: "kj", name: "allorigins/kj" },
+];
+
+let debugLogs = [];
+function addDebug(msg) {
+  const time = new Date().toLocaleTimeString('zh-CN');
+  debugLogs.push(`[${time}] ${msg}`);
+  if (debugLogs.length > 50) debugLogs.shift();
+  const box = document.getElementById('debugBox');
+  if (box) box.textContent = debugLogs.join('\n');
+}
+
+async function tryFetch(url, type) {
+  const resp = await fetch(url, {
+    headers: { "Accept": "application/json", "Referer": "https://pc28.help/" },
+    cache: "no-store",
+  });
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const json = await resp.json();
+  return parseAnyFormat(json, type);
+}
+
+function parseAnyFormat(raw, type) {
+  const parsed = [];
+
+  // 格式A: kj.json → data数组里每项有 number(特码) 和 combination
+  // raw = {countdown, data:[{nbr,date,time,number,num,combination}], message}
+  if (type === "kj" || (!type && raw.countdown !== undefined)) {
+    const items = raw.data || raw.list || raw.results || [];
+    for (const item of items) {
+      try {
+        const nbr = String(item.nbr || item.issue || item.period || "");
+        const sum = parseInt(item.number || item.num || item.sum || item.value || "0");
+        if (!nbr || isNaN(sum)) continue;
+        const combo = item.combination || item.combo || comboOf(sum);
+        const decomposed = decomposeSum(sum);
+        parsed.push({
+          nbr,
+          date: item.date || item.draw_date || "",
+          time: item.time || item.draw_time || "",
+          raw: decomposed,
+          b1: decomposed[0], b2: decomposed[1], b3: decomposed[2],
+          sum,
+          combo,
+          odd: sum % 2 === 1,
+          big: sum >= 14,
+        });
+      } catch(e) { continue; }
+    }
+  }
+
+  // 格式B: keno.json → 20码原始数据
+  // raw = {data:[{nbr,date,time,nums:[...]}]} 或 {data:[{nbr,raw:[]}]}
+  if ((type === "keno" || type === "yu28") && parsed.length === 0) {
+    const items = raw.data || raw.list || raw.results || (Array.isArray(raw) ? raw : []);
+    for (const item of items) {
+      try {
+        const nbr = String(item.nbr || item.issue || item.period || "");
+        let nums;
+        if (item.nums) nums = item.nums;
+        else if (item.numbers) nums = item.numbers;
+        else if (item.raw) nums = item.raw;
+        else if (item.num) {
+          // num可能是逗号分隔字符串
+          const parts = String(item.num).split(",");
+          if (parts.length >= 19) nums = parts.map(Number);
+        }
+        if (!nums || nums.length < 19) continue;
+        nums = nums.map(Number).filter(n => !isNaN(n));
+        if (nums.length < 19) continue;
+        const sorted = [...nums].sort((a, b) => a - b);
+        const b1 = sorted[0], b2 = sorted[1], b3 = sorted[2];
+        const sum = b1 + b2 + b3;
+        parsed.push({
+          nbr,
+          date: item.date || item.draw_date || "",
+          time: item.time || item.draw_time || "",
+          raw: nums,
+          b1, b2, b3, sum,
+          combo: comboOf(sum),
+          odd: sum % 2 === 1,
+          big: sum >= 14,
+        });
+      } catch(e) { continue; }
+    }
+  }
+
+  // 格式C: 直接是数组
+  if (parsed.length === 0 && Array.isArray(raw)) {
+    for (const item of raw) {
+      try {
+        const nbr = String(item.nbr || item.issue || "");
+        const sum = parseInt(item.number || item.sum || item.value || "0");
+        if (!nbr || isNaN(sum)) continue;
+        const decomposed = decomposeSum(sum);
+        parsed.push({
+          nbr, date: item.date || "", time: item.time || "",
+          raw: decomposed,
+          b1: decomposed[0], b2: decomposed[1], b3: decomposed[2],
+          sum, combo: comboOf(sum),
+          odd: sum % 2 === 1, big: sum >= 14,
+        });
+      } catch(e) { continue; }
+    }
+  }
+
+  parsed.sort((a, b) => a.nbr.localeCompare(b.nbr));
+  return parsed;
+}
+
+async function fetchFromAllSources() {
+  const errors = [];
+  for (const src of API_SOURCES) {
+    try {
+      addDebug(`尝试 ${src.name} ...`);
+      const data = await tryFetch(src.url, src.type);
+      if (data.length > 0) {
+        addDebug(`✅ ${src.name} 成功 → ${data.length}期`);
+        return { data, source: src.name };
+      }
+      addDebug(`⚠️ ${src.name} 返回空`);
+    } catch(e) {
+      addDebug(`❌ ${src.name}: ${e.message}`);
+      errors.push(`${src.name}: ${e.message}`);
+    }
+  }
+  throw new Error("所有接口均失败: " + errors.join(" | "));
+}
+
+// ============================================================
+// 预测算法（V8 七信号融合，简化版）
+// ============================================================
+function gaussianProbs(center, sigma) {
+  const probs = {};
+  for (let x = 0; x <= 27; x++) {
+    const d = x - center;
+    probs[x] = Math.exp(-d * d / (2 * sigma * sigma));
+  }
+  return probs;
+}
+
+function normalize(probs) {
+  const total = Object.values(probs).reduce((a, b) => a + b, 0) || 1;
+  const out = {};
+  for (const k in probs) out[k] = probs[k] / total;
+  return out;
+}
+
 function signalEMA(data, alpha = 0.3) {
   if (!data.length) return {};
   let ema = data[0].sum;
@@ -504,21 +527,20 @@ function signalEMA(data, alpha = 0.3) {
   return gaussianProbs(Math.round(ema), 2.0);
 }
 
-function signalDoubleEMA(data, alpha = 0.3, beta = 0.15) {
+function signalDoubleEMA(data) {
   if (data.length < 3) return {};
-  let ema1 = data[0].sum, ema2 = data[0].sum;
+  let e1 = data[0].sum, e2 = data[0].sum;
   for (let i = 1; i < data.length; i++) {
-    ema1 = alpha * data[i].sum + (1 - alpha) * ema1;
-    ema2 = beta * ema1 + (1 - beta) * ema2;
+    e1 = 0.3 * data[i].sum + 0.7 * e1;
+    e2 = 0.15 * e1 + 0.85 * e2;
   }
-  let center = Math.round(ema1 + (ema1 - ema2));
-  center = Math.max(0, Math.min(27, center));
-  return gaussianProbs(center, 1.5);
+  const c = Math.max(0, Math.min(27, Math.round(e1 + (e1 - e2))));
+  return gaussianProbs(c, 1.5);
 }
 
-function signalWeightedFreq(data, decay = 0.95) {
+function signalWeightedFreq(data) {
   if (!data.length) return {};
-  const weights = data.map((_, i) => Math.pow(decay, data.length - 1 - i));
+  const weights = data.map((_, i) => Math.pow(0.95, data.length - 1 - i));
   const counts = {};
   data.forEach((d, i) => { counts[d.sum] = (counts[d.sum] || 0) + weights[i]; });
   const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
@@ -544,23 +566,6 @@ function signalMarkov1(data) {
   return probs;
 }
 
-function signalMarkov2(data) {
-  if (data.length < 10) return {};
-  const trans = {};
-  for (let i = 0; i < data.length - 2; i++) {
-    const k = data[i].sum + "_" + data[i + 1].sum;
-    if (!trans[k]) trans[k] = {};
-    trans[k][data[i + 2].sum] = (trans[k][data[i + 2].sum] || 0) + 1;
-  }
-  const last = data[data.length - 2].sum + "_" + data[data.length - 1].sum;
-  if (!trans[last]) return {};
-  const c = trans[last];
-  const total = Object.values(c).reduce((a, b) => a + b, 0) || 1;
-  const probs = {};
-  for (let x = 0; x <= 27; x++) probs[x] = (c[x] || 0) / total;
-  return probs;
-}
-
 function signalDiffReversal(data) {
   if (data.length < 6) return {};
   const diffs = [];
@@ -571,33 +576,9 @@ function signalDiffReversal(data) {
   return gaussianProbs(Math.max(0, Math.min(27, center)), 1.0);
 }
 
-function signalSecondDiff(data) {
-  if (data.length < 8) return {};
-  const diffs = [];
-  for (let i = 1; i < data.length; i++) diffs.push(data[i].sum - data[i - 1].sum);
-  const sd = [];
-  for (let i = 1; i < diffs.length; i++) sd.push(diffs[i] - diffs[i - 1]);
-  const avg = sd.slice(-5).reduce((a, b) => a + b, 0) / Math.min(5, sd.length);
-  const pred = data[data.length - 1].sum + diffs[diffs.length - 1] + avg;
-  return gaussianProbs(Math.max(0, Math.min(27, Math.round(pred))), 1.2);
-}
-
-function signalColdReturn(data, window = 50) {
-  if (!data.length) return {};
-  const recent = data.slice(-window);
-  const seen = new Set(recent.map(d => d.sum));
-  const cold = [];
-  for (let x = 0; x <= 27; x++) if (!seen.has(x)) cold.push(x);
-  if (!cold.length) return {};
-  const probs = {};
-  const strength = 1.0 / cold.length;
-  for (let x = 0; x <= 27; x++) probs[x] = cold.includes(x) ? strength : 0.01;
-  return probs;
-}
-
 function signalComboConstraint(data) {
   if (data.length < 10) return {};
-  const recent = data.slice(-30).map(d => comboOf(d.sum));
+  const recent = data.slice(-30).map(d => d.combo);
   const counts = {};
   recent.forEach(c => { counts[c] = (counts[c] || 0) + 1; });
   const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
@@ -607,194 +588,63 @@ function signalComboConstraint(data) {
   return probs;
 }
 
-function signalExtremeReversal(data) {
-  if (data.length < 5) return {};
-  const recent = data.slice(-5).map(d => d.sum);
-  const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
-  const extremity = Math.abs(avg - 13.5);
-  if (extremity <= 5) return {};
-  const center = Math.round(13.5 + (avg - 13.5) * 0.3);
-  return gaussianProbs(Math.max(0, Math.min(27, center)), 1.5);
-}
-
-// --- 工具 ---
-function gaussianProbs(center, sigma) {
-  const probs = {};
-  for (let x = 0; x <= 27; x++) {
-    const d = x - center;
-    probs[x] = Math.exp(-d * d / (2 * sigma * sigma));
-  }
-  return probs;
-}
-
-function normalize(probs) {
-  const total = Object.values(probs).reduce((a, b) => a + b, 0) || 1;
-  const out = {};
-  for (const k in probs) out[k] = probs[k] / total;
-  return out;
-}
-
-function entropy(probs) {
-  let e = 0;
-  for (const k in probs) {
-    if (probs[k] > 0) e -= probs[k] * Math.log2(probs[k]);
-  }
-  return e;
-}
-
-// --- 融合 ---
-const SIGNAL_WEIGHTS = {
-  ema: 3.0, double_ema: 2.0, weighted_freq: 2.5,
-  markov_1: 2.0, markov_2: 1.0, diff_reversal: 1.5,
-  second_diff: 1.0, cold_return: 0.8,
-  combo_constraint: 1.2, extreme_reversal: 1.0,
-};
-
-function fuseSignals(data) {
-  const signals = {
-    ema: signalEMA(data),
-    double_ema: signalDoubleEMA(data),
-    weighted_freq: signalWeightedFreq(data),
-    markov_1: signalMarkov1(data),
-    markov_2: signalMarkov2(data),
-    diff_reversal: signalDiffReversal(data),
-    second_diff: signalSecondDiff(data),
-    cold_return: signalColdReturn(data),
-    combo_constraint: signalComboConstraint(data),
-    extreme_reversal: signalExtremeReversal(data),
-  };
-
-  const fused = {};
-  for (let x = 0; x <= 27; x++) fused[x] = 0;
-  let totalW = 0;
-  for (const name in signals) {
-    const probs = signals[name];
-    if (!probs || !Object.keys(probs).length) continue;
-    const w = SIGNAL_WEIGHTS[name] || 1.0;
-    const norm = normalize(probs);
-    for (let x = 0; x <= 27; x++) fused[x] += (norm[x] || 0) * w;
-    totalW += w;
-  }
-  if (totalW > 0) {
-    for (let x = 0; x <= 27; x++) fused[x] /= totalW;
-  }
-  return { fused, signals: Object.fromEntries(
-    Object.entries(signals).map(([k, v]) => [k, v && Object.keys(v).length ? normalize(v) : {}])
-  )};
-}
-
-// --- 组合信号 ---
-function comboMarkov(data, order) {
-  if (data.length < 10) return {};
-  const combos = data.map(d => comboOf(d.sum));
-  let trans;
-  if (order === 1) {
-    trans = {};
-    for (let i = 0; i < combos.length - 1; i++) {
-      if (!trans[combos[i]]) trans[combos[i]] = {};
-      trans[combos[i]][combos[i + 1]] = (trans[combos[i]][combos[i + 1]] || 0) + 1;
-    }
-    const last = combos[combos.length - 1];
-    if (!trans[last]) return {};
-    const c = trans[last];
-    const total = Object.values(c).reduce((a, b) => a + b, 0) || 1;
-    const out = {};
-    COMBOS.forEach(c => out[c] = (c[last] || 0) / total);
-    return out;
-  }
-  return {};
-}
-
-function comboFreq(data, decay = 0.97) {
-  if (!data.length) return {};
-  const combos = data.map(d => comboOf(d.sum));
-  const weights = combos.map((_, i) => Math.pow(decay, combos.length - 1 - i));
-  const scores = {};
-  combos.forEach((c, i) => { scores[c] = (scores[c] || 0) + weights[i]; });
-  const total = Object.values(scores).reduce((a, b) => a + b, 0) || 1;
-  const out = {};
-  COMBOS.forEach(c => out[c] = (scores[c] || 0) / total);
-  return out;
-}
-
-function predictCombo(data) {
-  const s1 = normalize(comboMarkov(data, 1));
-  const s2 = normalize(comboFreq(data));
-  const fused = {};
-  COMBOS.forEach(c => {
-    fused[c] = (s1[c] || 0) * 2.5 + (s2[c] || 0) * 2.0;
-  });
-  const total = Object.values(fused).reduce((a,b) => a + b, 0) || 1;
-  COMBOS.forEach(c => fused[c] /= total);
-  return fused;
-}
-
-// --- 决策 ---
-function topN(probs, n) {
-  return Object.entries(probs)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, n)
-    .map(e => parseInt(e[0]));
-}
-
-function killN(fused, data, n) {
-  // 理论概率
-  const theo = {};
-  for (let x = 0; x <= 27; x++) {
-    let count = 0;
-    for (let a = 0; a <= 9; a++)
-      for (let b = 0; b <= 9; b++)
-        for (let c = 0; c <= 9; c++)
-          if (a + b + c === x) count++;
-    theo[x] = count / 1000;
-  }
-  const combined = {};
-  for (let x = 0; x <= 27; x++) {
-    combined[x] = (1 - (fused[x] || 0)) * 0.5 + theo[x] * 0.5;
-  }
-  return Object.entries(combined)
-    .sort((a, b) => a[1] - b[1])
-    .slice(0, n)
-    .map(e => parseInt(e[0]));
-}
-
-function calcConfidence(fused, comboProbs) {
-  const sorted = Object.values(fused).sort((a, b) => b - a);
-  const topShare = sorted[0] || 0;
-  const comboSorted = Object.values(comboProbs).sort((a, b) => b - a);
-  const comboShare = comboSorted[0] || 0;
-  const e = entropy(fused);
-  const maxE = Math.log2(28);
-  const consistency = 1 - e / maxE;
-  const score = topShare * 30 + comboShare * 15 + consistency * 15;
-  return Math.min(55, Math.max(15, Math.round(score)));
-}
-
-function v8Predict(data) {
+function v9Predict(data) {
   if (!data.length) {
     return {
       tricode_main: [13, 14, 15], tricode_backup: [10, 17],
       tricode_kill: [0, 1, 2, 26, 27],
       combo_push: ["小单", "大双"], combo_kill: "大单",
       sum_center: 13, sum_range: [10, 17], confidence: 15,
-      signal_details: {},
     };
   }
 
-  const { fused, signals } = fuseSignals(data);
-  const comboProbs = predictCombo(data);
+  const sigs = {
+    ema: normalize(signalEMA(data)),
+    double_ema: normalize(signalDoubleEMA(data)),
+    freq: normalize(signalWeightedFreq(data)),
+    mk1: normalize(signalMarkov1(data)),
+    diff: normalize(signalDiffReversal(data)),
+    combo: normalize(signalComboConstraint(data)),
+  };
 
-  const main3 = topN(fused, 3);
-  const remaining = [];
-  for (let x = 0; x <= 27; x++) {
-    if (!main3.includes(x)) remaining.push([x, fused[x] || 0]);
+  const weights = { ema: 3.0, double_ema: 2.0, freq: 2.5, mk1: 2.0, diff: 1.5, combo: 1.2 };
+
+  const fused = {};
+  for (let x = 0; x <= 27; x++) fused[x] = 0;
+  let totalW = 0;
+  for (const name in sigs) {
+    if (!sigs[name] || !Object.keys(sigs[name]).length) continue;
+    const w = weights[name] || 1.0;
+    for (let x = 0; x <= 27; x++) fused[x] += (sigs[name][x] || 0) * w;
+    totalW += w;
   }
-  remaining.sort((a, b) => b[1] - a[1]);
-  const backup2 = remaining.slice(0, 2).map(e => e[0]);
+  if (totalW > 0) for (let x = 0; x <= 27; x++) fused[x] /= totalW;
 
-  const kill5 = killN(fused, data, 5);
+  // 主推3
+  const ranked = Object.entries(fused).sort((a, b) => b[1] - a[1]);
+  const main3 = ranked.slice(0, 3).map(e => parseInt(e[0]));
+  const backup2 = ranked.slice(3, 5).map(e => parseInt(e[0]));
 
-  const comboRanked = Object.entries(comboProbs).sort((a, b) => b[1] - a[1]);
+  // 杀5（选概率最低的5个）
+  const theoProbs = {};
+  for (let x = 0; x <= 27; x++) {
+    let count = 0;
+    for (let a = 0; a <= 9; a++)
+      for (let b = 0; b <= 9; b++)
+        for (let c = 0; c <= 9; c++)
+          if (a + b + c === x) count++;
+    theoProbs[x] = count / 1000;
+  }
+  const killScore = {};
+  for (let x = 0; x <= 27; x++) {
+    killScore[x] = (1 - (fused[x] || 0)) * 0.5 + theoProbs[x] * 0.5;
+  }
+  const kill5 = Object.entries(killScore).sort((a, b) => a[1] - b[1]).slice(0, 5).map(e => parseInt(e[0]));
+
+  // 组合预测
+  const comboCounts = {};
+  data.slice(-20).forEach(d => { comboCounts[d.combo] = (comboCounts[d.combo] || 0) + 1; });
+  const comboRanked = Object.entries(comboCounts).sort((a, b) => b[1] - a[1]);
   const push2 = comboRanked.slice(0, 2).map(e => e[0]);
   const kill1 = comboRanked[comboRanked.length - 1][0];
 
@@ -807,105 +657,111 @@ function v8Predict(data) {
   const lo = Math.max(0, center - spread);
   const hi = Math.min(27, center + spread);
 
-  const confidence = calcConfidence(fused, comboProbs);
+  // 置信度
+  const topShare = ranked[0][1] || 0;
+  const entropy = -Object.values(fused).filter(p => p > 0).reduce((s, p) => s + p * Math.log2(p), 0);
+  const maxE = Math.log2(28);
+  const consistency = 1 - entropy / maxE;
+  const conf = Math.min(55, Math.max(15, Math.round(topShare * 30 + consistency * 15)));
 
   return {
     tricode_main: main3, tricode_backup: backup2,
     tricode_kill: kill5, combo_push: push2, combo_kill: kill1,
-    sum_center: center, sum_range: [lo, hi], confidence,
-    signal_details: {
-      ema_center: Math.round(Object.entries(fused).reduce((s, [k, v]) => s + parseInt(k) * v, 0)),
-      top3_prob: main3.reduce((s, x) => s + (fused[x] || 0), 0),
-      kill5_prob: kill5.reduce((s, x) => s + (fused[x] || 0), 0),
-      combo_entropy: Math.round(entropy(comboProbs) * 1000) / 1000,
-      signal_count: Object.values(signals).filter(s => s && Object.keys(s).length).length,
-    },
+    sum_center: center, sum_range: [lo, hi], confidence: conf,
   };
 }
 
 // ============================================================
-// 数据获取 + 渲染
+// 对错记录（核心新增功能）
 // ============================================================
+const RECORD_KEY = "qianjin_v9_records";
 
-const API_URL = "https://pc28.help/api/keno.json?count=60";
-const STORAGE_KEY = "qianjin_v8_data";
-const MAX_STORAGE = 500;
-
-let allData = [];
-let currentPred = null;
-
-async function fetchFromAPI() {
-  const resp = await fetch(API_URL, {
-    headers: { "Accept": "application/json", "Referer": "https://pc28.help/" },
-    cache: "no-store",
-  });
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  return await resp.json();
-}
-
-function parseApiData(raw) {
-  const items = raw.data || raw.list || raw.results || (Array.isArray(raw) ? raw : null);
-  if (!items) throw new Error("未知API格式: " + Object.keys(raw).join(","));
-  const parsed = [];
-  for (const item of items) {
-    try {
-      const nbr = item.nbr || item.issue || item.period || "";
-      const numsStr = item.num || item.numbers || item.raw || "";
-      let nums;
-      if (typeof numsStr === "string") nums = numsStr.split(",").map(Number).filter(n => !isNaN(n));
-      else if (Array.isArray(numsStr)) nums = numsStr.map(Number);
-      else continue;
-      if (nums.length < 19) continue;
-      const { b1, b2, b3, sum, combo } = calcBalls(nums);
-      parsed.push({
-        nbr: String(nbr), date: item.date || "", time: item.time || "",
-        raw: nums, b1, b2, b3, sum, combo,
-        odd: sum % 2 === 1, big: sum >= 14,
-      });
-    } catch(e) { continue; }
-  }
-  parsed.sort((a, b) => a.nbr.localeCompare(b.nbr));
-  return parsed;
-}
-
-function loadStorage() {
+function loadRecords() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    return JSON.parse(localStorage.getItem(RECORD_KEY) || "[]");
   } catch { return []; }
 }
 
-function saveStorage(data) {
+function saveRecords(records) {
   try {
-    const trimmed = data.slice(-MAX_STORAGE);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+    localStorage.setItem(RECORD_KEY, JSON.stringify(records.slice(-100)));
   } catch {}
 }
 
-function mergeData(oldData, newData) {
-  const map = new Map();
-  [...oldData, ...newData].forEach(d => {
-    if (d && d.nbr) map.set(d.nbr, d);
+function updateRecords(history, prediction) {
+  if (!prediction || !history.length) return loadRecords();
+  const records = loadRecords();
+  const latest = history[history.length - 1];
+  const latestNbr = latest.nbr;
+
+  // 检查这期是否已有记录
+  if (records.some(r => r.nbr === latestNbr)) return records;
+
+  // 主推命中？
+  const mainHit = prediction.tricode_main.includes(latest.sum);
+  // 候补命中？
+  const backupHit = prediction.tricode_backup.includes(latest.sum);
+  // 杀特码正确？（实际特码不在杀列表中）
+  const killCorrect = !prediction.tricode_kill.includes(latest.sum);
+  // 押组合命中？
+  const comboHit = prediction.combo_push.includes(latest.combo);
+
+  records.push({
+    nbr: latestNbr,
+    sum: latest.sum,
+    combo: latest.combo,
+    main_hit: mainHit,
+    backup_hit: backupHit,
+    kill_correct: killCorrect,
+    combo_hit: comboHit,
+    main_pred: [...prediction.tricode_main],
+    kill_pred: [...prediction.tricode_kill],
+    date: latest.date,
   });
-  return Array.from(map.values()).sort((a, b) => a.nbr.localeCompare(b.nbr));
+
+  saveRecords(records);
+  return records;
 }
 
-// --- 渲染 ---
+function renderRecords(records) {
+  const recent = records.slice(-20);
+  const bar = document.getElementById('recordBar');
+  const summary = document.getElementById('recordSummary');
+  const killBar = document.getElementById('killRecordBar');
+  const killSummary = document.getElementById('killRecordSummary');
+
+  // 主推命中记录
+  bar.innerHTML = recent.map(r => {
+    const hit = r.main_hit || r.backup_hit;
+    return `<span class="record-dot ${hit ? 'hit' : 'miss'}" title="期${r.nbr} 特码${r.sum} 预测${r.main_pred.join(',')} ${hit?'中':'挂'}"></span>`;
+  }).join('');
+
+  const mainHits = records.filter(r => r.main_hit).length;
+  const backupHits = records.filter(r => r.backup_hit).length;
+  const total = records.length;
+  summary.innerHTML = `主推命中: <span style="color:var(--green)">${mainHits}/${total}</span> (${total?(mainHits/total*100).toFixed(1):0}%) · 含候补: <span style="color:var(--green)">${mainHits+backupHits}/${total}</span> (${total?((mainHits+backupHits)/total*100).toFixed(1):0}%)`;
+
+  // 杀特码记录
+  killBar.innerHTML = recent.map(r => {
+    return `<span class="record-dot ${r.kill_correct ? 'hit' : 'miss'}" title="期${r.nbr} 特码${r.sum} 杀${r.kill_pred.join(',')} ${r.kill_correct?'✓':'✗'}"></span>`;
+  }).join('');
+
+  const killCorrect = records.filter(r => r.kill_correct).length;
+  killSummary.innerHTML = `杀特码正确: <span style="color:var(--green)">${killCorrect}/${total}</span> (${total?(killCorrect/total*100).toFixed(1):0}%)`;
+}
+
+// ============================================================
+// 渲染
+// ============================================================
 function renderLatest(d) {
   document.getElementById("ball1").textContent = d.b1;
   document.getElementById("ball2").textContent = d.b2;
   document.getElementById("ball3").textContent = d.b3;
   document.getElementById("sumDisplay").textContent = d.sum;
-  const tag = document.getElementById("comboTags");
   const cls = d.big ? (d.odd ? "big-odd" : "big-even") : (d.odd ? "small-odd" : "small-even");
-  tag.innerHTML = `<span class="combo-tag ${cls}">${d.combo}</span>`;
-  document.getElementById("drawInfo").textContent =
-    `期号 ${d.nbr} · ${d.date} ${d.time}`;
-  document.getElementById("rawNums").textContent =
-    "[" + d.raw.join(", ") + "]";
-  // 下期期号
-  const next = String(parseInt(d.nbr) + 1);
-  document.getElementById("nextNbr").textContent = next;
+  document.getElementById("comboTags").innerHTML = `<span class="combo-tag ${cls}">${d.combo}</span>`;
+  document.getElementById("drawInfo").textContent = `期号 ${d.nbr} · ${d.date} ${d.time}`;
+  document.getElementById("nextNbr").textContent = String(parseInt(d.nbr) + 1);
 }
 
 function renderPrediction(pred) {
@@ -913,37 +769,34 @@ function renderPrediction(pred) {
   document.getElementById("mainBalls").innerHTML = pred.tricode_main.map(n => mkBall(n, "main")).join("");
   document.getElementById("backupBalls").innerHTML = pred.tricode_backup.map(n => mkBall(n, "backup")).join("");
   document.getElementById("killBalls").innerHTML = pred.tricode_kill.map(n => mkBall(n, "kill")).join("");
-
-  document.getElementById("pushCombos").innerHTML = pred.combo_push
-    .map(c => `<span class="pred-combo push">${c}</span>`).join("");
-  document.getElementById("killCombo").innerHTML =
-    `<span class="pred-combo kill-c">${pred.combo_kill}</span>`;
-
-  document.getElementById("sumCenter").textContent =
-    `${pred.sum_center}  (区间 ${pred.sum_range[0]}-${pred.sum_range[1]})`;
-
-  const conf = pred.confidence;
-  document.getElementById("confBar").style.width = conf + "%";
-  document.getElementById("confText").textContent =
-    `置信度 ${conf}% · 信号数 ${pred.signal_details.signal_count || "-"}`;
-
-  // 投票详情
-  if (pred.signal_details && Object.keys(pred.signal_details).length) {
-    document.getElementById("voteCard").style.display = "";
-  }
+  document.getElementById("pushCombos").innerHTML = pred.combo_push.map(c => `<span class="pred-combo push">${c}</span>`).join("");
+  document.getElementById("killCombo").innerHTML = `<span class="pred-combo kill-c">${pred.combo_kill}</span>`;
+  document.getElementById("sumCenter").textContent = `${pred.sum_center} (区间 ${pred.sum_range[0]}-${pred.sum_range[1]})`;
+  document.getElementById("confBar").style.width = pred.confidence + "%";
+  document.getElementById("confText").textContent = `置信度 ${pred.confidence}%`;
 }
 
-function renderHistory(data) {
+function renderHistory(data, prediction) {
   const tbody = document.getElementById("histBody");
   const recent = data.slice(-50).reverse();
   tbody.innerHTML = recent.map(d => {
     const cls = d.big ? (d.odd ? "big-odd" : "big-even") : (d.odd ? "small-odd" : "small-even");
+    let resultMark = "";
+    if (prediction) {
+      const hit = prediction.tricode_main.includes(d.sum) || prediction.tricode_backup.includes(d.sum);
+      const cls2 = hit ? "hit" : "miss";
+      const sym = hit ? "✓" : "✗";
+      resultMark = `<span class="${cls2}">${sym}</span>`;
+    }
+    const mainStr = prediction ? prediction.tricode_main.join(',') : "-";
     return `<tr>
       <td>${d.nbr}</td>
       <td>${d.date}</td>
       <td class="num-cell">${d.b1}+${d.b2}+${d.b3}</td>
       <td style="font-weight:700;color:var(--gold);">${d.sum}</td>
       <td><span class="combo-mini ${cls}">${d.combo}</span></td>
+      <td style="font-size:10px;">${mainStr}</td>
+      <td>${resultMark}</td>
     </tr>`;
   }).join("");
   document.getElementById("histCount").textContent = data.length;
@@ -951,31 +804,25 @@ function renderHistory(data) {
 
 function renderSourceBadge(source, count) {
   const el = document.getElementById("sourceBadge");
-  const labels = {
-    "pc28.help": "✅ pc28.help 直连",
-    "yu28.top": "✅ yu28.top 备用",
-    "localStorage": "💾 本地缓存",
-    "builtin": "📦 内置数据",
-    "error": "❌ 连接失败",
-  };
-  el.textContent = (labels[source] || source) + ` · ${count}期`;
-  el.style.color = source === "error" ? "var(--red)" : "var(--accent)";
+  el.textContent = `${source} · ${count}期`;
+  el.style.color = source.includes("❌") ? "var(--red)" : "var(--accent)";
 }
 
-// --- 倒计时 ---
-let countdownSeconds = 210;
+// ============================================================
+// 倒计时
+// ============================================================
+let countdownSeconds = TOTAL_SECONDS;
 let countdownTimer = null;
 
 function startCountdown() {
   if (countdownTimer) clearInterval(countdownTimer);
-  countdownSeconds = 210;
+  countdownSeconds = TOTAL_SECONDS;
   updateCountdownDisplay();
   countdownTimer = setInterval(() => {
     countdownSeconds--;
     if (countdownSeconds <= 0) {
-      countdownSeconds = 210;
-      // 尝试刷新数据
-      setTimeout(() => fetchAndUpdate(true), 1000);
+      countdownSeconds = TOTAL_SECONDS;
+      setTimeout(() => fetchAndUpdate(true), 2000);
     }
     updateCountdownDisplay();
   }, 1000);
@@ -984,96 +831,131 @@ function startCountdown() {
 function updateCountdownDisplay() {
   const m = Math.floor(countdownSeconds / 60);
   const s = countdownSeconds % 60;
-  const text = `${m}:${s.toString().padStart(2, "0")}`;
-  document.getElementById("countdown").textContent = text;
+  document.getElementById("countdown").textContent = `${m}:${s.toString().padStart(2, "0")}`;
   const circumference = 2 * Math.PI * 52;
-  const offset = circumference * (1 - countdownSeconds / 210);
+  const offset = circumference * (1 - countdownSeconds / TOTAL_SECONDS);
   document.getElementById("ringFg").setAttribute("stroke-dashoffset", offset);
 }
 
-// --- Toast ---
+// ============================================================
+// Toast
+// ============================================================
 function showToast(msg) {
   const t = document.getElementById("toast");
   t.textContent = msg;
   t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 2000);
+  setTimeout(() => t.classList.remove("show"), 2500);
 }
 
-// --- 主流程 ---
+// ============================================================
+// 主流程
+// ============================================================
+let allData = [];
+let currentPred = null;
+
 async function fetchAndUpdate(silent = false) {
-  let source = "error";
-  let parsed = [];
-
-  // 1. 尝试 API
   try {
-    if (!silent) showToast("📡 获取最新数据...");
-    const raw = await fetchFromAPI();
-    parsed = parseApiData(raw);
-    if (parsed.length > 0) {
-      source = "pc28.help";
-    }
+    if (!silent) showToast("📡 尝试多接口获取数据...");
+    addDebug("--- 开始获取 ---");
+
+    const { data, source } = await fetchFromAllSources();
+
+    if (data.length === 0) throw new Error("返回数据为空");
+
+    // 保存
+    localStorage.setItem("qianjin_v9_data", JSON.stringify(data.slice(-500)));
+    allData = data;
+
+    // 渲染最新
+    const latest = data[data.length - 1];
+    renderLatest(latest);
+
+    // 预测
+    const pred = v9Predict(data);
+    currentPred = pred;
+    renderPrediction(pred);
+
+    // 更新对错记录
+    const records = updateRecords(data, pred);
+    renderRecords(records);
+
+    // 历史
+    renderHistory(data, pred);
+
+    // 徽章
+    renderSourceBadge(`✅ ${source}`, data.length);
+
+    // 显示调试
+    document.getElementById("debugCard").style.display = "";
+
+    document.getElementById("updateTime").textContent = `最后更新: ${new Date().toLocaleString("zh-CN")}`;
+
+    if (!silent) showToast(`✅ ${source} · ${data.length}期 · 最新期${latest.nbr}(${latest.sum})`);
+
   } catch(e) {
-    console.warn("API失败:", e.message);
-  }
+    addDebug(`💥 全部失败: ${e.message}`);
+    console.error(e);
 
-  // 2. 合并本地
-  const local = loadStorage();
-  let merged = mergeData(local, parsed);
+    // 尝试用本地缓存
+    try {
+      const cached = JSON.parse(localStorage.getItem("qianjin_v9_data") || "[]");
+      if (cached.length > 0) {
+        allData = cached;
+        renderLatest(cached[cached.length - 1]);
+        const pred = v9Predict(cached);
+        renderPrediction(pred);
+        const records = updateRecords(cached, pred);
+        renderRecords(records);
+        renderHistory(cached, pred);
+        renderSourceBadge("💾 本地缓存", cached.length);
+        showToast(`💾 使用缓存 · ${cached.length}期`);
+        return;
+      }
+    } catch {}
 
-  // 3. 如果API没拿到，用本地
-  if (merged.length === 0) {
     // 尝试 data.json
     try {
       const resp = await fetch("data.json", { cache: "no-store" });
       const json = await resp.json();
       if (json.history && json.history.length) {
-        merged = json.history;
-        source = "builtin";
+        allData = json.history;
+        renderLatest(json.history[json.history.length - 1]);
+        if (json.prediction) renderPrediction(json.prediction);
+        renderHistory(json.history, json.prediction);
+        renderSourceBadge("📦 data.json", json.history.length);
+        return;
       }
-    } catch(e) {}
+    } catch {}
+
+    renderSourceBadge("❌ 全部接口失败", 0);
+    showToast("❌ 数据获取失败，请检查网络");
   }
-
-  if (merged.length === 0) {
-    renderSourceBadge("error", 0);
-    showToast("❌ 数据获取失败");
-    return;
-  }
-
-  // 保存
-  saveStorage(merged);
-  allData = merged;
-
-  // 渲染
-  const latest = merged[merged.length - 1];
-  renderLatest(latest);
-
-  // V8 预测
-  const pred = v8Predict(merged);
-  currentPred = pred;
-  renderPrediction(pred);
-  renderHistory(merged);
-  renderSourceBadge(source, merged.length);
-
-  document.getElementById("updateTime").textContent =
-    `最后更新: ${new Date().toLocaleString("zh-CN")}`;
-
-  if (!silent) showToast(`✅ 已更新 · ${merged.length}期 · V8引擎`);
 }
 
 function manualRefresh() {
   fetchAndUpdate(false);
 }
 
-// --- 启动 ---
+// ============================================================
+// 启动
+// ============================================================
 async function init() {
+  addDebug("页面初始化...");
+
   // 先渲染本地缓存（秒开）
-  const local = loadStorage();
-  if (local.length > 0) {
-    allData = local;
-    renderLatest(local[local.length - 1]);
-    renderHistory(local);
-    renderSourceBadge("localStorage", local.length);
-  }
+  try {
+    const cached = JSON.parse(localStorage.getItem("qianjin_v9_data") || "[]");
+    if (cached.length > 0) {
+      allData = cached;
+      renderLatest(cached[cached.length - 1]);
+      const pred = v9Predict(cached);
+      renderPrediction(pred);
+      const records = loadRecords();
+      renderRecords(records);
+      renderHistory(cached, pred);
+      renderSourceBadge("💾 本地缓存", cached.length);
+    }
+  } catch(e) { addDebug(`缓存读取失败: ${e.message}`); }
 
   // 再拉远程
   await fetchAndUpdate(true);
@@ -1081,22 +963,14 @@ async function init() {
   // 启动倒计时
   startCountdown();
 
-  // 每60秒自动检测新期
-  setInterval(() => {
-    const now = new Date();
-    // 跳过维护窗口 19:00-19:30 北京时间
-    const utc8 = new Date(now.getTime() + 8 * 3600000);
-    if (utc8.getUTCHours() === 19 && utc8.getUTCMinutes() < 30) return;
-    fetchAndUpdate(true);
-  }, 60000);
+  // 每60秒检测
+  setInterval(() => fetchAndUpdate(true), 60000);
 }
 
-// 页面可见性变化 → 刷新
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) fetchAndUpdate(true);
 });
 
-// 启动
 init().catch(err => {
   console.error("初始化失败:", err);
   showToast("❌ 初始化失败: " + err.message);
