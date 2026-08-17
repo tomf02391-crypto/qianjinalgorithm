@@ -24,7 +24,7 @@ jobs:
         run: pip install requests 2>/dev/null || true
 
       - name: Fetch & Predict
-        run: python fetch_bclc.py
+        run: python fetch_data.py
 
       - name: Commit
         run: |
@@ -38,12 +38,11 @@ jobs:
       - name: Diagnose
         if: failure()
         run: |
-          echo "::warning::BCLC接口可能不可达，将使用种子数据"
+          echo "::warning::BCLC接口可能不可达，使用种子数据兜底"
           python -c "
           import json, os
-          # 确保至少有种子数据
           if not os.path.exists('data.json') or os.path.getsize('data.json') < 100:
-              os.system('python fetch_bclc.py')
+              os.system('python fetch_data.py')
           "
           git add data.json
           git diff --cached --quiet || git commit -m "chore: 种子数据兜底"
