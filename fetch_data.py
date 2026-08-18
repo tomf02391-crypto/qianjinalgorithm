@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-fetch_data.py — 千金星轨 V9.2 数据层（统一接口版）
-==================================================
-变更说明（V9.2）：
-  - 全面接入 pc28_standard_api（统一多源降级 + 缓存 + 重试）
-  - 数据源优先级：pc28.help → pgsoft → 28api → byw.bet
-  - 内置 3 秒缓存层，避免高频请求被限流
-  - Token 全部从环境变量读取（安全加固）
-  - 保留旧数据兜底，绝不造假
+fetch_data.py — 千金星轨 V10 · 数据仓库版
+==========================================
+变更说明（V10）：
+  - 数据源统一从 Liquid-Glass-Profil 数据仓库读取
+  - 不再直接调用外部API，避免限流和依赖
+  - BCLC官方规则计算由数据仓库统一完成
+  - 本地缓存兜底，永不返回空数据
+
+数据流:
+  BCLC官网 → Liquid-Glass-Profil/scripts/fetch_data.py (每5分钟)
+  → data/latest.json (GitHub Pages托管)
+  → 本脚本读取 → 写入 data.json (供前端使用)
 
 用法：
   python fetch_data.py           # 抓取+预测+写data.json
@@ -21,78 +25,150 @@ import sys
 import os
 import math
 import time
+import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 # ============================================================
-# 导入统一接口模块
+# 配置
 # ============================================================
-try:
-    from pc28_standard_api import PC28API, CONFIG
-except ImportError:
-    # 兼容直接运行（同目录）
-    sys.path.insert(0, str(Path(__file__).parent))
-    from pc28_standard_api import PC28API, CONFIG
-
-# ============================================================
-# 配置（环境变量优先）
-# ============================================================
-TOKEN_28API = os.environ.get("PC28_TOKEN_28API", "")
-TOKEN_BYW = os.environ.get("PC28_TOKEN_BYW", "")
-
-# 太平洋时区
-PACIFIC_TZ_OFFSET = -8
-PACIFIC_DST_OFFSET = -7
-DRAW_INTERVAL = CONFIG["draw_interval"]
 BJT = timezone(timedelta(hours=8))
+DRAW_INTERVAL = 210  # 3分30秒
+
+# Liquid-Glass-Profil 数据仓库 URL (GitHub Pages)
+DATA_URLS = [
+    "https://tomf02391-crypto.github.io/Liquid-Glass-Profil/data/latest.json",
+    "https://raw.githubusercontent.com/tomf02391-crypto/Liquid-Glass-Profil/main/data/latest.json",
+]
+
+# 本地缓存路径
+CACHE_DIR = Path(__file__).parent
+DATA_FILE = CACHE_DIR / "data.json"
+RECORDS_FILE = CACHE_DIR / "records.json"
+
 
 # ============================================================
-# 时区工具
+# 时区工具（与数据仓库保持一致）
 # ============================================================
-def get_bclc_offset(utc_dt=None):
-    if utc_dt is None:
-        utc_dt = datetime.utcnow().replace(tzinfo=timezone.utc)
+def is_dst_utc(utc_dt):
+    """判断UTC时间是否处于北美夏令时"""
     year = utc_dt.year
     march1 = datetime(year, 3, 1, tzinfo=timezone.utc)
-    days_to_2nd_sun = (6 - march1.weekday() + 7) % 7 + 7
-    dst_start = march1 + timedelta(days=days_to_2nd_sun, hours=10)
+    days = (6 - march1.weekday() + 7) % 7 + 7
+    dst_start = march1 + timedelta(days=days, hours=10)
     nov1 = datetime(year, 11, 1, tzinfo=timezone.utc)
-    days_to_1st_sun = (6 - nov1.weekday()) % 7
-    dst_end = nov1 + timedelta(days=days_to_1st_sun, hours=9)
-    if dst_start <= utc_dt < dst_end:
-        return -7, True
-    return -8, False
+    days2 = (6 - nov1.weekday()) % 7
+    dst_end = nov1 + timedelta(days=days2, hours=9)
+    return dst_start <= utc_dt < dst_end
 
 
-def get_session_bounds(bjt):
-    utc = bjt.astimezone(timezone.utc)
-    _, is_dst = get_bclc_offset(utc)
-    if is_dst:
-        start = bjt.replace(hour=20, minute=0, second=0, microsecond=0)
+def get_session_bounds(bj_dt):
+    utc = bj_dt.astimezone(timezone.utc)
+    dst = is_dst_utc(utc)
+    if dst:
+        start = bj_dt.replace(hour=20, minute=0, second=0, microsecond=0)
         end = (start + timedelta(days=1)).replace(hour=19, minute=0, second=0)
     else:
-        start = bjt.replace(hour=21, minute=0, second=0, microsecond=0)
+        start = bj_dt.replace(hour=21, minute=0, second=0, microsecond=0)
         end = (start + timedelta(days=1)).replace(hour=20, minute=0, second=0)
-    return start, end, is_dst
+    return start, end, dst
 
 
-def is_open(bjt):
-    s, e, _ = get_session_bounds(bjt)
-    return s <= bjt <= e
+def is_open(bj_dt):
+    s, e, _ = get_session_bounds(bj_dt)
+    return s <= bj_dt <= e
 
 
-def period_info(bjt):
-    s, e, dst = get_session_bounds(bjt)
-    if bjt < s:
-        prev = bjt - timedelta(days=1)
+def period_info(bj_dt):
+    s, e, dst = get_session_bounds(bj_dt)
+    if bj_dt < s:
+        prev = bj_dt - timedelta(days=1)
         s, _, _ = get_session_bounds(prev)
-    elapsed = (bjt - s).total_seconds()
+    elapsed = (bj_dt - s).total_seconds()
     seq = max(1, int(elapsed / DRAW_INTERVAL) + 1)
-    date_str = s.strftime("%y%m%d")
+    date_str = s.strftime('%y%m%d')
     period = f"{date_str}{seq:04d}"
     next_draw = s + timedelta(seconds=seq * DRAW_INTERVAL)
-    cd = max(0, int((next_draw - bjt).total_seconds()))
+    cd = max(0, int((next_draw - bj_dt).total_seconds()))
     return period, cd, next_draw, seq, s
+
+
+# ============================================================
+# 从数据仓库获取数据
+# ============================================================
+def fetch_from_warehouse() -> dict:
+    """从 Liquid-Glass-Profil 数据仓库获取最新数据"""
+    last_err = None
+    for url in DATA_URLS:
+        try:
+            print(f"  [FETCH] 尝试: {url}", flush=True)
+            req = urllib.request.Request(
+                url + f"?t={int(time.time())}",
+                headers={"User-Agent": "qianjinalgorithm/10.0", "Accept": "application/json"}
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                raw = json.loads(resp.read().decode("utf-8"))
+
+            data = raw.get("data", [])
+            if not data:
+                print(f"  [WARN] {url} 返回空数据", flush=True)
+                continue
+
+            # 标准化格式
+            normalized = []
+            for d in data:
+                item = {
+                    "nbr": str(d.get("nbr", "")),
+                    "date": d.get("date", ""),
+                    "time": d.get("time", ""),
+                    "b1": int(d.get("b1", 0)),
+                    "b2": int(d.get("b2", 0)),
+                    "b3": int(d.get("b3", 0)),
+                    "sum": int(d.get("num", d.get("sum", 0))),
+                    "combo": d.get("combination", d.get("combo", "")),
+                    "raw_nums": d.get("raw_nums", []),
+                }
+                if not item["combo"]:
+                    item["combo"] = ("大" if item["sum"] >= 14 else "小") + ("单" if item["sum"] % 2 == 1 else "双")
+                normalized.append(item)
+
+            src_name = "Liquid-Glass-Profil数据仓库(BCLC官方规则)"
+            print(f"  [OK] {src_name} → {len(normalized)}期", flush=True)
+            return {
+                "data": normalized,
+                "source": src_name,
+                "countdown": raw.get("countdown", ""),
+                "fetched_at": raw.get("fetched_at", ""),
+            }
+
+        except Exception as e:
+            last_err = str(e)
+            print(f"  [ERR] {url}: {e}", flush=True)
+            continue
+
+    raise RuntimeError(f"所有数据仓库URL均失败: {last_err}")
+
+
+# ============================================================
+# 本地缓存兜底
+# ============================================================
+def load_cache() -> list:
+    """从本地 data.json 读取缓存"""
+    if DATA_FILE.exists():
+        try:
+            with open(DATA_FILE) as f:
+                old = json.load(f)
+            return old.get("history", [])
+        except:
+            pass
+    # 也试试 records
+    if RECORDS_FILE.exists():
+        try:
+            with open(RECORDS_FILE) as f:
+                return json.load(f)
+        except:
+            pass
+    return []
 
 
 # ============================================================
@@ -127,9 +203,9 @@ def decompose_sum(s):
     for r in results:
         if r not in seen:
             seen.add(r)
-            unique.append(r)
+            unique.append(list(r))
     unique.sort(key=lambda x: (not (x[0] == x[1] or x[1] == x[2]), x[0]))
-    return list(unique[0]) if unique else [0, 0, 0]
+    return unique[0] if unique else [0, 0, 0]
 
 
 # ============================================================
@@ -260,7 +336,7 @@ def v9_predict(data):
     main3 = [kv[0] for kv in ranked[:3]]
     backup2 = [kv[0] for kv in ranked[3:5]]
 
-    # 杀5（融合概率 + 理论概率）
+    # 杀5
     theo = {}
     for x in range(28):
         count = sum(1 for a in range(10) for b in range(10) for c in range(10) if a + b + c == x)
@@ -277,7 +353,7 @@ def v9_predict(data):
     push2 = [kv[0] for kv in combo_ranked[:2]]
     kill1 = combo_ranked[-1][0] if combo_ranked else "大单"
 
-    # 和值中心 + 置信度
+    # 置信度
     ema = data[0]["sum"]
     for d in data[1:]:
         ema = 0.3 * d["sum"] + 0.7 * ema
@@ -340,77 +416,48 @@ def main():
     tz_name = "PDT" if dst else "PST"
 
     print("=" * 55, flush=True)
-    print(f"  千金星轨 V9.2 · 统一接口版", flush=True)
+    print(f"  千金星轨 V10 · 数据仓库版", flush=True)
     print(f"  北京时间: {bjt.strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
     print(f"  时区: {tz_name}  开奖中: {is_open(bjt)}  倒计时: {cd}秒", flush=True)
     print(f"  当期期号: {per}", flush=True)
     print("=" * 55, flush=True)
 
-    # 初始化统一 API
-    api = PC28API(config={
-        "token_28api": TOKEN_28API,
-        "token_byw": TOKEN_BYW,
-    })
-
-    # 健康检查
-    print("\n🏥 数据源健康检查:", flush=True)
-    health = api.health_check()
-    for k, v in health.items():
-        s = "✅" if v["status"] == "ok" else "❌"
-        info = f"{v.get('ms','')}ms" if v["status"] == "ok" else v.get("error", "")[:60]
-        print(f"   {s} {k}: {info}", flush=True)
-
-    # 拉取数据
-    data = None
-    source = ""
-    countdown = ""
-
+    # 1. 从数据仓库获取
     try:
-        latest = api.get_latest()
-        if latest and "sum" in latest:
-            # 获取历史来构建完整数据集
-            history = api.get_history(60)
-            if history:
-                data = history
-                source = "pc28.help"
-                countdown = str(latest.get("countdown", ""))
-                print(f"\n  [OK] 拉取 {len(data)} 期历史数据", flush=True)
-                print(f"  最新: 期{latest.get('nbr','?')} 特码{latest.get('sum','?')} {latest.get('combo','')}", flush=True)
+        result = fetch_from_warehouse()
+        data = result["data"]
+        source = result["source"]
+        countdown = result.get("countdown", "")
+        print(f"\n  [OK] 数据源: {source}", flush=True)
+        print(f"  [OK] 获取 {len(data)} 期数据", flush=True)
+        if data:
+            latest = data[-1]
+            print(f"  [OK] 最新: 期{latest['nbr']} {latest['b1']}+{latest['b2']}+{latest['b3']}={latest['sum']} {latest['combo']}", flush=True)
     except Exception as e:
-        print(f"\n  [WARN] 标准接口异常: {e}", flush=True)
-
-    # 全部失败 → 保留旧数据
-    if not data:
-        print(f"\n  [WARN] 所有数据源失败，尝试保留旧数据", flush=True)
-        old_path = Path(__file__).parent / "data.json"
-        if old_path.exists():
-            try:
-                with open(old_path) as f:
-                    old = json.load(f)
-                data = old.get("history", [])
-                source = old.get("meta", {}).get("source", "old_data")
-                print(f"  [KEEP] 保留旧数据: {len(data)}期 (来源: {source})", flush=True)
-            except Exception as e2:
-                print(f"  [ERROR] 旧数据也读不了: {e2}", flush=True)
-                return 1
-        else:
-            print("  [ERROR] 无旧数据可保留", flush=True)
+        print(f"\n  [WARN] 数据仓库不可用: {e}", flush=True)
+        print(f"  [WARN] 尝试本地缓存...", flush=True)
+        cached = load_cache()
+        if not cached:
+            print(f"  [ERROR] 无缓存数据，无法继续", flush=True)
             return 1
+        data = cached
+        source = "💾 本地缓存(数据仓库不可用)"
+        countdown = ""
+        print(f"  [KEEP] 使用本地缓存 {len(data)} 期", flush=True)
 
-    # 数据校验
+    # 2. 数据校验
     valid = []
     for d in data:
         if d["sum"] < 0 or d["sum"] > 27:
             continue
         if d.get("b1", 0) + d.get("b2", 0) + d.get("b3", 0) != d["sum"]:
-            # 尝试修复
             balls = decompose_sum(d["sum"])
             d["b1"], d["b2"], d["b3"] = balls[0], balls[1], balls[2]
         valid.append(d)
 
     print(f"\n  有效数据: {len(valid)}期 (来源: {source})", flush=True)
 
-    # 预测
+    # 3. 预测
     if len(valid) < 5:
         print("  [WARN] 数据不足5期，跳过预测", flush=True)
         pred = None
@@ -425,12 +472,11 @@ def main():
         print(f"    和值: {pred['sum_center']} 区间{pred['sum_range']}", flush=True)
         print(f"    置信度: {pred['confidence']}%", flush=True)
 
-    # 对错记录
-    records_path = Path(__file__).parent / "records.json"
+    # 4. 对错记录
     old_records = []
-    if records_path.exists():
+    if RECORDS_FILE.exists():
         try:
-            with open(records_path) as f:
+            with open(RECORDS_FILE) as f:
                 old_records = json.load(f)
         except:
             old_records = []
@@ -447,48 +493,58 @@ def main():
         print(f"    含候补: {main_hits+backup_hits}/{total} ({(main_hits+backup_hits)/total*100:.1f}%)", flush=True)
         print(f"    杀特码正确: {kill_ok}/{total} ({kill_ok/total*100:.1f}%)", flush=True)
 
-    # 写入 data.json
+    # 5. 写入 data.json
     output = {
         "meta": {
             "source": source,
             "count": len(valid),
             "updated": bjt.strftime("%Y-%m-%d %H:%M:%S"),
-            "engine": "V9.2",
+            "engine": "V10-warehouse",
             "timezone": tz_name,
             "is_open": is_open(bjt),
             "countdown": cd if not countdown else countdown,
             "next_draw": next_draw.strftime("%Y-%m-%d %H:%M:%S"),
             "current_period": per,
             "records_total": len(new_records),
-            "api_version": "unified_v1",
+            "data_warehouse": "Liquid-Glass-Profil",
+            "rule": "BCLC官方规则: b1=(pos2+5+8+11+14+17)%10, b2=(pos3+6+9+12+15+18)%10, b3=(pos4+7+10+13+16+19)%10",
         },
         "history": valid,
         "prediction": pred,
         "records": new_records[-20:],
     }
 
-    out_path = Path(__file__).parent / "data.json"
-    with open(out_path, "w", encoding="utf-8") as f:
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
 
-    with open(records_path, "w", encoding="utf-8") as f:
+    with open(RECORDS_FILE, "w", encoding="utf-8") as f:
         json.dump(new_records, f, ensure_ascii=False, indent=2)
 
-    size = out_path.stat().st_size
-    print(f"\n  [OK] 写入 {out_path} ({size} bytes)", flush=True)
-    print(f"  [OK] 写入 {records_path}", flush=True)
+    size = DATA_FILE.stat().st_size
+    print(f"\n  [OK] 写入 {DATA_FILE} ({size} bytes)", flush=True)
+    print(f"  [OK] 写入 {RECORDS_FILE}", flush=True)
     return 0
 
 
 if __name__ == "__main__":
     if "--dry" in sys.argv:
         print("  数据源连通性测试模式")
+        try:
+            r = fetch_from_warehouse()
+            print(f"  ✅ 成功: {len(r['data'])}期 from {r['source']}")
+        except Exception as e:
+            print(f"  ❌ 失败: {e}")
         sys.exit(0)
     if "--health" in sys.argv:
-        from pc28_standard_api import PC28API
-        api = PC28API()
-        for k, v in api.health_check().items():
-            s = "✅" if v["status"] == "ok" else "❌"
-            print(f"  {s} {k}: {v.get('ms','')}{'ms' if v['status']=='ok' else v.get('error','')}")
+        print("  健康检查模式")
+        for url in DATA_URLS:
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "health-check"})
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    count = len(data.get("data", []))
+                    print(f"  ✅ {url}: {count}期")
+            except Exception as e:
+                print(f"  ❌ {url}: {e}")
         sys.exit(0)
     sys.exit(main())
