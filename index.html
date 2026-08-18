@@ -335,40 +335,56 @@ function addDebug(msg) {
 }
 
 async function fetchFromAllSources() {
-  // ① 从 Liquid-Glass-Profil 数据仓库读取（已按BCLC官方规则计算好）
-  // 使用 raw.githubusercontent.com 绕过 GitHub Pages 403 限制
+  // ① 优先 yu28.top 真实接口（与28开放平台，X-Api-Key 鉴权，保证最新数据）
+  // 与 Liquid-Glass-Profil 仓库使用同一接口，三级降级：直连→allorigins→cors.sh
+  const YU28_API = 'https://yu28.top/api/kj.json?nbr=60';
+  const YU28_KEY = 'yu28_f9f41d673b447fac';
   const DATA_URLS = [
-    'https://raw.githubusercontent.com/tomf02391-crypto/Liquid-Glass-Profil/main/data/latest.json',  // ① Liquid-Glass-Profil 数据仓库（BCLC官方规则，实时更新）
-    'data.json',                        // ② 本地备用
+    YU28_API,                                                            // ① 直连（带X-Api-Key头）
+    'https://api.allorigins.win/raw?url=' + encodeURIComponent(YU28_API), // ② 备用代理1
+    'https://proxy.cors.sh/' + YU28_API,                                 // ③ 备用代理2
+    'data.json',                        // ④ 本地最后兜底
   ];
 
   for (const url of DATA_URLS) {
     try {
-      addDebug(`尝试数据仓库: ${url.includes('raw.githubusercontent') ? 'Liquid-Glass-Profil(raw)' : '本地data.json'} ...`);
-      const resp = await fetch(url + '?t=' + Date.now(), { cache: 'no-store' });
+      const isDirect = url === YU28_API;
+      const headers = isDirect ? { 'X-Api-Key': YU28_KEY } : {};
+      const tag = !isDirect ? (url.includes('allorigins') ? 'allorigins代理' : (url.includes('cors.sh') ? 'cors.sh代理' : (url.includes('raw.githubusercontent') ? 'Liquid-Glass-Profil(raw)' : '本地data.json'))) : 'yu28.top(直连)';
+      addDebug(`尝试数据源: ${tag} ...`);
+      const resp = await fetch(url + (url.includes('?') ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store', headers });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const json = await resp.json();
       if (!json.data || json.data.length === 0) throw new Error('数据为空');
 
-      const allData = json.data.map(d => ({
-        nbr: String(d.nbr || ''),
-        date: d.date || '',
-        time: d.time || '',
-        raw: [d.b1 || 0, d.b2 || 0, d.b3 || 0],
-        b1: d.b1 || 0,
-        b2: d.b2 || 0,
-        b3: d.b3 || 0,
-        sum: d.num || d.sum || (d.b1 + d.b2 + d.b3),
-        combo: d.combination || d.combo || comboOf(d.num || d.sum || 0),
-        odd: (d.num || d.sum || 0) % 2 === 1,
-        big: (d.num || d.sum || 0) >= 14,
-      }));
+      // 兼容两种格式：yu28.top(number="4+7+6=17") 和旧格式(b1/b2/b3/num)
+      const allData = json.data.map(d => {
+        let b1=0,b2=0,b3=0,s=0;
+        const numStr = String(d.number || d.num || '');
+        if (numStr) {
+          const body = numStr.split('=')[0];
+          const parts = body.split(/[+,]/).map(n=>parseInt(n.trim(),10)).filter(n=>!isNaN(n));
+          if (parts.length>=3) { b1=parts[0]; b2=parts[1]; b3=parts[2]; s=b1+b2+b3; }
+        }
+        if (s===0) { b1=d.b1||0; b2=d.b2||0; b3=d.b3||0; s=d.num||d.sum||(b1+b2+b3); }
+        return {
+          nbr: String(d.nbr || ''),
+          date: d.date || (d.time||'').split(' ')[0] || '',
+          time: d.time || '',
+          raw: [b1,b2,b3],
+          b1,b2,b3,
+          sum: s,
+          combo: d.combination || d.combo || comboOf(s),
+          odd: s%2===1,
+          big: s>=14,
+        };
+      }).filter(d => d.nbr && d.sum>0);
 
       if (allData.length > 0) {
-        const srcName = url.includes('raw.githubusercontent') ? 'Liquid-Glass-Profil数据仓库(BCLC官方规则)' : '本地data.json';
-        addDebug(`✅ ${srcName} → ${allData.length}期`);
+        const tag = !isDirect ? (url.includes('allorigins') ? 'yu28(allorigins代理)' : (url.includes('cors.sh') ? 'yu28(cors.sh代理)' : '本地data.json')) : 'yu28.top(直连)';
+        addDebug(`✅ ${tag} → ${allData.length}期`);
         try { localStorage.setItem("qianjin_v9_data", JSON.stringify(allData.slice(-500))); } catch{}
-        return { data: allData, source: srcName, countdown: json.countdown || '' };
+        return { data: allData, source: tag, countdown: json.countdown || '' };
       }
     } catch(e) {
       addDebug(`⚠️ ${url}: ${e.message}`);
