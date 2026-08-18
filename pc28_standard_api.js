@@ -1,240 +1,277 @@
 /**
- * PC28 统一数据接口模块（标准版）
- * =====================================
- * 数据源优先级：pc28.help → pgsoft.one → 28api.com → byw.bet
- * 功能：多源降级、3秒缓存、超时重试、统一输出格式
- * 
- * 使用：<script src="pc28_standard_api.js"></script>
- *       全局变量 PC28API 自动可用
+ * PC28 Standard API - 统一数据接口模块
+ * 支持多源自动降级：pc28.help → pgsoft → 28api → byw.bet
+ * 全局实例: window.pc28
  */
-
 (function (global) {
     'use strict';
 
-    const CONFIG = {
-        primary: 'https://pc28.help/api',
-        backup1: 'http://api.pgsoft.one/api/28',
-        backup2: 'http://www.28api.com/api/v1',
-        backup3: 'https://api.byw.bet/api',
-        timeout: 8000,
-        cacheTTL: 3000,
-    };
+    const SOURCES = [
+        { name: 'pc28.help',  type: 'pc28help' },
+        { name: 'pgsoft',     type: 'pgsoft' },
+        { name: '28api',      type: 'api28' },
+        { name: 'byw',        type: 'byw' }
+    ];
 
-    // ---------- 工具函数 ----------
-    function timeoutFetch(url, ms) {
+    const TIMEOUT = 8000;
+
+    // ========== 工具函数 ==========
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    function normalize(raw, sourceType) {
+        // 统一字段映射
+        const map = {
+            period:  raw.issue || raw.period || raw.id || raw.nbr || '',
+            b1:      parseInt(raw.num1 || raw.b1 || raw.n1 || 0),
+            b2:      parseInt(raw.num2 || raw.b2 || raw.n2 || 0),
+            b3:      parseInt(raw.num3 || raw.b3 || raw.n3 || 0),
+            sum:     parseInt(raw.sum || raw.total || 0),
+            countdown: raw.countdown || raw.cd || null,
+            time:    raw.time || raw.opentime || raw.drawTime || ''
+        };
+        if (!map.sum && (map.b1 + map.b2 + map.b3)) {
+            map.sum = map.b1 + map.b2 + map.b3;
+        }
+        map.size  = map.sum >= 14 ? '大' : '小';
+        map.parity = map.sum % 2 === 1 ? '单' : '双';
+        map.combo = map.size + map.parity;
+        return map;
+    }
+
+    // ========== 各源抓取器 ==========
+    async function fetchPc28Help(endpoint) {
+        const url = `https://pc28.help/api/${endpoint}`;
         const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), ms || CONFIG.timeout);
-        return fetch(url, { signal: ctrl.signal, headers: { 'Accept': 'application/json' } })
-            .finally(() => clearTimeout(timer));
+        const tid = setTimeout(() => ctrl.abort(), TIMEOUT);
+        try {
+            const r = await fetch(url, { signal: ctrl.signal });
+            clearTimeout(tid);
+            if (!r.ok) throw new Error(`pc28.help ${endpoint} HTTP ${r.status}`);
+            const j = await r.json();
+            return j;
+        } finally { clearTimeout(tid); }
     }
 
-    async function fetchWithFallback(urlList) {
-        const errors = [];
-        for (const item of urlList) {
-            const url = typeof item === 'string' ? item : item.url;
-            const name = typeof item === 'string' ? url : (item.name || url);
-            try {
-                const res = await timeoutFetch(url);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data) {
-                        data._source = name;
-                        return data;
-                    }
-                }
-                errors.push(name + ' → HTTP ' + res.status);
-            } catch (e) {
-                errors.push(name + ' → ' + (e.name === 'AbortError' ? 'timeout' : e.message));
-            }
-        }
-        throw new Error('所有数据源不可用:\n' + errors.join('\n'));
+    async function fetchPgSoft(endpoint, params) {
+        const base = 'http://api.pgsoft.one/api/28';
+        const qs = new URLSearchParams({ type: 'canada28', ...params }).toString();
+        const url = `${base}/${endpoint}?${qs}`;
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), TIMEOUT);
+        try {
+            const r = await fetch(url, { signal: ctrl.signal });
+            clearTimeout(tid);
+            if (!r.ok) throw new Error(`pgsoft ${endpoint} HTTP ${r.status}`);
+            return await r.json();
+        } finally { clearTimeout(tid); }
     }
 
-    // 统一输出格式转换
-    function normalize(raw) {
-        if (!raw) return null;
-        // pc28.help 格式
-        if (raw.period || raw.issue) {
-            const nums = raw.numbers || raw.opencode || [];
-            const b1 = parseInt(nums[0] || raw.num1 || 0);
-            const b2 = parseInt(nums[1] || raw.num2 || 0);
-            const b3 = parseInt(nums[2] || raw.num3 || 0);
-            return {
-                nbr: raw.period || raw.issue || '',
-                b1, b2, b3,
-                sum: parseInt(raw.sum || (b1 + b2 + b3)),
-                combo: raw.combo || raw.combination || '',
-                size: raw.size || (b1+b2+b3 >= 14 ? '大' : '小'),
-                parity: raw.parity || ((b1+b2+b3) % 2 === 0 ? '双' : '单'),
-                countdown: raw.countdown || 0,
-                source: raw._source || '',
-            };
-        }
-        // pgsoft 格式（数组）
-        if (Array.isArray(raw)) {
-            const item = raw[0] || {};
-            const nums = item.numbers || item.opencode || [];
-            const b1 = parseInt(nums[0] || 0);
-            const b2 = parseInt(nums[1] || 0);
-            const b3 = parseInt(nums[2] || 0);
-            return {
-                nbr: item.period || item.issue || item.nbr || '',
-                b1, b2, b3,
-                sum: parseInt(item.sum || (b1 + b2 + b3)),
-                combo: '', size: '', parity: '',
-                countdown: 0, source: 'pgsoft',
-            };
-        }
+    // ========== 核心：带降级的抓取 ==========
+    async function tryFetch(fetchFn, validator) {
+        try {
+            const data = await fetchFn();
+            if (validator(data)) return data;
+        } catch (e) { /* 继续下一个源 */ }
         return null;
     }
 
-    // ---------- 主类 ----------
-    class PC28API {
-        constructor() {
-            this.cache = new Map();
-        }
-
-        _cached(key, fetcher) {
-            const now = Date.now();
-            const hit = this.cache.get(key);
-            if (hit && now - hit.t < CONFIG.cacheTTL) return Promise.resolve(hit.data);
-            return fetcher().then(data => {
-                this.cache.set(key, { data, t: now });
-                return data;
-            });
-        }
-
-        // 实时开奖
-        getLatest() {
-            return this._cached('latest', () =>
-                fetchWithFallback([
-                    { name: 'pc28.help', url: CONFIG.primary + '/kj.json' },
-                    { name: 'pgsoft', url: CONFIG.backup1 + '/latest?type=canada28&limit=1' },
-                ]).then(normalize)
+    // ========== 公开 API ==========
+    const api = {
+        /**
+         * 获取最新一期开奖
+         * @returns {Promise<Object>} { period, b1, b2, b3, sum, size, parity, combo, countdown, time, source }
+         */
+        async getLatest() {
+            // 尝试 pc28.help
+            let data = await tryFetch(
+                () => fetchPc28Help('kj.json'),
+                j => j && (j.issue || j.period || j.nbr)
             );
-        }
+            if (data) {
+                const n = normalize(data, 'pc28help');
+                n.source = 'pc28.help';
+                return n;
+            }
 
-        // Keno 原始数据
-        getKeno() {
-            return this._cached('keno', () =>
-                timeoutFetch(CONFIG.primary + '/keno.json').then(r => r.json())
+            // 降级 pgsoft
+            data = await tryFetch(
+                () => fetchPgSoft('latest', { limit: 1 }),
+                j => j && (j.data || j.list || j.rows)
             );
-        }
+            if (data) {
+                const arr = data.data || data.list || data.rows || data;
+                const item = Array.isArray(arr) ? arr[0] : arr;
+                const n = normalize(item, 'pgsoft');
+                n.source = 'pgsoft';
+                return n;
+            }
 
-        // 聚合预览（一次拿全）
-        getPreview() {
-            return this._cached('preview', () =>
-                timeoutFetch(CONFIG.primary + '/preview.json').then(r => r.json())
-            );
-        }
+            throw new Error('所有数据源均不可用');
+        },
 
-        // 历史开奖
-        getHistory(page, limit) {
-            page = page || 1;
-            limit = limit || 50;
-            return this._cached('hist_' + page + '_' + limit, () =>
-                fetchWithFallback([
-                    { name: 'pgsoft_history', url: CONFIG.backup1 + '/history?type=canada28&page=' + page + '&limit=' + limit },
-                    { name: 'pc28_preview', url: CONFIG.primary + '/preview.json' },
-                ])
-            );
-        }
+        /**
+         * 获取历史开奖
+         * @param {number} limit 期数
+         * @returns {Promise<Array>}
+         */
+        async getHistory(limit = 50) {
+            // pc28.help
+            try {
+                const data = await fetchPc28Help(`kj.json?limit=${limit}`);
+                if (data && (data.list || data.data || Array.isArray(data))) {
+                    const arr = data.list || data.data || data;
+                    return arr.slice(0, limit).map(r => normalize(r, 'pc28help'));
+                }
+            } catch(e) {}
 
-        // 双组预测
-        getDoubleGroup() {
-            return this._cached('sz', () =>
-                timeoutFetch(CONFIG.primary + '/sz.json').then(r => r.json())
-            );
-        }
+            // pgsoft
+            try {
+                const data = await fetchPgSoft('history', { page: 1, limit });
+                if (data) {
+                    const arr = data.data || data.list || data.rows || [];
+                    return arr.slice(0, limit).map(r => normalize(r, 'pgsoft'));
+                }
+            } catch(e) {}
 
-        // 杀组预测
-        getKillGroup() {
-            return this._cached('sha', () =>
-                timeoutFetch(CONFIG.primary + '/sha.json').then(r => r.json())
-            );
-        }
+            return [];
+        },
 
-        // 单双预测
-        getDS() {
-            return this._cached('ds', () =>
-                timeoutFetch(CONFIG.primary + '/ds.json').then(r => r.json())
-            );
-        }
+        /**
+         * 获取双组预测
+         * @returns {Promise<Object>}
+         */
+        async getDoubleGroup() {
+            try { return await fetchPc28Help('sz.json'); } catch(e) {}
+            return { data: [] };
+        },
 
-        // 大小预测
-        getDX() {
-            return this._cached('dx', () =>
-                timeoutFetch(CONFIG.primary + '/dx.json').then(r => r.json())
-            );
-        }
+        /**
+         * 获取杀组预测
+         * @returns {Promise<Object>}
+         */
+        async getKillGroup() {
+            try { return await fetchPc28Help('sha.json'); } catch(e) {}
+            return { data: [] };
+        },
 
-        // 遗漏统计
-        getMissStats() {
-            return this._cached('yl', () =>
-                timeoutFetch(CONFIG.primary + '/yl.json').then(r => r.json())
-            );
-        }
+        /**
+         * 获取单双预测
+         */
+        async getDS() {
+            try { return await fetchPc28Help('ds.json'); } catch(e) {}
+            return { data: [] };
+        },
 
-        // 今日已开
-        getTodayCount() {
-            return this._cached('yk', () =>
-                timeoutFetch(CONFIG.primary + '/yk.json').then(r => r.json())
-            );
-        }
+        /**
+         * 获取大小预测
+         */
+        async getDX() {
+            try { return await fetchPc28Help('dx.json'); } catch(e) {}
+            return { data: [] };
+        },
 
-        // 长龙监控（全部）
-        getDragons() {
-            return Promise.all([
-                timeoutFetch(CONFIG.primary + '/xh.json').then(r => r.json()).catch(() => null),
-                timeoutFetch(CONFIG.primary + '/jt.json').then(r => r.json()).catch(() => null),
-                timeoutFetch(CONFIG.primary + '/abb.json').then(r => r.json()).catch(() => null),
-                timeoutFetch(CONFIG.primary + '/pl.json').then(r => r.json()).catch(() => null),
-            ]).then(([xh, jt, abb, pl]) => ({ xh, jt, abb, pl }));
-        }
+        /**
+         * 获取遗漏统计
+         */
+        async getMissStats() {
+            try { return await fetchPc28Help('yl.json'); } catch(e) {}
+            return { data: [] };
+        },
 
-        // 一键拉取全部核心数据
+        /**
+         * 获取今日已开次数
+         */
+        async getTodayCount() {
+            try { return await fetchPc28Help('yk.json'); } catch(e) {}
+            return { data: [] };
+        },
+
+        /**
+         * 获取长龙数据
+         */
+        async getDragons() {
+            const result = {};
+            for (const k of ['xh', 'jt', 'abb', 'pl']) {
+                try {
+                    const r = await fetchPc28Help(`${k}.json`);
+                    result[k] = r;
+                } catch(e) { result[k] = null; }
+            }
+            return result;
+        },
+
+        /**
+         * 聚合预览（一次拿全）
+         */
+        async getPreview() {
+            try { return await fetchPc28Help('preview.json'); } catch(e) {}
+            return null;
+        },
+
+        /**
+         * 一次性拉取所有核心数据
+         */
         async fetchAll() {
-            const [latest, sz, sha, ds, dx, yl, dragons] = await Promise.all([
-                this.getLatest().catch(() => null),
-                this.getDoubleGroup().catch(() => null),
-                this.getKillGroup().catch(() => null),
-                this.getDS().catch(() => null),
-                this.getDX().catch(() => null),
-                this.getMissStats().catch(() => null),
-                this.getDragons().catch(() => null),
+            const [latest, sz, sha, ds, dx, yl, dragons] = await Promise.allSettled([
+                this.getLatest(),
+                this.getDoubleGroup(),
+                this.getKillGroup(),
+                this.getDS(),
+                this.getDX(),
+                this.getMissStats(),
+                this.getDragons()
             ]);
-            return { latest, prediction: { sz, sha, ds, dx }, miss: yl, dragons };
-        }
+            return {
+                latest:  latest.status === 'fulfilled' ? latest.value : null,
+                doubleGroup: sz.status === 'fulfilled' ? sz.value : { data: [] },
+                killGroup:  sha.status === 'fulfilled' ? sha.value : { data: [] },
+                ds: ds.status === 'fulfilled' ? ds.value : { data: [] },
+                dx: dx.status === 'fulfilled' ? dx.value : { data: [] },
+                miss: yl.status === 'fulfilled' ? yl.value : { data: [] },
+                dragons: dragons.status === 'fulfilled' ? dragons.value : {}
+            };
+        },
 
-        // 轮询（新期自动回调）
-        startPolling(onNewPeriod, interval) {
-            interval = interval || 5000;
-            let lastPeriod = null;
+        /**
+         * 轮询新期（自动回调）
+         * @param {Function} onNewPeriod 新期回调
+         * @param {number} intervalMs 轮询间隔
+         */
+        async startPolling(onNewPeriod, intervalMs = 30000) {
+            let lastNbr = null;
             const tick = async () => {
                 try {
                     const data = await this.getLatest();
-                    const cur = data && (data.nbr || data.period || data.issue);
-                    if (cur && cur !== lastPeriod) {
-                        if (lastPeriod !== null) onNewPeriod && onNewPeriod(data);
-                        lastPeriod = cur;
+                    if (data.period && data.period !== lastNbr) {
+                        lastNbr = data.period;
+                        if (onNewPeriod) onNewPeriod(data);
                     }
-                } catch (e) {
-                    console.warn('[PC28] 轮询失败:', e.message);
-                }
+                } catch(e) { console.warn('[pc28] poll error:', e.message); }
             };
-            tick();
-            return setInterval(tick, interval);
+            await tick();
+            setInterval(tick, intervalMs);
         }
-    }
+    };
 
-    // 导出
-    const instance = new PC28API();
-    global.PC28API = PC28API;
-    global.pc28 = instance;
+    // 暴露全局
+    global.pc28 = api;
 
+    // Node.js 兼容
     if (typeof module !== 'undefined' && module.exports) {
-        module.exports = { PC28API, pc28: instance };
+        module.exports = api;
     }
 
-    console.log('%c[PC28] 统一接口模块已加载 ✅', 'color:#34d399;font-weight:bold');
 })(typeof window !== 'undefined' ? window : globalThis);
+
+/**
+ * 便捷函数（全局可用）
+ */
+async function getLatestPC28() {
+    return window.pc28.getLatest();
+}
+async function fetchAllPC28() {
+    return window.pc28.fetchAll();
+}
+function startPC28Polling(cb, ms) {
+    return window.pc28.startPolling(cb, ms);
+}
