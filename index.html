@@ -338,6 +338,7 @@ async function fetchFromAllSources() {
   // ① 优先从 Liquid-Glass-Profil 数据仓库读取（已按BCLC官方规则计算好）
   const DATA_URLS = [
     'https://tomf02391-crypto.github.io/Liquid-Glass-Profil/data/latest.json',
+    'https://raw.githubusercontent.com/tomf02391-crypto/Liquid-Glass-Profil/main/data/latest.json',
     'data.json', // 本地备用
   ];
 
