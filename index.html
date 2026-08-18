@@ -305,79 +305,25 @@ footer .warn { color: var(--orange); font-weight: 600; }
 <button class="refresh-btn" onclick="manualRefresh()" title="刷新">🔄</button>
 <div class="toast" id="toast"></div>
 
-<script src="pc28_standard_api.js"></script>
+<script src="bclc_calc.js"></script>
 <script>
 // ============================================================
-// V9 真数据版（统一接口）
-// 数据源已统一为 pc28.standard_api 模块（多源自动降级）
-// pc28.help → pgsoft → 28api → byw.bet
+// V9 真数据版（BCLC 官方规则）
+// 数据源: Liquid-Glass-Profil 数据仓库（GitHub Pages）
+// 规则: b1=(pos2+5+8+11+14+17)%10, b2=(pos3+6+9+12+15+18)%10, b3=(pos4+7+10+13+16+19)%10
 // ============================================================
 
 const COMBOS = ["大单", "大双", "小单", "小双"];
 const TOTAL_SECONDS = 210; // 3分30秒
 
-// ============================================================
-// 工具函数
-// ============================================================
-function comboOf(sum) {
-  if (sum >= 14) return sum % 2 === 1 ? "大单" : "大双";
-  return sum % 2 === 1 ? "小单" : "小双";
-}
-
-function calcBallsFromRaw(rawNums) {
-  const sorted = [...rawNums].sort((a, b) => a - b);
-  const b1 = sorted[0], b2 = sorted[1], b3 = sorted[2];
-  const sum = b1 + b2 + b3;
-  return { b1, b2, b3, sum, combo: comboOf(sum) };
-}
-
-// 从特码反推最可能的三球组合
-// 优先选有重复数字的（对子/豹子更常见）
-function decomposeSum(sum) {
-  const combos = [];
-  for (let a = 0; a <= 9; a++) {
-    for (let b = 0; b <= 9; b++) {
-      for (let c = 0; c <= 9; c++) {
-        if (a + b + c === sum) {
-          const s = [a, b, c].sort((x, y) => x - y);
-          combos.push(s);
-        }
-      }
-    }
-  }
-  // 去重
-  const seen = new Set();
-  const unique = [];
-  for (const c of combos) {
-    const key = c.join(',');
-    if (!seen.has(key)) { seen.add(key); unique.push(c); }
-  }
-  // 优先返回有重复数字的（对子概率更高）
-  unique.sort((a, b) => {
-    const aDup = a[0] === a[1] || a[1] === a[2] ? 1 : 0;
-    const bDup = b[0] === b[1] || b[1] === b[2] ? 1 : 0;
-    return bDup - aDup;
-  });
-  return unique[0] || [0, 0, 0];
-}
+// 使用 BCLCCalc 模块（已通过 <script> 引入）
+const comboOf = BCLCCalc.comboOf;
+const decomposeSum = BCLCCalc.decomposeSum;
 
 // ============================================================
-// 多接口容灾数据获取
+// 数据源：Liquid-Glass-Profil 数据仓库（BCLC 官方规则已计算好）
+// 降级：BCLCCalc 直连 Keno 接口现场计算
 // ============================================================
-const API_SOURCES = [
-  // ① pc28.help 开奖接口（免费开放，最快）
-  { url: "https://pc28.help/api/kj.json?nbr=60", type: "kj", name: "pc28.help/kj" },
-  // ② pc28.help 20码原始数据
-  { url: "https://pc28.help/api/keno.json?nbr=60", type: "keno", name: "pc28.help/keno" },
-  // ③ yu28.top 带API Key（明文Key，直连）
-  { url: "https://yu28.top/api/kj.json?nbr=60&key=yu28-f9f41d673b447fac", type: "kj", name: "yu28.top/kj+key" },
-  { url: "https://yu28.top/api/bclc?count=60&key=yu28-f9f41d673b447fac", type: "yu28", name: "yu28.top/bclc+key" },
-  // ④ 备用CORS代理
-  { url: "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://pc28.help/api/kj.json?nbr=60"), type: "kj", name: "allorigins/kj" },
-  { url: "https://corsproxy.io/?" + encodeURIComponent("https://pc28.help/api/kj.json?nbr=60"), type: "kj", name: "corsproxy/kj" },
-  // ⑤ 终极兜底：thingproxy
-  { url: "https://thingproxy.freeboard.io/fetch/https://pc28.help/api/kj.json?nbr=60", type: "kj", name: "thingproxy/kj" },
-];
 
 let debugLogs = [];
 function addDebug(msg) {
@@ -388,151 +334,55 @@ function addDebug(msg) {
   if (box) box.textContent = debugLogs.join('\n');
 }
 
-async function tryFetch(url, type) {
-  const resp = await fetch(url, {
-    headers: { "Accept": "application/json", "Referer": "https://pc28.help/" },
-    cache: "no-store",
-  });
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  const text = await resp.text();
-  // 检测 Cloudflare 拦截页面（返回的是HTML而不是JSON）
-  if (text.trim().startsWith("<")) {
-    throw new Error("Cloudflare拦截(HTML)");
-  }
-  let json;
-  try {
-    json = JSON.parse(text);
-  } catch(e) {
-    throw new Error("非JSON响应");
-  }
-  // 检测 JSON 形式的 Cloudflare 拦截
-  if (json.status === 403 && json.title) {
-    throw new Error(`Cloudflare拦截: ${json.detail || json.title}`);
-  }
-  return parseAnyFormat(json, type);
-}
-
-function parseAnyFormat(raw, type) {
-  const parsed = [];
-
-  // 格式A: kj.json → data数组里每项有 number(特码) 和 combination
-  // raw = {countdown, data:[{nbr,date,time,number,num,combination}], message}
-  if (type === "kj" || (!type && raw.countdown !== undefined)) {
-    const items = raw.data || raw.list || raw.results || [];
-    for (const item of items) {
-      try {
-        const nbr = String(item.nbr || item.issue || item.period || "");
-        const sum = parseInt(item.number || item.num || item.sum || item.value || "0");
-        if (!nbr || isNaN(sum)) continue;
-        const combo = item.combination || item.combo || comboOf(sum);
-        const decomposed = decomposeSum(sum);
-        parsed.push({
-          nbr,
-          date: item.date || item.draw_date || "",
-          time: item.time || item.draw_time || "",
-          raw: decomposed,
-          b1: decomposed[0], b2: decomposed[1], b3: decomposed[2],
-          sum,
-          combo,
-          odd: sum % 2 === 1,
-          big: sum >= 14,
-        });
-      } catch(e) { continue; }
-    }
-  }
-
-  // 格式B: keno.json → 20码原始数据
-  // 正确规则：球1=(第2+5+8+11+14+17位)%10, 球2=(第3+6+9+12+15+18位)%10, 球3=(第4+7+10+13+16+19位)%10
-  // 索引: pos1=[1,4,7,10,13,16], pos2=[2,5,8,11,14,17], pos3=[3,6,9,12,15,18]
-  if ((type === "keno" || type === "yu28") && parsed.length === 0) {
-    const items = raw.data || raw.list || raw.results || (Array.isArray(raw) ? raw : []);
-    for (const item of items) {
-      try {
-        const nbr = String(item.nbr || item.issue || item.period || "");
-        let nums;
-        if (item.nums) nums = item.nums;
-        else if (item.numbers) nums = item.numbers;
-        else if (item.raw) nums = item.raw;
-        else if (item.rawNums) nums = item.rawNums;
-        else if (item.nbrs) nums = item.nbrs;
-        else if (item.num) {
-          const parts = String(item.num).split(",");
-          if (parts.length >= 19) nums = parts.map(Number);
-        }
-        if (!nums || nums.length < 19) {
-          // 只有特码，反推
-          const sv = parseInt(item.number || item.num || item.sum || "0");
-          if (!isNaN(sv) && sv >= 0 && sv <= 27) {
-            const decomposed = decomposeSum(sv);
-            parsed.push({
-              nbr, date: item.date || "", time: item.time || "",
-              raw: decomposed,
-              b1: decomposed[0], b2: decomposed[1], b3: decomposed[2],
-              sum: sv, combo: comboOf(sv),
-              odd: sv % 2 === 1, big: sv >= 14,
-            });
-          }
-          continue;
-        }
-        nums = nums.map(Number).filter(n => !isNaN(n));
-        if (nums.length < 19) continue;
-        const sorted = [...nums].sort((a, b) => a - b);
-        // 正确PC28算法：6位求和取末位
-        const b1 = (sorted[1]+sorted[4]+sorted[7]+sorted[10]+sorted[13]+sorted[16]) % 10;
-        const b2 = (sorted[2]+sorted[5]+sorted[8]+sorted[11]+sorted[14]+sorted[17]) % 10;
-        const b3 = (sorted[3]+sorted[6]+sorted[9]+sorted[12]+sorted[15]+sorted[18]) % 10;
-        const sum = b1 + b2 + b3;
-        parsed.push({
-          nbr,
-          date: item.date || item.draw_date || "",
-          time: item.time || item.draw_time || "",
-          raw: nums,
-          b1, b2, b3, sum,
-          combo: comboOf(sum),
-          odd: sum % 2 === 1,
-          big: sum >= 14,
-        });
-      } catch(e) { continue; }
-    }
-  }
-
-  // 格式C: 直接是数组
-  if (parsed.length === 0 && Array.isArray(raw)) {
-    for (const item of raw) {
-      try {
-        const nbr = String(item.nbr || item.issue || "");
-        const sum = parseInt(item.number || item.sum || item.value || "0");
-        if (!nbr || isNaN(sum)) continue;
-        const decomposed = decomposeSum(sum);
-        parsed.push({
-          nbr, date: item.date || "", time: item.time || "",
-          raw: decomposed,
-          b1: decomposed[0], b2: decomposed[1], b3: decomposed[2],
-          sum, combo: comboOf(sum),
-          odd: sum % 2 === 1, big: sum >= 14,
-        });
-      } catch(e) { continue; }
-    }
-  }
-
-  parsed.sort((a, b) => a.nbr.localeCompare(b.nbr));
-  return parsed;
-}
-
 async function fetchFromAllSources() {
-  // 优先使用统一API模块（pc28.standard_api.js）
-  if (window.pc28) {
+  // ① 优先从 Liquid-Glass-Profil 数据仓库读取（已按BCLC官方规则计算好）
+  const DATA_URLS = [
+    'https://tomf02391-crypto.github.io/Liquid-Glass-Profil/data/latest.json',
+    'data.json', // 本地备用
+  ];
+
+  for (const url of DATA_URLS) {
     try {
-      addDebug(`尝试 统一API(pc28.help→pgsoft→...) ...`);
-      const [latest, history] = await Promise.allSettled([
-        pc28.getLatest(),
-        pc28.getHistory(60)
-      ]);
-      let allData = [];
-      if (history.status === 'fulfilled' && history.value.length > 0) {
-        allData = history.value.map(d => ({
-          nbr: String(d.period || d.nbr || ''),
-          date: d.time || '',
+      addDebug(`尝试数据仓库: ${url.includes('github.io') ? 'Liquid-Glass-Profil(GitHub Pages)' : '本地data.json'} ...`);
+      const resp = await fetch(url + '?t=' + Date.now(), { cache: 'no-store' });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const json = await resp.json();
+      if (!json.data || json.data.length === 0) throw new Error('数据为空');
+
+      const allData = json.data.map(d => ({
+        nbr: String(d.nbr || ''),
+        date: d.date || '',
+        time: d.time || '',
+        raw: [d.b1 || 0, d.b2 || 0, d.b3 || 0],
+        b1: d.b1 || 0,
+        b2: d.b2 || 0,
+        b3: d.b3 || 0,
+        sum: d.num || d.sum || (d.b1 + d.b2 + d.b3),
+        combo: d.combination || d.combo || comboOf(d.num || d.sum || 0),
+        odd: (d.num || d.sum || 0) % 2 === 1,
+        big: (d.num || d.sum || 0) >= 14,
+      }));
+
+      if (allData.length > 0) {
+        const srcName = url.includes('github.io') ? 'Liquid-Glass-Profil数据仓库(BCLC官方规则)' : '本地data.json';
+        addDebug(`✅ ${srcName} → ${allData.length}期`);
+        try { localStorage.setItem("qianjin_v9_data", JSON.stringify(allData.slice(-500))); } catch{}
+        return { data: allData, source: srcName, countdown: json.countdown || '' };
+      }
+    } catch(e) {
+      addDebug(`⚠️ ${url}: ${e.message}`);
+    }
+  }
+
+  // ② 降级：直接用 BCLCCalc 从原始Keno接口获取并现场计算
+  if (window.BCLCCalc) {
+    try {
+      addDebug(`尝试 BCLCCalc 直连Keno接口 ...`);
+      const result = await BCLCCalc.fetchFromAllSources();
+      if (result.data && result.data.length > 0) {
+        const allData = result.data.map(d => ({
+          nbr: String(d.nbr || ''),
+          date: d.date || '',
           time: d.time || '',
           raw: [d.b1, d.b2, d.b3],
           b1: d.b1, b2: d.b2, b3: d.b3,
@@ -541,52 +391,24 @@ async function fetchFromAllSources() {
           odd: d.sum % 2 === 1,
           big: d.sum >= 14,
         }));
-      } else if (latest.status === 'fulfilled' && latest.value) {
-        const d = latest.value;
-        allData = [{
-          nbr: String(d.period || ''),
-          date: d.time || '', time: d.time || '',
-          raw: [d.b1, d.b2, d.b3],
-          b1: d.b1, b2: d.b2, b3: d.b3,
-          sum: d.sum, combo: d.combo || comboOf(d.sum),
-          odd: d.sum % 2 === 1, big: d.sum >= 14,
-        }];
-      }
-      if (allData.length > 0) {
-        addDebug(`✅ 统一API成功 → ${allData.length}期 (来源: ${latest.status==='fulfilled'?latest.value.source:'未知'})`);
+        addDebug(`✅ BCLCCalc直连 → ${allData.length}期 (${result.source})`);
         try { localStorage.setItem("qianjin_v9_data", JSON.stringify(allData.slice(-500))); } catch{}
-        return { data: allData, source: "pc28.standard_api（多源降级）" };
+        return { data: allData, source: result.source };
       }
     } catch(e) {
-      addDebug(`⚠️ 统一API失败: ${e.message}，降级到备用源`);
+      addDebug(`⚠️ BCLCCalc直连失败: ${e.message}`);
     }
   }
-  // 降级：原有多源逻辑
-  const errors = [];
-  for (const src of API_SOURCES) {
-    try {
-      addDebug(`尝试 ${src.name} ...`);
-      const data = await tryFetch(src.url, src.type);
-      if (data.length > 0) {
-        addDebug(`✅ ${src.name} 成功 → ${data.length}期`);
-        try { localStorage.setItem("qianjin_v9_data", JSON.stringify(data.slice(-500))); } catch{}
-        return { data, source: src.name };
-      }
-      addDebug(`⚠️ ${src.name} 返回空`);
-    } catch(e) {
-      addDebug(`❌ ${src.name}: ${e.message}`);
-      errors.push(`${src.name}: ${e.message}`);
-    }
-  }
-  // 全部失败 → 本地缓存
+
+  // ③ 全部失败 → 本地缓存
   try {
     const cached = JSON.parse(localStorage.getItem("qianjin_v9_data") || "[]");
     if (cached.length > 0) {
       addDebug(`💾 全部接口失败，使用本地缓存 ${cached.length}期`);
       return { data: cached, source: "💾 本地缓存(离线)" };
     }
-  } catch(e) { addDebug(`缓存读取失败: ${e.message}`); }
-  throw new Error("所有接口均失败: " + errors.join(" | "));
+  } catch(e) {}
+  throw new Error("所有BCLC数据源均失败");
 }
 
 // ============================================================
@@ -943,10 +765,10 @@ let currentPred = null;
 
 async function fetchAndUpdate(silent = false) {
   try {
-    if (!silent) showToast("📡 尝试多接口获取数据...");
+    if (!silent) showToast("📡 从 Liquid-Glass-Profil 数据仓库获取...");
     addDebug("--- 开始获取 ---");
 
-    const { data, source } = await fetchFromAllSources();
+    const { data, source, countdown } = await fetchFromAllSources();
 
     if (data.length === 0) throw new Error("返回数据为空");
 
@@ -972,6 +794,17 @@ async function fetchAndUpdate(silent = false) {
 
     // 徽章
     renderSourceBadge(`✅ ${source}`, data.length);
+
+    // 倒计时（优先用数据仓库的，其次用BCLCCalc计算）
+    if (countdown) {
+      const parts = String(countdown).split(':').map(Number);
+      if (parts.length === 2 && !isNaN(parts[0])) {
+        countdownSeconds = parts[0] * 60 + parts[1];
+      }
+    } else if (window.BCLCCalc) {
+      const info = BCLCCalc.periodInfo(new Date());
+      countdownSeconds = info.countdown;
+    }
 
     // 显示调试
     document.getElementById("debugCard").style.display = "";
@@ -1001,16 +834,25 @@ async function fetchAndUpdate(silent = false) {
       }
     } catch {}
 
-    // 尝试 data.json
+    // 尝试本地 data.json
     try {
-      const resp = await fetch("data.json", { cache: "no-store" });
+      const resp = await fetch("data.json?t=" + Date.now(), { cache: "no-store" });
       const json = await resp.json();
-      if (json.history && json.history.length) {
-        allData = json.history;
-        renderLatest(json.history[json.history.length - 1]);
-        if (json.prediction) renderPrediction(json.prediction);
-        renderHistory(json.history, json.prediction);
-        renderSourceBadge("📦 data.json", json.history.length);
+      if (json.data && json.data.length) {
+        const mapped = json.data.map(d => ({
+          nbr: d.nbr, date: d.date || '', time: d.time || '',
+          b1: d.b1 || 0, b2: d.b2 || 0, b3: d.b3 || 0,
+          sum: d.num || d.sum || 0,
+          combo: d.combination || d.combo || comboOf(d.num || d.sum || 0),
+          odd: (d.num || d.sum || 0) % 2 === 1,
+          big: (d.num || d.sum || 0) >= 14,
+        }));
+        allData = mapped;
+        renderLatest(mapped[mapped.length - 1]);
+        const pred = v9Predict(mapped);
+        renderPrediction(pred);
+        renderHistory(mapped, pred);
+        renderSourceBadge("📦 data.json", mapped.length);
         return;
       }
     } catch {}
