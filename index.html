@@ -338,7 +338,7 @@ async function fetchFromAllSources() {
   // ① 从 Liquid-Glass-Profil 数据仓库读取（已按BCLC官方规则计算好）
   // 使用 raw.githubusercontent.com 绕过 GitHub Pages 403 限制
   const DATA_URLS = [
-    'https://raw.githubusercontent.com/tomf02391-crypto/Liquid-Glass-Profil/main/data/latest.json',
+    // (已改为优先读本地) 'https://raw.githubusercontent.com/tomf02391-crypto/Liquid-Glass-Profil/main/data/latest.json',
     'data.json', // 本地备用
   ];
 
