@@ -335,16 +335,16 @@ function addDebug(msg) {
 }
 
 async function fetchFromAllSources() {
-  // ① 优先从 Liquid-Glass-Profil 数据仓库读取（已按BCLC官方规则计算好）
+  // ① 从 Liquid-Glass-Profil 数据仓库读取（已按BCLC官方规则计算好）
+  // 使用 raw.githubusercontent.com 绕过 GitHub Pages 403 限制
   const DATA_URLS = [
-    'https://tomf02391-crypto.github.io/Liquid-Glass-Profil/data/latest.json',
     'https://raw.githubusercontent.com/tomf02391-crypto/Liquid-Glass-Profil/main/data/latest.json',
     'data.json', // 本地备用
   ];
 
   for (const url of DATA_URLS) {
     try {
-      addDebug(`尝试数据仓库: ${url.includes('github.io') ? 'Liquid-Glass-Profil(GitHub Pages)' : '本地data.json'} ...`);
+      addDebug(`尝试数据仓库: ${url.includes('raw.githubusercontent') ? 'Liquid-Glass-Profil(raw)' : '本地data.json'} ...`);
       const resp = await fetch(url + '?t=' + Date.now(), { cache: 'no-store' });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const json = await resp.json();
@@ -365,7 +365,7 @@ async function fetchFromAllSources() {
       }));
 
       if (allData.length > 0) {
-        const srcName = url.includes('github.io') ? 'Liquid-Glass-Profil数据仓库(BCLC官方规则)' : '本地data.json';
+        const srcName = url.includes('raw.githubusercontent') ? 'Liquid-Glass-Profil数据仓库(BCLC官方规则)' : '本地data.json';
         addDebug(`✅ ${srcName} → ${allData.length}期`);
         try { localStorage.setItem("qianjin_v9_data", JSON.stringify(allData.slice(-500))); } catch{}
         return { data: allData, source: srcName, countdown: json.countdown || '' };
@@ -375,7 +375,7 @@ async function fetchFromAllSources() {
     }
   }
 
-  // ② 降级：直接用 BCLCCalc 从原始Keno接口获取并现场计算
+  // ② 降级：BCLCCalc 直连 Keno 接口现场计算
   if (window.BCLCCalc) {
     try {
       addDebug(`尝试 BCLCCalc 直连Keno接口 ...`);
