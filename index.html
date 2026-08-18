@@ -335,89 +335,61 @@ function addDebug(msg) {
 }
 
 async function fetchFromAllSources() {
-  // ① 优先 yu28.top 真实接口（与28开放平台，X-Api-Key 鉴权，保证最新数据）
-  // 与 Liquid-Glass-Profil 仓库使用同一接口，三级降级：直连→allorigins→cors.sh
+  // 修复版：统一使用 BCLCCalc.parseResponse 解析，不再各自为战
+  // 修掉 NaN 根因：① 不再过滤 sum>0（保留合法 0+0+0）② 单条失败仅跳过该条
   const YU28_API = 'https://yu28.top/api/kj.json?nbr=60';
   const YU28_KEY = 'yu28_f9f41d673b447fac';
   const DATA_URLS = [
-    YU28_API,                                                            // ① 直连（带X-Api-Key头）
-    'https://api.allorigins.win/raw?url=' + encodeURIComponent(YU28_API), // ② 备用代理1
-    'https://proxy.cors.sh/' + YU28_API,                                 // ③ 备用代理2
-    'data.json',                        // ④ 本地最后兜底
+    { url: YU28_API,                                                       tag: 'yu28.top(直连)',  direct: true  },
+    { url: 'https://api.allorigins.win/raw?url=' + encodeURIComponent(YU28_API), tag: 'yu28(allorigins)', direct: false },
+    { url: 'https://proxy.cors.sh/' + YU28_API,                            tag: 'yu28(cors.sh)',   direct: false },
+    { url: 'data.json',                                                     tag: '本地data.json',   direct: false },
   ];
 
-  for (const url of DATA_URLS) {
+  for (const src of DATA_URLS) {
     try {
-      const isDirect = url === YU28_API;
-      const headers = isDirect ? { 'X-Api-Key': YU28_KEY } : {};
-      const tag = !isDirect ? (url.includes('allorigins') ? 'allorigins代理' : (url.includes('cors.sh') ? 'cors.sh代理' : (url.includes('raw.githubusercontent') ? 'Liquid-Glass-Profil(raw)' : '本地data.json'))) : 'yu28.top(直连)';
-      addDebug(`尝试数据源: ${tag} ...`);
-      const resp = await fetch(url + (url.includes('?') ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store', headers });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const json = await resp.json();
-      if (!json.data || json.data.length === 0) throw new Error('数据为空');
+      const headers = src.direct ? { 'X-Api-Key': YU28_KEY, 'Accept':'application/json' } : { 'Accept':'application/json' };
+      addDebug(`尝试数据源: ${src.tag} ...`);
+      const sep = src.url.includes('?') ? '&' : '?';
+      const resp = await fetch(src.url + sep + 't=' + Date.now(), { cache:'no-store', headers });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const text = await resp.text();
+      if (text.trim().startsWith('<')) throw new Error('HTML响应(被拦截)');
+      const json = JSON.parse(text);
+      if (json.status === 403) throw new Error('拦截: ' + (json.title||json.detail));
 
-      // 兼容两种格式：yu28.top(number="4+7+6=17") 和旧格式(b1/b2/b3/num)
-      const allData = json.data.map(d => {
-        let b1=0,b2=0,b3=0,s=0;
-        const numStr = String(d.number || d.num || '');
-        if (numStr) {
-          const body = numStr.split('=')[0];
-          const parts = body.split(/[+,]/).map(n=>parseInt(n.trim(),10)).filter(n=>!isNaN(n));
-          if (parts.length>=3) { b1=parts[0]; b2=parts[1]; b3=parts[2]; s=b1+b2+b3; }
-        }
-        if (s===0) { b1=d.b1||0; b2=d.b2||0; b3=d.b3||0; s=d.num||d.sum||(b1+b2+b3); }
-        return {
-          nbr: String(d.nbr || ''),
-          date: d.date || (d.time||'').split(' ')[0] || '',
-          time: d.time || '',
-          raw: [b1,b2,b3],
-          b1,b2,b3,
-          sum: s,
-          combo: d.combination || d.combo || comboOf(s),
-          odd: s%2===1,
-          big: s>=14,
-        };
-      }).filter(d => d.nbr && d.sum>0);
+      // 统一解析：交给 BCLCCalc.parseResponse（修掉 NaN 的核心）
+      let allData;
+      if (window.BCLCCalc && BCLCCalc.parseResponse) {
+        allData = BCLCCalc.parseResponse(json).map(d => ({
+          nbr: String(d.nbr||''), date: d.date||'', time: d.time||'',
+          raw: [d.b1,d.b2,d.b3], b1:d.b1, b2:d.b2, b3:d.b3,
+          sum:d.sum, combo:d.combo||comboOf(d.sum), odd:d.sum%2===1, big:d.sum>=14,
+        }));
+      } else {
+        // 退化：仅取 json.data，不依赖 bclc_calc.js
+        const items = json.data || json.list || json.results || (Array.isArray(json)?json:[]);
+        allData = items.map(d => {
+          const r = { nbr:String(d.nbr||''), date:d.date||'', time:d.time||'', raw:[0,0,0], b1:0,b2:0,b3:0,sum:0,combo:'',odd:false,big:false };
+          const ns = String(d.number||d.num||''); const body = ns.split('=')[0];
+          const p = body.split(/[+,]/).map(n=>parseInt(n,10)).filter(n=>!isNaN(n));
+          if (p.length>=3){ r.b1=p[0];r.b2=p[1];r.b3=p[2];r.sum=p[0]+p[1]+p[2]; }
+          r.combo = d.combination||d.combo||comboOf(r.sum); r.odd=r.sum%2===1; r.big=r.sum>=14; r.raw=[r.b1,r.b2,r.b3];
+          return r;
+        }).filter(d => d.nbr); // 仅过滤无期号的，不再过滤 sum>0
+      }
 
       if (allData.length > 0) {
-        const tag = !isDirect ? (url.includes('allorigins') ? 'yu28(allorigins代理)' : (url.includes('cors.sh') ? 'yu28(cors.sh代理)' : '本地data.json')) : 'yu28.top(直连)';
-        addDebug(`✅ ${tag} → ${allData.length}期`);
+        addDebug(`✅ ${src.tag} → ${allData.length}期`);
         try { localStorage.setItem("qianjin_v9_data", JSON.stringify(allData.slice(-500))); } catch{}
-        return { data: allData, source: tag, countdown: json.countdown || '' };
+        return { data: allData, source: src.tag, countdown: json.countdown || '' };
       }
     } catch(e) {
-      addDebug(`⚠️ ${url}: ${e.message}`);
+      addDebug(`⚠️ ${src.tag}: ${e.message}`);
     }
   }
 
-  // ② 降级：BCLCCalc 直连 Keno 接口现场计算
-  if (window.BCLCCalc) {
-    try {
-      addDebug(`尝试 BCLCCalc 直连Keno接口 ...`);
-      const result = await BCLCCalc.fetchFromAllSources();
-      if (result.data && result.data.length > 0) {
-        const allData = result.data.map(d => ({
-          nbr: String(d.nbr || ''),
-          date: d.date || '',
-          time: d.time || '',
-          raw: [d.b1, d.b2, d.b3],
-          b1: d.b1, b2: d.b2, b3: d.b3,
-          sum: d.sum,
-          combo: d.combo || comboOf(d.sum),
-          odd: d.sum % 2 === 1,
-          big: d.sum >= 14,
-        }));
-        addDebug(`✅ BCLCCalc直连 → ${allData.length}期 (${result.source})`);
-        try { localStorage.setItem("qianjin_v9_data", JSON.stringify(allData.slice(-500))); } catch{}
-        return { data: allData, source: result.source };
-      }
-    } catch(e) {
-      addDebug(`⚠️ BCLCCalc直连失败: ${e.message}`);
-    }
-  }
-
-  // ③ 全部失败 → 本地缓存
+  // 全部失败 → 本地缓存兜底
   try {
     const cached = JSON.parse(localStorage.getItem("qianjin_v9_data") || "[]");
     if (cached.length > 0) {
