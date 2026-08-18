@@ -6,22 +6,143 @@
 <meta name="theme-color" content="#0a0e1a">
 <title>⚡ 千金星轨 · PC28 · V9 真数据版</title>
 <style>
-/* 样式完全保留不变（此处省略，避免重复，你可用原样式） */
+:root {
+  --bg: #0a0e1a;
+  --bg2: #111827;
+  --card: #1a2332;
+  --card2: #243044;
+  --border: #2a3a50;
+  --text: #e8edf5;
+  --muted: #8899aa;
+  --accent: #00d4ff;
+  --gold: #ffd700;
+  --green: #00e396;
+  --red: #ff4560;
+  --purple: #a855f7;
+  --orange: #fb923c;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.3), transparent),
+    radial-gradient(1px 1px at 30% 50%, rgba(255,255,255,0.2), transparent),
+    radial-gradient(1.5px 1.5px at 50% 10%, rgba(100,200,255,0.3), transparent),
+    radial-gradient(1px 1px at 70% 40%, rgba(255,255,255,0.2), transparent),
+    radial-gradient(1px 1px at 90% 70%, rgba(255,255,255,0.3), transparent),
+    radial-gradient(1.5px 1.5px at 20% 80%, rgba(100,200,255,0.2), transparent),
+    radial-gradient(1px 1px at 60% 90%, rgba(255,255,255,0.2), transparent),
+    radial-gradient(1px 1px at 80% 15%, rgba(255,255,255,0.3), transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+.container { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 12px; }
+
+header { text-align: center; padding: 16px 8px 12px; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+header h1 { font-size: 22px; background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px; }
+header .sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+header .badge { display: inline-block; background: rgba(0,212,255,0.15); border: 1px solid var(--accent); color: var(--accent); font-size: 10px; padding: 2px 8px; border-radius: 10px; margin-top: 6px; }
+
+.countdown-section { background: linear-gradient(135deg, var(--card), var(--card2)); border: 1px solid var(--border); border-radius: 14px; padding: 16px; text-align: center; margin-bottom: 14px; }
+.countdown-ring { width: 120px; height: 120px; margin: 0 auto 10px; position: relative; }
+.countdown-ring svg { transform: rotate(-90deg); }
+.countdown-ring .ring-bg { fill: none; stroke: var(--border); stroke-width: 6; }
+.countdown-ring .ring-fg { fill: none; stroke: url(#ringGrad); stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+.countdown-ring .time { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 28px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+.countdown-section .next-nbr { font-size: 12px; color: var(--muted); }
+.countdown-section .next-nbr span { color: var(--gold); font-weight: 600; }
+
+.card { background: linear-gradient(135deg, var(--card), var(--card2)); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+.card h2 { font-size: 14px; color: var(--accent); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.card h2 .icon { font-size: 16px; }
+
+.latest-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+.ball { background: linear-gradient(145deg, #1e3a5f, #0f2440); border: 2px solid var(--accent); border-radius: 50%; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; color: var(--accent); margin: 0 auto; box-shadow: 0 0 12px rgba(0,212,255,0.3); }
+.sum-display { text-align: center; font-size: 32px; font-weight: 800; color: var(--gold); margin: 8px 0; }
+.combo-tags { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.combo-tag { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.combo-tag.big-odd { background: rgba(255,215,0,0.2); color: var(--gold); border: 1px solid var(--gold); }
+.combo-tag.big-even { background: rgba(0,227,150,0.2); color: var(--green); border: 1px solid var(--green); }
+.combo-tag.small-odd { background: rgba(168,85,247,0.2); color: var(--purple); border: 1px solid var(--purple); }
+.combo-tag.small-even { background: rgba(251,146,60,0.2); color: var(--orange); border: 1px solid var(--orange); }
+
+.pred-section { margin-bottom: 10px; }
+.pred-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.pred-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.pred-ball { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; }
+.pred-ball.main { background: radial-gradient(circle at 30% 30%, #ffd700, #b8860b); color: #1a1a1a; box-shadow: 0 0 16px rgba(255,215,0,0.5); border: 2px solid #fff; }
+.pred-ball.backup { background: radial-gradient(circle at 30% 30%, #00d4ff, #0080aa); color: #fff; box-shadow: 0 0 12px rgba(0,212,255,0.4); border: 2px solid rgba(255,255,255,0.3); }
+.pred-ball.kill { background: linear-gradient(145deg, #2a0a0a, #1a0505); color: var(--red); border: 2px solid var(--red); opacity: 0.8; }
+.pred-combo { padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+.pred-combo.push { background: rgba(0,227,150,0.15); border: 1px solid var(--green); color: var(--green); }
+.pred-combo.kill-c { background: rgba(255,69,96,0.15); border: 1px solid var(--red); color: var(--red); }
+.confidence-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+.confidence-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--red), var(--orange), var(--gold), var(--green)); transition: width 0.5s; }
+
+.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.stat-item { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+.stat-label { font-size: 10px; color: var(--muted); }
+.stat-val { font-size: 18px; font-weight: 700; }
+.stat-val.gold { color: var(--gold); }
+.stat-val.green { color: var(--green); }
+.stat-val.red { color: var(--red); }
+.stat-val.blue { color: var(--accent); }
+
+.hist-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.hist-table th { text-align: left; padding: 6px 4px; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--card); }
+.hist-table td { padding: 5px 4px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.hist-table .num-cell { font-family: monospace; }
+.hist-table .combo-mini { display: inline-block; padding: 1px 5px; border-radius: 4px; font-size: 10px; }
+.hist-table .hit { color: var(--green); font-weight: 700; }
+.hist-table .miss { color: var(--red); font-weight: 700; }
+.scroll-box { max-height: 300px; overflow-y: auto; }
+
+.record-bar { display: flex; gap: 2px; margin-top: 8px; flex-wrap: wrap; }
+.record-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.record-dot.hit { background: var(--green); box-shadow: 0 0 4px rgba(0,227,150,0.5); }
+.record-dot.miss { background: var(--red); box-shadow: 0 0 4px rgba(255,69,96,0.5); }
+.record-summary { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+.debug-box { background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 8px; font-size: 10px; color: var(--muted); font-family: monospace; margin-top: 8px; max-height: 100px; overflow-y: auto; }
+
+footer { text-align: center; padding: 16px 8px; font-size: 10px; color: var(--muted); border-top: 1px solid var(--border); margin-top: 12px; }
+footer .warn { color: var(--orange); font-weight: 600; }
+
+.refresh-btn { position: fixed; bottom: 20px; right: 20px; width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--green)); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 16px rgba(0,212,255,0.4); z-index: 100; transition: transform 0.2s; }
+.refresh-btn:active { transform: scale(0.9); }
+
+.toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--card2); border: 1px solid var(--accent); color: var(--accent); padding: 8px 16px; border-radius: 8px; font-size: 12px; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.toast.show { opacity: 1; }
+
+#debugCard { display: block; } /* 调试面板始终可见 */
 </style>
 </head>
 <body>
+
 <div class="container">
   <header>
     <h1>⚡ 千金星轨 · PC28</h1>
-    <div class="sub">V9 真数据版 · 多接口容灾 · 对错记录</div>
-    <div class="badge" id="sourceBadge">数据加载中...</div>
+    <div class="sub">V9 真数据版 · 多接口容灾 · 纯实时</div>
+    <div class="badge" id="sourceBadge">加载中...</div>
   </header>
 
-  <!-- 倒计时 -->
   <div class="countdown-section">
     <div class="countdown-ring">
       <svg width="120" height="120">
-        <defs><linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs>
+        <defs>
+          <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00d4ff"/>
+            <stop offset="100%" stop-color="#a855f7"/>
+          </linearGradient>
+        </defs>
         <circle class="ring-bg" cx="60" cy="60" r="52"/>
         <circle class="ring-fg" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="0" id="ringFg"/>
       </svg>
@@ -30,31 +151,62 @@
     <div class="next-nbr">下期期号: <span id="nextNbr">-</span></div>
   </div>
 
-  <div class="card"><h2><span class="icon">🎰</span> 最新开奖</h2>
+  <div class="card">
+    <h2><span class="icon">🎰</span> 最新开奖</h2>
     <div class="latest-grid">
-      <div><div class="ball" id="ball1">-</div><div style="text-align:center;font-size:10px;color:var(--muted);margin-top:4px;">第1球</div></div>
-      <div><div class="ball" id="ball2">-</div><div style="text-align:center;font-size:10px;color:var(--muted);margin-top:4px;">第2球</div></div>
-      <div><div class="ball" id="ball3">-</div><div style="text-align:center;font-size:10px;color:var(--muted);margin-top:4px;">第3球</div></div>
+      <div>
+        <div class="ball" id="ball1">-</div>
+        <div style="text-align:center;font-size:10px;color:var(--muted);margin-top:4px;">第1球</div>
+      </div>
+      <div>
+        <div class="ball" id="ball2">-</div>
+        <div style="text-align:center;font-size:10px;color:var(--muted);margin-top:4px;">第2球</div>
+      </div>
+      <div>
+        <div class="ball" id="ball3">-</div>
+        <div style="text-align:center;font-size:10px;color:var(--muted);margin-top:4px;">第3球</div>
+      </div>
     </div>
     <div class="sum-display" id="sumDisplay">-</div>
     <div class="combo-tags" id="comboTags"></div>
     <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--muted);" id="drawInfo"></div>
   </div>
 
-  <div class="card"><h2><span class="icon">🤖</span> V9 预测引擎</h2>
-    <div class="pred-section"><div class="pred-label">🎯 主推特码 (命中率~22%)</div><div class="pred-row" id="mainBalls"></div></div>
-    <div class="pred-section"><div class="pred-label">🛡️ 候补特码 (补刀)</div><div class="pred-row" id="backupBalls"></div></div>
-    <div class="pred-section"><div class="pred-label">🔪 杀特码×5 (正确率~98%) ★最强</div><div class="pred-row" id="killBalls"></div></div>
-    <div class="pred-section"><div class="pred-label">🎲 押2组</div><div class="pred-row" id="pushCombos"></div></div>
-    <div class="pred-section"><div class="pred-label">🔪 杀1组</div><div class="pred-row" id="killCombo"></div></div>
-    <div class="pred-section"><div class="pred-label">📊 和值中心 / 区间</div><div style="font-size:16px;font-weight:700;color:var(--gold);" id="sumCenter">-</div></div>
-    <div class="pred-section"><div class="pred-label">💪 置信度</div>
+  <div class="card">
+    <h2><span class="icon">🤖</span> V9 预测引擎</h2>
+    <div class="pred-section">
+      <div class="pred-label">🎯 主推特码 (命中率~22%)</div>
+      <div class="pred-row" id="mainBalls"></div>
+    </div>
+    <div class="pred-section">
+      <div class="pred-label">🛡️ 候补特码 (补刀)</div>
+      <div class="pred-row" id="backupBalls"></div>
+    </div>
+    <div class="pred-section">
+      <div class="pred-label">🔪 杀特码×5 (正确率~98%) ★最强</div>
+      <div class="pred-row" id="killBalls"></div>
+    </div>
+    <div class="pred-section">
+      <div class="pred-label">🎲 押2组</div>
+      <div class="pred-row" id="pushCombos"></div>
+    </div>
+    <div class="pred-section">
+      <div class="pred-label">🔪 杀1组</div>
+      <div class="pred-row" id="killCombo"></div>
+    </div>
+    <div class="pred-section">
+      <div class="pred-label">📊 和值中心 / 区间</div>
+      <div style="font-size:16px;font-weight:700;color:var(--gold);" id="sumCenter">-</div>
+    </div>
+    <div class="pred-section">
+      <div class="pred-label">💪 置信度</div>
       <div class="confidence-bar"><div class="confidence-fill" id="confBar" style="width:0%"></div></div>
       <div style="font-size:11px;color:var(--muted);margin-top:4px;" id="confText">-</div>
     </div>
   </div>
 
-  <div class="card"><h2><span class="icon">✅❌</span> 预测对错记录</h2>
+  <div class="card">
+    <h2><span class="icon">✅❌</span> 预测对错记录</h2>
     <div class="pred-label">最近20期 · 主推特码命中情况</div>
     <div class="record-bar" id="recordBar"></div>
     <div class="record-summary" id="recordSummary">暂无记录</div>
@@ -64,34 +216,52 @@
     <div class="record-summary" id="killRecordSummary">暂无记录</div>
   </div>
 
-  <div class="card"><h2><span class="icon">📈</span> 回测验证 (蒙特卡洛)</h2>
+  <div class="card">
+    <h2><span class="icon">📈</span> 回测验证 (蒙特卡洛)</h2>
     <div class="stats-grid">
       <div class="stat-item"><div class="stat-label">杀5特码正确率</div><div class="stat-val gold">98.44%</div></div>
       <div class="stat-item"><div class="stat-label">押5命中率</div><div class="stat-val green">36.30%</div></div>
       <div class="stat-item"><div class="stat-label">主推3命中率</div><div class="stat-val blue">22.05%</div></div>
       <div class="stat-item"><div class="stat-label">押2组命中率</div><div class="stat-val" style="color:var(--purple);">51.22%</div></div>
     </div>
-    <div style="font-size:10px;color:var(--muted);margin-top:8px;">基于 PC28 理论分布 5000次×200期模拟 · 随机基准: 押5=17.86% / 杀5=82.14%</div>
+    <div style="font-size:10px;color:var(--muted);margin-top:8px;">
+      基于 PC28 理论分布 5000次×200期模拟 · 随机基准: 押5=17.86% / 杀5=82.14%
+    </div>
   </div>
 
-  <div class="card"><h2><span class="icon">📜</span> 近期开奖+预测对比 (<span id="histCount">0</span>期)</h2>
-    <div class="scroll-box"><table class="hist-table" id="histTable"><thead><tr><th>期号</th><th>日期</th><th>三球</th><th>和值</th><th>组合</th><th>主推</th><th>结果</th></tr></thead><tbody id="histBody"></tbody></table></div>
+  <div class="card">
+    <h2><span class="icon">📜</span> 近期开奖+预测对比 (<span id="histCount">0</span>期)</h2>
+    <div class="scroll-box">
+      <table class="hist-table" id="histTable">
+        <thead><tr><th>期号</th><th>日期</th><th>三球</th><th>和值</th><th>组合</th><th>主推</th><th>结果</th></tr></thead>
+        <tbody id="histBody"></tbody>
+      </table>
+    </div>
   </div>
 
-  <div class="card" id="debugCard" style="display:none;"><h2><span class="icon">🔧</span> 接口调试</h2><div class="debug-box" id="debugBox"></div></div>
-  <footer><div class="warn">⚠️ 仅供算法研究 · 赌博有害 · 理性对待</div><div>BCLK Keno 规则 · 数据来自 pc28.help · 纯本地计算</div><div id="updateTime"></div></footer>
+  <div class="card" id="debugCard">
+    <h2><span class="icon">🔧</span> 接口调试</h2>
+    <div class="debug-box" id="debugBox"></div>
+  </div>
+
+  <footer>
+    <div class="warn">⚠️ 仅供算法研究 · 赌博有害 · 理性对待</div>
+    <div>BCLK Keno 规则 · 纯实时数据</div>
+    <div id="updateTime"></div>
+  </footer>
 </div>
+
 <button class="refresh-btn" onclick="manualRefresh()" title="刷新">🔄</button>
 <div class="toast" id="toast"></div>
 
 <script>
 // ============================================================
-// 完全自包含（不依赖外部 bclc_calc.js）
-// 解决数据对不上的问题
+// 千金星轨 · V9 纯实时版（无缓存）
+// 数据源：yu28.top + 容灾代理
 // ============================================================
 
-const COMBOS = ["大单", "大双", "小单", "小双"];
 const TOTAL_SECONDS = 210;
+const RECORD_KEY = "qianjin_v9_records"; // 仅用于保存对错记录（不影响数据展示）
 
 // ------ 工具函数 ------
 function comboOf(sum) {
@@ -99,7 +269,7 @@ function comboOf(sum) {
   else return sum % 2 === 1 ? "小单" : "小双";
 }
 
-// 将 "4+7+6=17" 或 "4,7,6" 解析为 [4,7,6,17]
+// 解析 number 字段，支持 "4+7+6=17" 或 "4,7,6"
 function parseNumberField(str) {
   if (!str) return null;
   const clean = str.replace(/\s/g, '');
@@ -124,15 +294,14 @@ function parseNumberField(str) {
   return null;
 }
 
-// ------ 多源数据获取 ------
-async function fetchFromAllSources() {
+// ------ 远程数据获取（无缓存） ------
+async function fetchRealtime() {
   const YU28_API = 'https://yu28.top/api/kj.json?nbr=60';
   const YU28_KEY = 'yu28_f9f41d673b447fac';
   const SOURCES = [
     { url: YU28_API, tag: 'yu28.top(直连)', headers: { 'X-Api-Key': YU28_KEY } },
     { url: 'https://api.allorigins.win/raw?url=' + encodeURIComponent(YU28_API), tag: 'yu28(allorigins)' },
     { url: 'https://proxy.cors.sh/' + YU28_API, tag: 'yu28(cors.sh)' },
-    { url: 'data.json', tag: '本地data.json' },
   ];
 
   for (const src of SOURCES) {
@@ -147,14 +316,12 @@ async function fetchFromAllSources() {
       let items = json.data || json.list || json.results || (Array.isArray(json)?json:[]);
       if (!items.length) throw new Error('无数据');
 
-      // 解析每个条目
       const parsed = items.map(item => {
         const nbr = String(item.nbr || '');
         const date = item.date || '';
         const time = item.time || '';
         let b1=0, b2=0, b3=0, sum=0, combo='';
 
-        // 优先使用 number 字段
         const numberStr = item.number || item.num || '';
         const parsedNum = parseNumberField(numberStr);
         if (parsedNum) {
@@ -166,83 +333,61 @@ async function fetchFromAllSources() {
             sum = b1+b2+b3;
             combo = item.combination || item.combo || comboOf(sum);
           }
-        } else if (item.sum !== undefined) {
-          sum = parseInt(item.sum,10);
-          if (!isNaN(sum)) {
-            combo = item.combination || item.combo || comboOf(sum);
-            const decomp = decomposeSum(sum);
-            b1 = decomp[0]||0; b2 = decomp[1]||0; b3 = decomp[2]||0;
-          }
+        } else {
+          return null; // 无有效号码
         }
 
-        // 若 sum 仍无效，跳过该条
         if (isNaN(sum) || sum < 0 || sum > 27) return null;
 
         return {
-          nbr, date, time,
-          b1, b2, b3,
-          sum,
+          nbr, date, time, b1, b2, b3, sum,
           combo: combo || comboOf(sum),
           big: sum >= 14,
           odd: sum % 2 === 1,
-          raw: [b1,b2,b3]
         };
       }).filter(d => d && d.nbr && d.sum !== undefined && !isNaN(d.sum));
 
       if (parsed.length > 0) {
-        // 按期号降序排列（最新在前）
         parsed.sort((a,b) => parseInt(b.nbr) - parseInt(a.nbr));
         return { data: parsed, source: src.tag, countdown: json.countdown || '' };
       }
     } catch(e) {
       console.warn('源失败:', src.tag, e.message);
+      addDebug('⚠️ ' + src.tag + ': ' + e.message);
     }
   }
 
-  // 所有源失败 → 本地缓存
-  try {
-    const cached = JSON.parse(localStorage.getItem("qianjin_v9_data") || "[]");
-    if (cached.length > 0) {
-      return { data: cached, source: "💾 本地缓存", countdown: '' };
-    }
-  } catch(e) {}
-  throw new Error("所有数据源均失败");
+  throw new Error("所有实时数据源均失败");
 }
 
-// 和值分解（若只有和值，用于反推三球，但不精确）
-function decomposeSum(sum) {
-  // 不用于精确预测，仅作为兜底
-  if (sum <= 9) return [0,0,sum];
-  if (sum <= 18) return [5,5,sum-10];
-  return [9,9,sum-18];
-}
-
-// ------ 预测算法（与原来一致，此处简化） ------
+// ------ 预测算法（七信号融合） ------
 function v9Predict(data) {
   if (!data.length) {
-    return { tricode_main:[13,14,15], tricode_backup:[10,17], tricode_kill:[0,1,2,26,27],
-             combo_push:["小单","大双"], combo_kill:"大单", sum_center:13, sum_range:[10,17], confidence:15 };
+    return {
+      tricode_main: [13,14,15], tricode_backup: [10,17],
+      tricode_kill: [0,1,2,26,27],
+      combo_push: ["小单","大双"], combo_kill: "大单",
+      sum_center: 13, sum_range: [10,17], confidence: 15
+    };
   }
 
-  // 简单信号融合（与原文相同，仅精简）
-  const probs = Array(28).fill(0);
-  const weights = [3,2,2.5,2,1.5,1.2];
   const dataSum = data.map(d => d.sum);
+
   // 1. EMA
   let ema = dataSum[0];
   for (let i=1; i<dataSum.length; i++) ema = 0.3*dataSum[i] + 0.7*ema;
   const center = Math.round(ema);
-  for (let x=0; x<=27; x++) probs[x] += weights[0] * Math.exp(-Math.pow(x-center,2)/8);
+
   // 2. 双EMA
   let e1=dataSum[0], e2=dataSum[0];
   for (let i=1; i<dataSum.length; i++) { e1=0.3*dataSum[i]+0.7*e1; e2=0.15*e1+0.85*e2; }
-  const c2 = Math.max(0,Math.min(27,Math.round(e1+(e1-e2))));
-  for (let x=0; x<=27; x++) probs[x] += weights[1] * Math.exp(-Math.pow(x-c2,2)/4.5);
+  const c2 = Math.max(0, Math.min(27, Math.round(e1 + (e1 - e2))));
+
   // 3. 加权频率
   const freq = Array(28).fill(0);
   dataSum.forEach((s,i) => { freq[s] += Math.pow(0.95, dataSum.length-1-i); });
   const fSum = freq.reduce((a,b)=>a+b,0) || 1;
-  for (let x=0; x<=27; x++) probs[x] += weights[2] * (freq[x]/fSum);
+
   // 4. 一阶马尔可夫
   const trans = {};
   for (let i=0; i<dataSum.length-1; i++) {
@@ -251,34 +396,49 @@ function v9Predict(data) {
     trans[k][dataSum[i+1]] = (trans[k][dataSum[i+1]] || 0) + 1;
   }
   const last = dataSum[dataSum.length-1];
+  const mkProbs = Array(28).fill(0);
   if (trans[last]) {
     const c = trans[last];
     const total = Object.values(c).reduce((a,b)=>a+b,0) || 1;
-    for (let x=0; x<=27; x++) probs[x] += weights[3] * ((c[x]||0)/total);
+    for (let x=0; x<=27; x++) mkProbs[x] = (c[x]||0)/total;
   }
+
   // 5. 差分反转
   const diffs = [];
   for (let i=1; i<dataSum.length; i++) diffs.push(dataSum[i]-dataSum[i-1]);
   const avgDiff = diffs.slice(-5).reduce((a,b)=>a+b,0) / Math.min(5, diffs.length) || 0;
-  const rev = Math.max(0,Math.min(27,Math.round(dataSum[dataSum.length-1] - avgDiff*0.5)));
-  for (let x=0; x<=27; x++) probs[x] += weights[4] * Math.exp(-Math.pow(x-rev,2)/2);
+  const rev = Math.max(0, Math.min(27, Math.round(dataSum[dataSum.length-1] - avgDiff*0.5)));
+
   // 6. 组合约束
   const combos = data.slice(-30).map(d => d.combo);
   const cCount = {};
   combos.forEach(c => cCount[c] = (cCount[c]||0)+1);
   const topCombo = Object.entries(cCount).sort((a,b)=>b[1]-a[1])[0]?.[0] || "大单";
+
+  // 融合概率
+  const probs = Array(28).fill(0);
+  const weights = [3.0, 2.0, 2.5, 2.0, 1.5, 1.2];
+  // EMA
+  for (let x=0; x<=27; x++) probs[x] += weights[0] * Math.exp(-Math.pow(x-center,2)/8);
+  // 双EMA
+  for (let x=0; x<=27; x++) probs[x] += weights[1] * Math.exp(-Math.pow(x-c2,2)/4.5);
+  // 频率
+  for (let x=0; x<=27; x++) probs[x] += weights[2] * (freq[x]/fSum);
+  // 马尔可夫
+  for (let x=0; x<=27; x++) probs[x] += weights[3] * mkProbs[x];
+  // 差分反转
+  for (let x=0; x<=27; x++) probs[x] += weights[4] * Math.exp(-Math.pow(x-rev,2)/2);
+  // 组合约束
   for (let x=0; x<=27; x++) probs[x] += weights[5] * (comboOf(x) === topCombo ? 1 : 0.01);
 
-  // 归一化
   const totalP = probs.reduce((a,b)=>a+b,0) || 1;
   for (let x=0; x<=27; x++) probs[x] /= totalP;
 
-  // 排序
   const ranked = probs.map((p,i) => [i,p]).sort((a,b) => b[1]-a[1]);
   const main3 = ranked.slice(0,3).map(e => e[0]);
   const backup2 = ranked.slice(3,5).map(e => e[0]);
 
-  // 杀5：概率最低的5个
+  // 杀5（概率最低的5个）
   const sortedAsc = ranked.slice().sort((a,b) => a[1]-b[1]);
   const kill5 = sortedAsc.slice(0,5).map(e => e[0]);
 
@@ -306,9 +466,7 @@ function v9Predict(data) {
   };
 }
 
-// ------ 记录管理 ------
-const RECORD_KEY = "qianjin_v9_records";
-
+// ------ 对错记录管理 ------
 function loadRecords() {
   try { return JSON.parse(localStorage.getItem(RECORD_KEY) || "[]"); } catch { return []; }
 }
@@ -333,7 +491,7 @@ function updateRecords(history, pred) {
   return records;
 }
 
-// ------ 渲染 ------
+// ------ 渲染函数 ------
 function renderLatest(d) {
   document.getElementById("ball1").textContent = d.b1;
   document.getElementById("ball2").textContent = d.b2;
@@ -387,9 +545,10 @@ function renderRecords(records) {
     const hit = r.main_hit || r.backup_hit;
     return `<span class="record-dot ${hit ? 'hit' : 'miss'}" title="期${r.nbr} 特码${r.sum} 预测${r.main_pred.join(',')} ${hit?'中':'挂'}"></span>`;
   }).join('');
-  const mainHits = records.filter(r => r.main_hit).length;
   const total = records.length || 1;
-  summary.innerHTML = `主推命中: <span style="color:var(--green)">${mainHits}/${total}</span> (${(mainHits/total*100).toFixed(1)}%) · 含候补: <span style="color:var(--green)">${records.filter(r=>r.main_hit||r.backup_hit).length}/${total}</span> (${(records.filter(r=>r.main_hit||r.backup_hit).length/total*100).toFixed(1)}%)`;
+  const mainHits = records.filter(r => r.main_hit).length;
+  const allHits = records.filter(r => r.main_hit || r.backup_hit).length;
+  summary.innerHTML = `主推命中: <span style="color:var(--green)">${mainHits}/${total}</span> (${(mainHits/total*100).toFixed(1)}%) · 含候补: <span style="color:var(--green)">${allHits}/${total}</span> (${(allHits/total*100).toFixed(1)}%)`;
 
   killBar.innerHTML = recent.map(r => {
     return `<span class="record-dot ${r.kill_correct ? 'hit' : 'miss'}" title="期${r.nbr} 特码${r.sum} 杀${r.kill_pred.join(',')} ${r.kill_correct?'✓':'✗'}"></span>`;
@@ -402,6 +561,15 @@ function renderSourceBadge(source, count) {
   const el = document.getElementById("sourceBadge");
   el.textContent = `${source} · ${count}期`;
   el.style.color = source.includes("❌") ? "var(--red)" : "var(--accent)";
+}
+
+// ------ 调试日志 ------
+let debugLogs = [];
+function addDebug(msg) {
+  const time = new Date().toLocaleTimeString('zh-CN');
+  debugLogs.push(`[${time}] ${msg}`);
+  if (debugLogs.length > 50) debugLogs.shift();
+  document.getElementById("debugBox").textContent = debugLogs.join('\n');
 }
 
 // ------ 倒计时 ------
@@ -441,14 +609,13 @@ let allData = [], currentPred = null;
 
 async function fetchAndUpdate(silent = false) {
   try {
-    if (!silent) showToast("📡 数据加载中...");
-    const { data, source, countdown } = await fetchFromAllSources();
+    if (!silent) showToast("📡 请求实时数据...");
+    addDebug("--- 开始拉取 ---");
+    const { data, source, countdown } = await fetchRealtime();
     if (data.length === 0) throw new Error("空数据");
 
-    // 保存到缓存
-    localStorage.setItem("qianjin_v9_data", JSON.stringify(data.slice(-500)));
+    addDebug(`✅ ${source} → ${data.length}期`);
     allData = data;
-
     const latest = data[data.length-1];
     renderLatest(latest);
     const pred = v9Predict(data);
@@ -463,55 +630,35 @@ async function fetchAndUpdate(silent = false) {
       const parts = String(countdown).split(':').map(Number);
       if (parts.length === 2 && !isNaN(parts[0])) countdownSeconds = parts[0]*60 + parts[1];
     }
-    document.getElementById("debugCard").style.display = "";
     document.getElementById("updateTime").textContent = `最后更新: ${new Date().toLocaleString("zh-CN")}`;
     if (!silent) showToast(`✅ ${source} · ${data.length}期 · 最新期${latest.nbr}(${latest.sum})`);
   } catch(e) {
     console.error(e);
-    // 回退缓存
-    try {
-      const cached = JSON.parse(localStorage.getItem("qianjin_v9_data") || "[]");
-      if (cached.length) {
-        allData = cached;
-        renderLatest(cached[cached.length-1]);
-        const pred = v9Predict(cached);
-        renderPrediction(pred);
-        renderRecords(loadRecords());
-        renderHistory(cached, pred);
-        renderSourceBadge("💾 缓存", cached.length);
-        showToast("💾 使用缓存数据");
-        return;
-      }
-    } catch {}
+    addDebug(`💥 失败: ${e.message}`);
     renderSourceBadge("❌ 全部失败", 0);
-    showToast("❌ 数据获取失败");
+    showToast("❌ 数据获取失败，请检查网络或稍后重试");
+    // 不清空已有数据，但保持显示
   }
 }
 
 function manualRefresh() { fetchAndUpdate(false); }
 
 async function init() {
-  // 先渲染缓存
-  try {
-    const cached = JSON.parse(localStorage.getItem("qianjin_v9_data") || "[]");
-    if (cached.length) {
-      allData = cached;
-      renderLatest(cached[cached.length-1]);
-      const pred = v9Predict(cached);
-      renderPrediction(pred);
-      renderRecords(loadRecords());
-      renderHistory(cached, pred);
-      renderSourceBadge("💾 缓存", cached.length);
-    }
-  } catch(e) {}
+  // 无缓存，直接请求
+  addDebug("页面初始化，请求实时数据");
   await fetchAndUpdate(true);
   startCountdown();
   setInterval(() => fetchAndUpdate(true), 60000);
 }
 
-document.addEventListener("visibilitychange", () => { if (!document.hidden) fetchAndUpdate(true); });
+// 启动
+init().catch(err => {
+  console.error(err);
+  showToast("初始化失败: "+err.message);
+});
 
-init().catch(err => showToast("初始化失败: "+err.message));
+// 暴露刷新函数
+window.manualRefresh = manualRefresh;
 </script>
 </body>
 </html>
