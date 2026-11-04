@@ -2,13 +2,13 @@
   "meta": {
     "source": "Liquid-Glass-Profil数据仓库(BCLC官方规则)",
     "count": 60,
-    "updated": "2026-11-04 19:13:38",
+    "updated": "2026-11-05 02:40:23",
     "engine": "V10-warehouse",
     "timezone": "PST",
     "is_open": false,
     "countdown": "00:00",
-    "next_draw": "2026-11-04 19:17:00",
-    "current_period": "2611030382",
+    "next_draw": "2026-11-05 02:43:00",
+    "current_period": "2611040098",
     "records_total": 1,
     "data_warehouse": "Liquid-Glass-Profil",
     "rule": "BCLC官方规则: b1=(pos2+5+8+11+14+17)%10, b2=(pos3+6+9+12+15+18)%10, b3=(pos4+7+10+13+16+19)%10"
